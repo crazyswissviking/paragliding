@@ -3,9 +3,10 @@ import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  "https://pcbqmjyfbkcwlmoztkem.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjYnFtanlmYmtjd2xtb3p0a2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMjU3NTgsImV4cCI6MjA5NDkwMTc1OH0._zVPKJTF0Yk_1UhLem-L217aypkhrFenzA_RrADmwEs"
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
+
 
 const termine = [
   "Samstag, 30. Mai 2026",
