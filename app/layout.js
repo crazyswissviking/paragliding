@@ -1,15 +1,9 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "Swissgliders Members",
   description: "Vollmond- & Nachtflüge",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="de">
       <body style={{ margin: "0", fontFamily: "sans-serif" }}>
