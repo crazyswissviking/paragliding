@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 
 const termine = [
@@ -10,12 +10,33 @@ const termine = [
   "Sonntag, 25. Oktober 2026",
 ];
 
+const MAX_TEILNEHMER = 6;
+
 export default function Anmelden() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [termin, setTermin] = useState("");
   const [status, setStatus] = useState<"erfolg" | "fehler" | null>(null);
   const [loading, setLoading] = useState(false);
+  const [plaetze, setPlaetze] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    async function plaetzeLaden() {
+      const { data } = await supabase
+        .from("anmeldungen")
+        .select("termin");
+      
+      const zaehler: Record<string, number> = {};
+      termine.forEach((t) => (zaehler[t] = 0));
+      data?.forEach((a) => {
+        if (zaehler[a.termin] !== undefined) {
+          zaehler[a.termin]++;
+        }
+      });
+      setPlaetze(zaehler);
+    }
+    plaetzeLaden();
+  }, [status]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,14 +94,20 @@ export default function Anmelden() {
             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
           >
             <option value="">-- Termin auswählen --</option>
-            {termine.map((t, i) => (
-              <option key={i} value={t}>🌕 {t}</option>
-            ))}
+            {termine.map((t, i) => {
+              const belegt = plaetze[t] || 0;
+              const voll = belegt >= MAX_TEILNEHMER;
+              return (
+                <option key={i} value={t} disabled={voll}>
+                  {voll ? "🔴" : "🟢"} {t} ({belegt}/{MAX_TEILNEHMER} Plätze)
+                </option>
+              );
+            })}
           </select>
         </div>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || (termin !== "" && (plaetze[termin] || 0) >= MAX_TEILNEHMER)}
           style={{
             width: "100%",
             padding: "14px",
