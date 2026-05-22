@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../../supabase";
 
 const termine = [
   "Samstag, 30. Mai 2026",
@@ -11,11 +11,6 @@ const termine = [
 ];
 
 export default function Anmelden() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [termin, setTermin] = useState("");
