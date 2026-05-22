@@ -3,10 +3,9 @@ import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
 
 const termine = [
   "Samstag, 30. Mai 2026",
@@ -20,10 +19,10 @@ export default function Anmelden() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [termin, setTermin] = useState("");
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState<"erfolg" | "fehler" | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setStatus(null);
