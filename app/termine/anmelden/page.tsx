@@ -2,11 +2,6 @@
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const termine = [
   "Samstag, 30. Mai 2026",
   "Samstag, 27. Juni 2026",
@@ -16,6 +11,11 @@ const termine = [
 ];
 
 export default function Anmelden() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [termin, setTermin] = useState("");
@@ -46,7 +46,6 @@ export default function Anmelden() {
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "500px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Anmeldung Vollmond-/Nachtflug</h2>
-
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "20px" }}>
           <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold" }}>Name</label>
@@ -59,7 +58,6 @@ export default function Anmelden() {
             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
           />
         </div>
-
         <div style={{ marginBottom: "20px" }}>
           <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold" }}>E-Mail</label>
           <input
@@ -71,7 +69,6 @@ export default function Anmelden() {
             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
           />
         </div>
-
         <div style={{ marginBottom: "30px" }}>
           <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold" }}>Termin wählen</label>
           <select
@@ -86,7 +83,6 @@ export default function Anmelden() {
             ))}
           </select>
         </div>
-
         <button
           type="submit"
           disabled={loading}
@@ -105,13 +101,11 @@ export default function Anmelden() {
           {loading ? "Wird gesendet..." : "Jetzt anmelden"}
         </button>
       </form>
-
       {status === "erfolg" && (
         <div style={{ marginTop: "20px", padding: "16px", background: "#e6f4ea", borderRadius: "10px", color: "#2d6a4f" }}>
           ✅ Anmeldung erfolgreich! Wir freuen uns auf dich.
         </div>
       )}
-
       {status === "fehler" && (
         <div style={{ marginTop: "20px", padding: "16px", background: "#fdecea", borderRadius: "10px", color: "#c0392b" }}>
           ❌ Etwas ist schiefgelaufen. Bitte versuche es nochmals.
