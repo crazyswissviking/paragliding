@@ -12,27 +12,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body style={{ margin: "0", fontFamily: "sans-serif", minHeight: "100vh", color: "#ffffff" }}>
-        {/* Hintergrundvideo */}
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", zIndex: 0, overflow: "hidden" }}>
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.4 }}
-          >
-            <source src="/video.mp4" type="video/mp4" />
-          </video>
-          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.55)" }} />
-        </div>
-
-        {/* Navigation */}
+      <body style={{ margin: "0", fontFamily: "sans-serif", background: "#111111", color: "#ffffff", minHeight: "100vh" }}>
         <nav style={{
-          position: "relative",
-          zIndex: 10,
-          background: "rgba(0,0,0,0.7)",
-          backdropFilter: "blur(10px)",
+          background: "rgba(0,0,0,0.8)",
           padding: "14px 40px",
           display: "flex",
           alignItems: "center",
@@ -55,9 +37,7 @@ export default function RootLayout({
             Admin Anmeldungen
           </a>
         </nav>
-
-        {/* Inhalt */}
-        <div style={{ position: "relative", zIndex: 10 }}>
+        <div>
           {children}
         </div>
       </body>
