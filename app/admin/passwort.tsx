@@ -12,6 +12,7 @@ export default function PasswortSchutz({ children }: { children: React.ReactNode
   }, []);
 
   function pruefen() {
+    alert("Eingabe: " + eingabe);
     if (eingabe === "SwissViking") {
       sessionStorage.setItem("admin_berechtigt", "ja");
       setBerechtigt(true);
