@@ -47,7 +47,7 @@ export default function Termine() {
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "700px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
-      <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Vollmond- & Nachtflüge 2026</h2>
+      <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Events</h2>
       <div>
         {termine.map((t) => {
           const label = `${t.wochentag}, ${t.datum}`;
@@ -58,7 +58,7 @@ export default function Termine() {
 
           return (
             <div key={t.id} style={{
-              border: "1px solid #ddd",
+              border: "1px solid rgba(255,255,255,0.15)",
               borderRadius: "12px",
               marginBottom: "16px",
               overflow: "hidden",
@@ -71,26 +71,26 @@ export default function Termine() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   cursor: "pointer",
-                  background: istOffen ? "#f5f8ff" : "white",
+                  background: istOffen ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
                 }}
               >
                 <div>
-                  <p style={{ color: "#888", margin: "0 0 4px", fontSize: "14px" }}>🌕 {t.wochentag}, {t.datum}</p>
-                  <h3 style={{ margin: "0 0 4px", fontSize: "18px" }}>{t.titel}</h3>
-                  <p style={{ margin: "0", color: "#aaa", fontSize: "14px" }}>📍 {t.ort}</p>
+                  <p style={{ color: "#aaa", margin: "0 0 4px", fontSize: "14px" }}>🌕 {t.wochentag}, {t.datum}</p>
+                  <h3 style={{ margin: "0 0 4px", fontSize: "18px", color: "#fff" }}>{t.titel}</h3>
+                  <p style={{ margin: "0", color: "#888", fontSize: "14px" }}>📍 {t.ort}</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{
-                    background: voll ? "#fdecea" : "#f0f4ff",
+                    background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
                     borderRadius: "8px",
                     padding: "10px 16px",
                     textAlign: "center",
                     minWidth: "80px",
                   }}>
-                    <p style={{ margin: "0", fontSize: "22px", fontWeight: "bold", color: voll ? "#c0392b" : "#3355cc" }}>
+                    <p style={{ margin: "0", fontSize: "22px", fontWeight: "bold", color: voll ? "#e74c3c" : "#7799ff" }}>
                       {t.max_teilnehmer - belegt}
                     </p>
-                    <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>
+                    <p style={{ margin: "0", fontSize: "12px", color: "#aaa" }}>
                       {voll ? "Voll" : "Frei"}
                     </p>
                   </div>
@@ -101,21 +101,21 @@ export default function Termine() {
               </div>
 
               {istOffen && (
-                <div style={{ padding: "16px 24px", borderTop: "1px solid #eee", background: "#fafafa" }}>
+                <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
                   {t.details && (
-                    <div style={{ marginBottom: "16px", padding: "12px", background: "#f0f4ff", borderRadius: "8px", fontSize: "14px", color: "#444" }}>
+                    <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
                       📝 <strong>Details:</strong> {t.details}
                     </div>
                   )}
-                  <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#555" }}>
+                  <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>
                     Angemeldete Teilnehmer ({belegt}/{t.max_teilnehmer}):
                   </p>
                   {belegt === 0 ? (
-                    <p style={{ color: "#aaa", fontSize: "14px", margin: "0" }}>Noch keine Anmeldungen.</p>
+                    <p style={{ color: "#666", fontSize: "14px", margin: "0" }}>Noch keine Anmeldungen.</p>
                   ) : (
                     <ul style={{ margin: "0", padding: "0 0 0 20px" }}>
                       {teilnehmer.map((a) => (
-                        <li key={a.id} style={{ fontSize: "15px", marginBottom: "4px" }}>
+                        <li key={a.id} style={{ fontSize: "15px", marginBottom: "4px", color: "#ddd" }}>
                           {a.name}
                         </li>
                       ))}
