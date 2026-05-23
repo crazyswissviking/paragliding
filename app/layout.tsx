@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Swissgliders Members",
-  description: "Vollmond- & Nachtflüge",
+  description: "Events",
 };
 
 export default function RootLayout({
@@ -29,6 +29,12 @@ export default function RootLayout({
           <a href="/termine/anmelden" style={{ color: "white", textDecoration: "none", fontSize: "15px" }}>
             Anmelden
           </a>
+          <a href="/admin/termine" style={{ color: "white", textDecoration: "none", fontSize: "15px" }}>
+  Admin Termine
+</a>
+<a href="/admin/anmeldungen" style={{ color: "white", textDecoration: "none", fontSize: "15px" }}>
+  Admin Anmeldungen
+</a>
         </nav>
         {children}
       </body>
