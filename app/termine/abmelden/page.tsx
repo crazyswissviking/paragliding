@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../supabase";
 
-export default function Abmelden() {
+function AbmeldenInhalt() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [anmeldung, setAnmeldung] = useState<{ name: string; termin: string } | null>(null);
@@ -85,5 +85,13 @@ export default function Abmelden() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function Abmelden() {
+  return (
+    <Suspense fallback={<p style={{ padding: "40px" }}>Wird geladen...</p>}>
+      <AbmeldenInhalt />
+    </Suspense>
   );
 }
