@@ -94,8 +94,8 @@ export default function Termine() {
                       {voll ? "Voll" : "Frei"}
                     </p>
                   </div>
-                  <span style={{ fontSize: "20px", color: "#aaa" }}>
-                    {istOffen ? "▲" : "▼"}
+                  <span style={{ fontSize: "14px", color: "#aaa", display: "flex", alignItems: "center", gap: "4px" }}>
+                    {istOffen ? "Details schliessen ▲" : "Details ▼"}
                   </span>
                 </div>
               </div>
