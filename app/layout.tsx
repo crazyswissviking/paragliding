@@ -12,7 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body style={{ margin: "0", fontFamily: "sans-serif", background: "#ffffff", color: "#000000", minHeight: "100vh" }}>
+      <body style={{ margin: "0", fontFamily: "sans-serif", background: "#1a1a2e", color: "#ffffff", minHeight: "100vh" }}>
         <nav style={{
           background: "#3355cc",
           padding: "14px 40px",
