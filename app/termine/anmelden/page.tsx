@@ -18,6 +18,7 @@ export default function Anmelden() {
   const [status, setStatus] = useState<"erfolg" | "fehler" | null>(null);
   const [loading, setLoading] = useState(false);
   const [plaetze, setPlaetze] = useState<Record<string, number>>({});
+  const [anmeldungId, setAnmeldungId] = useState<number | null>(null);
 
   useEffect(() => {
     async function laden() {
@@ -47,13 +48,15 @@ export default function Anmelden() {
     setLoading(true);
     setStatus(null);
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("anmeldungen")
-      .insert([{ name, email, termin }]);
+      .insert([{ name, email, termin }])
+      .select();
 
     if (error) {
       setStatus("fehler");
     } else {
+      setAnmeldungId(data?.[0]?.id || null);
       setStatus("erfolg");
       setName("");
       setEmail("");
@@ -131,6 +134,14 @@ export default function Anmelden() {
       {status === "erfolg" && (
         <div style={{ marginTop: "20px", padding: "16px", background: "#e6f4ea", borderRadius: "10px", color: "#2d6a4f" }}>
           ✅ Anmeldung erfolgreich! Wir freuen uns auf dich.
+          {anmeldungId && (
+            <p style={{ marginTop: "10px", fontSize: "14px" }}>
+              Möchtest du dich später abmelden?{" "}
+              <a href={`/termine/abmelden?id=${anmeldungId}`} style={{ color: "#2d6a4f", fontWeight: "bold" }}>
+                Abmelde-Link speichern
+              </a>
+            </p>
+          )}
         </div>
       )}
       {status === "fehler" && (
