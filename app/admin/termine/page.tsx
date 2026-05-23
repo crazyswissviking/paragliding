@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
+import PasswortSchutz from "../passwort";
 
 type Termin = {
   id: number;
@@ -69,7 +70,8 @@ export default function AdminTermine() {
 
   const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
-  return (
+ return (
+    <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Admin – Termine verwalten</h2>
@@ -203,5 +205,6 @@ export default function AdminTermine() {
         </div>
       ))}
     </main>
+    </PasswortSchutz>
   );
 }

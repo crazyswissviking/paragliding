@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase";
+import PasswortSchutz from "../passwort";
 type Anmeldung = {
   id: number;
   name: string;
@@ -25,7 +26,8 @@ export default function AdminAnmeldungen() {
     laden();
   }, []);
 
-  return (
+ return (
+    <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "900px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Alle Anmeldungen</h2>
@@ -66,7 +68,8 @@ export default function AdminAnmeldungen() {
           </tbody>
         </table>
       )}
-    </main>
+ </main>
+    </PasswortSchutz>
   );
 }
 
