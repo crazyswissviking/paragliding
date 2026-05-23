@@ -2,17 +2,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 
-const termine = [
-  "Samstag, 30. Mai 2026",
-  "Samstag, 27. Juni 2026",
-  "Sonntag, 28. Juni 2026",
-  "Freitag, 28. August 2026",
-  "Sonntag, 25. Oktober 2026",
-];
-
-const MAX_TEILNEHMER = 6;
+type Termin = {
+  id: number;
+  datum: string;
+  wochentag: string;
+  titel: string;
+  max_teilnehmer: number;
+};
 
 export default function Anmelden() {
+  const [termine, setTermine] = useState<Termin[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [termin, setTermin] = useState("");
@@ -21,21 +20,26 @@ export default function Anmelden() {
   const [plaetze, setPlaetze] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    async function plaetzeLaden() {
-      const { data } = await supabase
+    async function laden() {
+      const { data: termineData } = await supabase
+        .from("termine")
+        .select("*")
+        .eq("aktiv", true)
+        .order("id", { ascending: true });
+      setTermine(termineData || []);
+
+      const { data: anmeldungenData } = await supabase
         .from("anmeldungen")
         .select("termin");
-      
+
       const zaehler: Record<string, number> = {};
-      termine.forEach((t) => (zaehler[t] = 0));
-      data?.forEach((a) => {
-        if (zaehler[a.termin] !== undefined) {
-          zaehler[a.termin]++;
-        }
+      termineData?.forEach((t) => (zaehler[`${t.wochentag}, ${t.datum}`] = 0));
+      anmeldungenData?.forEach((a) => {
+        if (zaehler[a.termin] !== undefined) zaehler[a.termin]++;
       });
       setPlaetze(zaehler);
     }
-    plaetzeLaden();
+    laden();
   }, [status]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -94,12 +98,13 @@ export default function Anmelden() {
             style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
           >
             <option value="">-- Termin auswählen --</option>
-            {termine.map((t, i) => {
-              const belegt = plaetze[t] || 0;
-              const voll = belegt >= MAX_TEILNEHMER;
+            {termine.map((t) => {
+              const label = `${t.wochentag}, ${t.datum}`;
+              const belegt = plaetze[label] || 0;
+              const voll = belegt >= t.max_teilnehmer;
               return (
-                <option key={i} value={t} disabled={voll}>
-                  {voll ? "🔴" : "🟢"} {t} ({belegt}/{MAX_TEILNEHMER} Plätze)
+                <option key={t.id} value={label} disabled={voll}>
+                  {voll ? "🔴" : "🟢"} {label} ({belegt}/{t.max_teilnehmer} Plätze)
                 </option>
               );
             })}
@@ -107,7 +112,7 @@ export default function Anmelden() {
         </div>
         <button
           type="submit"
-          disabled={loading || (termin !== "" && (plaetze[termin] || 0) >= MAX_TEILNEHMER)}
+          disabled={loading || (termin !== "" && (plaetze[termin] || 0) >= (termine.find((t) => `${t.wochentag}, ${t.datum}` === termin)?.max_teilnehmer || 6))}
           style={{
             width: "100%",
             padding: "14px",
