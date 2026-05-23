@@ -58,6 +58,12 @@ export default function Anmelden() {
     } else {
       setAnmeldungId(data?.[0]?.id || null);
       setStatus("erfolg");
+
+      await fetch("/api/bestaetigung", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, termin }),
+      });
       setName("");
       setEmail("");
       setTermin("");
