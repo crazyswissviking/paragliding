@@ -11,6 +11,7 @@ type Termin = {
   ort: string;
   max_teilnehmer: number;
   aktiv: boolean;
+  details: string;
 };
 
 export default function AdminTermine() {
@@ -23,6 +24,7 @@ export default function AdminTermine() {
     ort: "Wird noch bekanntgegeben",
     max_teilnehmer: 6,
     aktiv: true,
+    details: "",
   });
   const [gespeichert, setGespeichert] = useState(false);
 
@@ -49,6 +51,7 @@ export default function AdminTermine() {
       ort: "Wird noch bekanntgegeben",
       max_teilnehmer: 6,
       aktiv: true,
+      details: "",
     });
     setGespeichert(true);
     setTimeout(() => setGespeichert(false), 2000);
@@ -70,7 +73,7 @@ export default function AdminTermine() {
 
   const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
- return (
+  return (
     <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
@@ -130,6 +133,16 @@ export default function AdminTermine() {
               style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
             />
           </div>
+          <div>
+            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Details (optional)</label>
+            <textarea
+              value={neu.details}
+              onChange={(e) => setNeu({ ...neu, details: e.target.value })}
+              placeholder="z.B. Treffpunkt, Ausrüstung, Hinweise..."
+              rows={3}
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
+            />
+          </div>
         </div>
         <button
           onClick={hinzufuegen}
@@ -160,48 +173,52 @@ export default function AdminTermine() {
           borderRadius: "12px",
           padding: "16px 24px",
           marginBottom: "12px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
           opacity: t.aktiv ? 1 : 0.5,
         }}>
-          <div>
-            <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{t.wochentag}, {t.datum}</p>
-            <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>{t.titel}</p>
-            <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} Teilnehmer</p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{t.wochentag}, {t.datum}</p>
+              <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>{t.titel}</p>
+              <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} Teilnehmer</p>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => toggleAktiv(t)}
+                style={{
+                  padding: "8px 14px",
+                  background: t.aktiv ? "#e6f4ea" : "#f5f5f5",
+                  color: t.aktiv ? "#2d6a4f" : "#888",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                }}
+              >
+                {t.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}
+              </button>
+              <button
+                onClick={() => loeschen(t.id)}
+                style={{
+                  padding: "8px 14px",
+                  background: "#fdecea",
+                  color: "#c0392b",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                }}
+              >
+                🗑 Löschen
+              </button>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button
-              onClick={() => toggleAktiv(t)}
-              style={{
-                padding: "8px 14px",
-                background: t.aktiv ? "#e6f4ea" : "#f5f5f5",
-                color: t.aktiv ? "#2d6a4f" : "#888",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: "bold",
-              }}
-            >
-              {t.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}
-            </button>
-            <button
-              onClick={() => loeschen(t.id)}
-              style={{
-                padding: "8px 14px",
-                background: "#fdecea",
-                color: "#c0392b",
-                border: "none",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: "bold",
-              }}
-            >
-              🗑 Löschen
-            </button>
-          </div>
+          {t.details && (
+            <div style={{ marginTop: "12px", padding: "12px", background: "#f9f9f9", borderRadius: "8px", fontSize: "14px", color: "#555" }}>
+              📝 {t.details}
+            </div>
+          )}
         </div>
       ))}
     </main>
