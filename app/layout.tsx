@@ -21,9 +21,9 @@ export default function RootLayout({
           gap: "30px",
           borderBottom: "1px solid rgba(255,255,255,0.1)",
         }}>
-          <span style={{ color: "white", fontWeight: "bold", fontSize: "18px" }}>
+          <a href="https://www.vikingfly.ch" style={{ color: "white", fontWeight: "bold", fontSize: "18px", textDecoration: "none" }}>
             🪂 Vikingfly
-          </span>
+          </a>
           <a href="/termine" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>
             Termine
           </a>
