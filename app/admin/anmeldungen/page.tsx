@@ -12,10 +12,17 @@ type Anmeldung = {
 };
 
 const parseDate = (d: string) => {
-  const parts = d.split(",")[1]?.trim().split(".").map(Number);
+  const monate: Record<string, number> = {
+    "Januar": 0, "Februar": 1, "März": 2, "April": 3,
+    "Mai": 4, "Juni": 5, "Juli": 6, "August": 7,
+    "September": 8, "Oktober": 9, "November": 10, "Dezember": 11
+  };
+  const parts = d.split(",")[1]?.trim().split(" ");
   if (!parts || parts.length < 3) return 0;
-  const [day, month, year] = parts;
-  return new Date(year, month - 1, day).getTime();
+  const day = parseInt(parts[0]);
+  const month = monate[parts[1]] ?? 0;
+  const year = parseInt(parts[2]);
+  return new Date(year, month, day).getTime();
 };
 
 export default function AdminAnmeldungen() {
