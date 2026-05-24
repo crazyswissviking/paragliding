@@ -14,6 +14,11 @@ type Termin = {
   details: string;
 };
 
+const parseDate = (d: string) => {
+  const [day, month, year] = d.split(".").map(Number);
+  return new Date(year, month - 1, day).getTime();
+};
+
 export default function AdminTermine() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,9 +36,9 @@ export default function AdminTermine() {
   async function laden() {
     const { data } = await supabase
       .from("termine")
-      .select("*")
-      .order("id", { ascending: true });
-    setTermine(data || []);
+      .select("*");
+    const sortiert = (data || []).sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
+    setTermine(sortiert);
     setLoading(false);
   }
 
@@ -84,10 +89,10 @@ export default function AdminTermine() {
         <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neuer Termin</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
           <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Datum</label>
+            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Datum (dd.mm.yyyy)</label>
             <input
               type="text"
-              placeholder="z.B. 30. Mai 2026"
+              placeholder="z.B. 30.05.2026"
               value={neu.datum}
               onChange={(e) => setNeu({ ...neu, datum: e.target.value })}
               style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
