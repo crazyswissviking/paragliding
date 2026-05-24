@@ -20,7 +20,7 @@ export default function Home() {
           playsInline
           style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.4 }}
         >
-          <source src="/video.mp4" type="video/mp4" />
+          <source src="https://res.cloudinary.com/dnfnng4mm/video/upload/v1779590348/video_ve6erm.mp4" type="video/mp4" />
         </video>
         <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.4)" }} />
       </div>
