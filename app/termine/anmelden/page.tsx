@@ -71,48 +71,58 @@ export default function Anmelden() {
     setLoading(false);
   }
 
+  const inputStyle = {
+    width: "100%",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid rgba(255,255,255,0.2)",
+    fontSize: "16px",
+    background: "rgba(255,255,255,0.05)",
+    color: "#ffffff",
+  };
+
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "500px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
-      <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Anmeldung Vollmond-/Nachtflug</h2>
+      <h1 style={{ fontSize: "28px", marginBottom: "8px", color: "#ffffff" }}>🪂 Swissgliders Members</h1>
+      <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Anmeldung Event</h2>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold" }}>Name</label>
+          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", color: "#ccc" }}>Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="Dein Name"
-            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
+            style={inputStyle}
           />
         </div>
         <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold" }}>E-Mail</label>
+          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", color: "#ccc" }}>E-Mail</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="deine@email.com"
-            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
+            style={inputStyle}
           />
         </div>
         <div style={{ marginBottom: "30px" }}>
-          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold" }}>Termin wählen</label>
+          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", color: "#ccc" }}>Event wählen</label>
           <select
             value={termin}
             onChange={(e) => setTermin(e.target.value)}
             required
-            style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "16px" }}
+            style={{ ...inputStyle, cursor: "pointer" }}
           >
-            <option value="">-- Termin auswählen --</option>
+            <option value="" style={{ background: "#1a1a2e" }}>-- Event auswählen --</option>
             {termine.map((t) => {
               const label = `${t.wochentag}, ${t.datum}`;
               const belegt = plaetze[label] || 0;
               const voll = belegt >= t.max_teilnehmer;
               return (
-                <option key={t.id} value={label} disabled={voll}>
+                <option key={t.id} value={label} disabled={voll} style={{ background: "#1a1a2e" }}>
                   {voll ? "🔴" : "🟢"} {label} ({belegt}/{t.max_teilnehmer} Plätze)
                 </option>
               );
@@ -125,7 +135,7 @@ export default function Anmelden() {
           style={{
             width: "100%",
             padding: "14px",
-            background: loading ? "#aaa" : "#3355cc",
+            background: loading ? "#555" : "#3355cc",
             color: "white",
             border: "none",
             borderRadius: "10px",
@@ -138,12 +148,12 @@ export default function Anmelden() {
         </button>
       </form>
       {status === "erfolg" && (
-        <div style={{ marginTop: "20px", padding: "16px", background: "#e6f4ea", borderRadius: "10px", color: "#2d6a4f" }}>
+        <div style={{ marginTop: "20px", padding: "16px", background: "rgba(45,106,79,0.3)", borderRadius: "10px", color: "#6fcf97", border: "1px solid rgba(111,207,151,0.3)" }}>
           ✅ Anmeldung erfolgreich! Wir freuen uns auf dich.
           {anmeldungId && (
             <p style={{ marginTop: "10px", fontSize: "14px" }}>
               Möchtest du dich später abmelden?{" "}
-              <a href={`/termine/abmelden?id=${anmeldungId}`} style={{ color: "#2d6a4f", fontWeight: "bold" }}>
+              <a href={`/termine/abmelden?id=${anmeldungId}`} style={{ color: "#6fcf97", fontWeight: "bold" }}>
                 Abmelde-Link speichern
               </a>
             </p>
@@ -151,7 +161,7 @@ export default function Anmelden() {
         </div>
       )}
       {status === "fehler" && (
-        <div style={{ marginTop: "20px", padding: "16px", background: "#fdecea", borderRadius: "10px", color: "#c0392b" }}>
+        <div style={{ marginTop: "20px", padding: "16px", background: "rgba(192,57,43,0.3)", borderRadius: "10px", color: "#e74c3c", border: "1px solid rgba(231,76,60,0.3)" }}>
           ❌ Etwas ist schiefgelaufen. Bitte versuche es nochmals.
         </div>
       )}
