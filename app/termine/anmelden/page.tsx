@@ -10,6 +10,11 @@ type Termin = {
   max_teilnehmer: number;
 };
 
+const parseDate = (d: string) => {
+  const [day, month, year] = d.split(".").map(Number);
+  return new Date(year, month - 1, day).getTime();
+};
+
 export default function Anmelden() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [name, setName] = useState("");
@@ -25,16 +30,17 @@ export default function Anmelden() {
       const { data: termineData } = await supabase
         .from("termine")
         .select("*")
-        .eq("aktiv", true)
-        .order("id", { ascending: true });
-      setTermine(termineData || []);
+        .eq("aktiv", true);
+
+      const sortiert = (termineData || []).sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
+      setTermine(sortiert);
 
       const { data: anmeldungenData } = await supabase
         .from("anmeldungen")
         .select("termin");
 
       const zaehler: Record<string, number> = {};
-      termineData?.forEach((t) => (zaehler[`${t.wochentag}, ${t.datum}`] = 0));
+      sortiert.forEach((t) => (zaehler[`${t.wochentag}, ${t.datum}`] = 0));
       anmeldungenData?.forEach((a) => {
         if (zaehler[a.termin] !== undefined) zaehler[a.termin]++;
       });
