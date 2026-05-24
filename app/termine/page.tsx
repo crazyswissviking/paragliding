@@ -18,6 +18,11 @@ type Anmeldung = {
   termin: string;
 };
 
+const parseDate = (d: string) => {
+  const [day, month, year] = d.split(".").map(Number);
+  return new Date(year, month - 1, day).getTime();
+};
+
 export default function Termine() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [offen, setOffen] = useState<string | null>(null);
@@ -30,23 +35,8 @@ export default function Termine() {
         .select("*")
         .eq("aktiv", true);
 
-      termineData?.sort((a, b) => {
-        const monate: Record<string, number> = {
-          "Januar": 0, "Februar": 1, "März": 2, "April": 3,
-          "Mai": 4, "Juni": 5, "Juli": 6, "August": 7,
-          "September": 8, "Oktober": 9, "November": 10, "Dezember": 11
-        };
-        const parseDate = (d: string) => {
-          const parts = d.trim().split(" ");
-          if (!parts || parts.length < 3) return 0;
-          const day = parseInt(parts[0]);
-          const month = monate[parts[1]] ?? 0;
-          const year = parseInt(parts[2]);
-          return new Date(year, month, day).getTime();
-        };
-        return parseDate(a.datum) - parseDate(b.datum);
-      });
-      setTermine(termineData || []);
+      const sortiert = (termineData || []).sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
+      setTermine(sortiert);
 
       const { data: anmeldungenData } = await supabase
         .from("anmeldungen")
@@ -123,7 +113,7 @@ export default function Termine() {
                       📝 <strong>Details:</strong> {t.details}
                     </div>
                   )}
-<div style={{ marginBottom: "16px" }}>
+                  <div style={{ marginBottom: "16px" }}>
                     {voll ? (
                       <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
                         🔴 Ausgebucht
