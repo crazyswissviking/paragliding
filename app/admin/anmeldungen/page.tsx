@@ -2,12 +2,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
+
 type Anmeldung = {
   id: number;
   name: string;
   email: string;
   termin: string;
   erstellt_am: string;
+};
+
+const parseDate = (d: string) => {
+  const parts = d.split(",")[1]?.trim().split(".").map(Number);
+  if (!parts || parts.length < 3) return 0;
+  const [day, month, year] = parts;
+  return new Date(year, month - 1, day).getTime();
 };
 
 export default function AdminAnmeldungen() {
@@ -20,13 +28,14 @@ export default function AdminAnmeldungen() {
         .from("anmeldungen")
         .select("*")
         .order("erstellt_am", { ascending: false });
-      setAnmeldungen(data || []);
+      const sortiert = (data || []).sort((a, b) => parseDate(a.termin) - parseDate(b.termin));
+      setAnmeldungen(sortiert);
       setLoading(false);
     }
     laden();
   }, []);
 
- return (
+  return (
     <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "900px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
@@ -68,7 +77,7 @@ export default function AdminAnmeldungen() {
           </tbody>
         </table>
       )}
- </main>
+    </main>
     </PasswortSchutz>
   );
 }
