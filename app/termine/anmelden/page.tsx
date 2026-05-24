@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../supabase";
 
 type Termin = {
@@ -15,11 +16,12 @@ const parseDate = (d: string) => {
   return new Date(year, month - 1, day).getTime();
 };
 
-export default function Anmelden() {
+function AnmeldenInhalt() {
+  const searchParams = useSearchParams();
   const [termine, setTermine] = useState<Termin[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [termin, setTermin] = useState("");
+  const [termin, setTermin] = useState(searchParams.get("termin") || "");
   const [status, setStatus] = useState<"erfolg" | "fehler" | null>(null);
   const [loading, setLoading] = useState(false);
   const [plaetze, setPlaetze] = useState<Record<string, number>>({});
@@ -172,5 +174,13 @@ export default function Anmelden() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function Anmelden() {
+  return (
+    <Suspense fallback={<p style={{ padding: "40px", color: "#fff" }}>Wird geladen...</p>}>
+      <AnmeldenInhalt />
+    </Suspense>
   );
 }

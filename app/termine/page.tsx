@@ -119,9 +119,9 @@ export default function Termine() {
                         🔴 Ausgebucht
                       </span>
                     ) : (
-                      <a href="/termine/anmelden" onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
-                        ✍️ Jetzt anmelden
-                      </a>
+                      <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
+  ✍️ Jetzt anmelden
+</a>
                     )}
                   </div>
                   <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>
