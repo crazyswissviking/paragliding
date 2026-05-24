@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   const { name, email, termin } = await request.json();
 
   const { error } = await resend.emails.send({
-    from: "Swissgliders Members <onboarding@resend.dev>",
+    from: "Swissgliders Members <noreply@vikingfly.ch>",
     to: email,
     subject: "Anmeldebestätigung – Vollmond-/Nachtflug",
     html: `
