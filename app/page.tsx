@@ -28,10 +28,10 @@ export default function Home() {
       {/* Inhalt */}
       <div style={{ position: "relative", zIndex: 10 }}>
         <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "16px" }}>
-          🪂 Swissgliders Members
+          🪂 Swissgliders
         </h1>
         <p style={{ fontSize: "20px", color: "#aaa", marginBottom: "60px" }}>
-          Dein Club für Vollmond- & Nachtflüge
+          Unsere Events
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
