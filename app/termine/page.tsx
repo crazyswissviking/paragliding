@@ -28,8 +28,24 @@ export default function Termine() {
       const { data: termineData } = await supabase
         .from("termine")
         .select("*")
-        .eq("aktiv", true)
-        .order("id", { ascending: true });
+        .eq("aktiv", true);
+
+      termineData?.sort((a, b) => {
+        const monate: Record<string, number> = {
+          "Januar": 0, "Februar": 1, "März": 2, "April": 3,
+          "Mai": 4, "Juni": 5, "Juli": 6, "August": 7,
+          "September": 8, "Oktober": 9, "November": 10, "Dezember": 11
+        };
+        const parseDate = (d: string) => {
+          const parts = d.trim().split(" ");
+          if (!parts || parts.length < 3) return 0;
+          const day = parseInt(parts[0]);
+          const month = monate[parts[1]] ?? 0;
+          const year = parseInt(parts[2]);
+          return new Date(year, month, day).getTime();
+        };
+        return parseDate(a.datum) - parseDate(b.datum);
+      });
       setTermine(termineData || []);
 
       const { data: anmeldungenData } = await supabase
