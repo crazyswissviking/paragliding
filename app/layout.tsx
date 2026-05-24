@@ -22,7 +22,7 @@ export default function RootLayout({
           borderBottom: "1px solid rgba(255,255,255,0.1)",
         }}>
           <span style={{ color: "white", fontWeight: "bold", fontSize: "18px" }}>
-            🪂 Swissgliders Members
+            🪂 Vikingfly
           </span>
           <a href="/termine" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>
             Termine
