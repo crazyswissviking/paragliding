@@ -30,6 +30,10 @@ export default function Home() {
         <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "16px" }}>
           🪂 Swissgliders
         </h1>
+        <p style={{ fontSize: "20px", color: "#aaa", marginBottom: "60px" }}>
+          Unsere Events
+        </p>
+
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
           <a href="/termine" style={{
             display: "block",
