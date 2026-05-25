@@ -21,6 +21,8 @@ const parseDate = (d: string) => {
 export default function AdminAnmeldungen() {
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bearbeiten, setBearbeiten] = useState<Anmeldung | null>(null);
+  const [gespeichert, setGespeichert] = useState(false);
 
   async function laden() {
     const { data } = await supabase.from("anmeldungen").select("*");
@@ -37,11 +39,63 @@ export default function AdminAnmeldungen() {
     laden();
   }
 
+  async function bearbeitenSpeichern() {
+    if (!bearbeiten) return;
+    await supabase.from("anmeldungen").update({
+      name: bearbeiten.name,
+      email: bearbeiten.email,
+      termin: bearbeiten.termin,
+    }).eq("id", bearbeiten.id);
+    setGespeichert(true);
+    setTimeout(() => {
+      setGespeichert(false);
+      setBearbeiten(null);
+    }, 1500);
+    laden();
+  }
+
+  const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
+
   return (
     <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "900px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Alle Anmeldungen</h2>
+
+      {/* Bearbeiten Modal */}
+      {bearbeiten && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "white", borderRadius: "16px", padding: "32px", maxWidth: "500px", width: "90%" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: "0", fontSize: "20px" }}>Anmeldung bearbeiten</h3>
+              <button onClick={() => setBearbeiten(null)} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#888" }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Name</label>
+                <input type="text" value={bearbeiten.name} onChange={(e) => setBearbeiten({ ...bearbeiten, name: e.target.value })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>E-Mail</label>
+                <input type="email" value={bearbeiten.email} onChange={(e) => setBearbeiten({ ...bearbeiten, email: e.target.value })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Termin</label>
+                <input type="text" value={bearbeiten.termin} onChange={(e) => setBearbeiten({ ...bearbeiten, termin: e.target.value })} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
+              <button onClick={bearbeitenSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
+                💾 Speichern
+              </button>
+              <button onClick={() => setBearbeiten(null)} style={{ padding: "10px 24px", background: "#f5f5f5", color: "#555", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+                Abbrechen
+              </button>
+              {gespeichert && <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>}
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading && <p>Wird geladen...</p>}
 
@@ -76,21 +130,20 @@ export default function AdminAnmeldungen() {
                   })}
                 </td>
                 <td style={td}>
-                  <button
-                    onClick={() => loeschen(a.id)}
-                    style={{
-                      padding: "6px 12px",
-                      background: "#fdecea",
-                      color: "#c0392b",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "13px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    🗑 Löschen
-                  </button>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => setBearbeiten(a)}
+                      style={{ padding: "6px 12px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => loeschen(a.id)}
+                      style={{ padding: "6px 12px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
