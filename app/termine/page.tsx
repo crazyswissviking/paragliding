@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
+import ReactMarkdown from "react-markdown";
 
 type Termin = {
   id: number;
@@ -110,7 +111,19 @@ export default function Termine() {
                 <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
                   {t.details && (
                     <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
-                      📝 <strong>Details:</strong> {t.details}
+                      📝 <strong>Details:</strong>
+                      <div style={{ marginTop: "8px" }}>
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => <p style={{ margin: "4px 0", color: "#ccc" }}>{children}</p>,
+                            strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
+                            ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
+                            li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
+                          }}
+                        >
+                          {t.details}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   )}
                   <div style={{ marginBottom: "16px" }}>
@@ -120,8 +133,8 @@ export default function Termine() {
                       </span>
                     ) : (
                       <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
-  ✍️ Jetzt anmelden
-</a>
+                        ✍️ Jetzt anmelden
+                      </a>
                     )}
                   </div>
                   <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>

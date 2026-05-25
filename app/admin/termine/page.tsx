@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
+import ReactMarkdown from "react-markdown";
 
 type Termin = {
   id: number;
@@ -251,7 +252,19 @@ export default function AdminTermine() {
           </div>
           {t.details && (
             <div style={{ marginTop: "12px", padding: "12px", background: "#f9f9f9", borderRadius: "8px", fontSize: "14px", color: "#555" }}>
-              📝 {t.details}
+              📝 <strong>Details:</strong>
+              <div style={{ marginTop: "8px" }}>
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p style={{ margin: "4px 0", color: "#555" }}>{children}</p>,
+                    strong: ({ children }) => <strong style={{ color: "#333" }}>{children}</strong>,
+                    ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px", color: "#555" }}>{children}</ul>,
+                    li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
+                  }}
+                >
+                  {t.details}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
         </div>
