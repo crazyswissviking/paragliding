@@ -14,6 +14,7 @@ type Termin = {
   aktiv: boolean;
   details: string;
   bild_url: string;
+  video_url: string;
 };
 
 type NeuerTermin = {
@@ -25,6 +26,7 @@ type NeuerTermin = {
   aktiv: boolean;
   details: string;
   bild_url: string;
+  video_url: string;
 };
 
 const parseDate = (d: string) => {
@@ -41,10 +43,10 @@ const leerTermin = (): NeuerTermin => ({
   aktiv: true,
   details: "",
   bild_url: "",
+  video_url: "",
 });
 
 const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
 export default function AdminTermine() {
@@ -103,6 +105,7 @@ export default function AdminTermine() {
       max_teilnehmer: bearbeiten.max_teilnehmer,
       details: bearbeiten.details,
       bild_url: bearbeiten.bild_url,
+      video_url: bearbeiten.video_url,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => {
@@ -156,6 +159,10 @@ export default function AdminTermine() {
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (von Cloudinary)</label>
                 <input type="text" value={bearbeiten.bild_url} onChange={(e) => setBearbeiten({ ...bearbeiten, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL (von Cloudinary)</label>
+                <input type="text" value={bearbeiten.video_url} onChange={(e) => setBearbeiten({ ...bearbeiten, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
               </div>
             </div>
             <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
@@ -211,6 +218,14 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (optional)</label>
                 <textarea value={neu.details} onChange={(e) => terminAendern(index, "details", e.target.value)} placeholder="**Fett**, - Aufzählung" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (optional)</label>
+                <input type="text" value={neu.bild_url} onChange={(e) => terminAendern(index, "bild_url", e.target.value)} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL (optional)</label>
+                <input type="text" value={neu.video_url} onChange={(e) => terminAendern(index, "video_url", e.target.value)} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
               </div>
             </div>
           </div>

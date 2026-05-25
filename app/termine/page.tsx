@@ -12,6 +12,7 @@ type Termin = {
   max_teilnehmer: number;
   details: string;
   bild_url: string;
+  video_url: string;
 };
 
 type Anmeldung = {
@@ -116,6 +117,14 @@ export default function Termine() {
                       alt={t.titel}
                       style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px", objectFit: "cover" }}
                     />
+                  )}
+                  {t.video_url && (
+                    <video
+                      controls
+                      style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px" }}
+                    >
+                      <source src={t.video_url} type="video/mp4" />
+                    </video>
                   )}
                   {t.details && (
                     <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
