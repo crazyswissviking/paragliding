@@ -14,29 +14,41 @@ type Termin = {
   details: string;
 };
 
+type NeuerTermin = {
+  datum: string;
+  wochentag: string;
+  titel: string;
+  ort: string;
+  max_teilnehmer: number;
+  aktiv: boolean;
+  details: string;
+};
+
 const parseDate = (d: string) => {
   const [day, month, year] = d.split(".").map(Number);
   return new Date(year, month - 1, day).getTime();
 };
 
+const leerTermin = (): NeuerTermin => ({
+  datum: "",
+  wochentag: "",
+  titel: "Vollmond-/Nachtflug",
+  ort: "Wird noch bekanntgegeben",
+  max_teilnehmer: 6,
+  aktiv: true,
+  details: "",
+});
+
+const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+
 export default function AdminTermine() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [loading, setLoading] = useState(true);
-  const [neu, setNeu] = useState({
-    datum: "",
-    wochentag: "",
-    titel: "Vollmond-/Nachtflug",
-    ort: "Wird noch bekanntgegeben",
-    max_teilnehmer: 6,
-    aktiv: true,
-    details: "",
-  });
+  const [neueTermine, setNeueTermine] = useState<NeuerTermin[]>([leerTermin()]);
   const [gespeichert, setGespeichert] = useState(false);
 
   async function laden() {
-    const { data } = await supabase
-      .from("termine")
-      .select("*");
+    const { data } = await supabase.from("termine").select("*");
     const sortiert = (data || []).sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
     setTermine(sortiert);
     setLoading(false);
@@ -46,28 +58,32 @@ export default function AdminTermine() {
     laden();
   }, []);
 
-  async function hinzufuegen() {
-    if (!neu.datum || !neu.wochentag || !neu.titel) return;
-    await supabase.from("termine").insert([neu]);
-    setNeu({
-      datum: "",
-      wochentag: "",
-      titel: "Vollmond-/Nachtflug",
-      ort: "Wird noch bekanntgegeben",
-      max_teilnehmer: 6,
-      aktiv: true,
-      details: "",
-    });
+  function terminAendern(index: number, feld: keyof NeuerTermin, wert: string | number | boolean) {
+    const updated = [...neueTermine];
+    updated[index] = { ...updated[index], [feld]: wert };
+    setNeueTermine(updated);
+  }
+
+  function terminHinzufuegen() {
+    setNeueTermine([...neueTermine, leerTermin()]);
+  }
+
+  function terminEntfernen(index: number) {
+    setNeueTermine(neueTermine.filter((_, i) => i !== index));
+  }
+
+  async function alleSpeichern() {
+    const gueltig = neueTermine.filter((t) => t.datum && t.wochentag && t.titel);
+    if (gueltig.length === 0) return;
+    await supabase.from("termine").insert(gueltig);
+    setNeueTermine([leerTermin()]);
     setGespeichert(true);
     setTimeout(() => setGespeichert(false), 2000);
     laden();
   }
 
   async function toggleAktiv(t: Termin) {
-    await supabase
-      .from("termine")
-      .update({ aktiv: !t.aktiv })
-      .eq("id", t.id);
+    await supabase.from("termine").update({ aktiv: !t.aktiv }).eq("id", t.id);
     laden();
   }
 
@@ -76,97 +92,111 @@ export default function AdminTermine() {
     laden();
   }
 
-  const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-
   return (
     <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Admin – Termine verwalten</h2>
 
-      {/* Neuer Termin */}
+      {/* Neue Termine */}
       <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "24px", marginBottom: "30px" }}>
-        <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neuer Termin</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-          <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Datum (dd.mm.yyyy)</label>
-            <input
-              type="text"
-              placeholder="z.B. 30.05.2026"
-              value={neu.datum}
-              onChange={(e) => setNeu({ ...neu, datum: e.target.value })}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
-            />
+        <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neue Termine</h3>
+
+        {neueTermine.map((neu, index) => (
+          <div key={index} style={{ border: "1px solid #eee", borderRadius: "8px", padding: "16px", marginBottom: "16px", background: "#fafafa" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <p style={{ margin: "0", fontWeight: "bold", fontSize: "14px" }}>Termin {index + 1}</p>
+              {neueTermine.length > 1 && (
+                <button
+                  onClick={() => terminEntfernen(index)}
+                  style={{ padding: "4px 10px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}
+                >
+                  ✕ Entfernen
+                </button>
+              )}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Datum (dd.mm.yyyy)</label>
+                <input
+                  type="text"
+                  placeholder="z.B. 30.05.2026"
+                  value={neu.datum}
+                  onChange={(e) => terminAendern(index, "datum", e.target.value)}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Wochentag</label>
+                <select
+                  value={neu.wochentag}
+                  onChange={(e) => terminAendern(index, "wochentag", e.target.value)}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                >
+                  <option value="">-- Wochentag --</option>
+                  {wochentage.map((w) => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
+                <input
+                  type="text"
+                  value={neu.titel}
+                  onChange={(e) => terminAendern(index, "titel", e.target.value)}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>
+                <input
+                  type="text"
+                  value={neu.ort}
+                  onChange={(e) => terminAendern(index, "ort", e.target.value)}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
+                <input
+                  type="number"
+                  value={neu.max_teilnehmer}
+                  onChange={(e) => terminAendern(index, "max_teilnehmer", parseInt(e.target.value))}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (optional)</label>
+                <textarea
+                  value={neu.details}
+                  onChange={(e) => terminAendern(index, "details", e.target.value)}
+                  placeholder="z.B. Treffpunkt, Ausrüstung..."
+                  rows={2}
+                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Wochentag</label>
-            <select
-              value={neu.wochentag}
-              onChange={(e) => setNeu({ ...neu, wochentag: e.target.value })}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
-            >
-              <option value="">-- Wochentag --</option>
-              {wochentage.map((w) => (
-                <option key={w} value={w}>{w}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Titel</label>
-            <input
-              type="text"
-              value={neu.titel}
-              onChange={(e) => setNeu({ ...neu, titel: e.target.value })}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Ort</label>
-            <input
-              type="text"
-              value={neu.ort}
-              onChange={(e) => setNeu({ ...neu, ort: e.target.value })}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Max. Teilnehmer</label>
-            <input
-              type="number"
-              value={neu.max_teilnehmer}
-              onChange={(e) => setNeu({ ...neu, max_teilnehmer: parseInt(e.target.value) })}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
-            />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", fontSize: "14px" }}>Details (optional)</label>
-            <textarea
-              value={neu.details}
-              onChange={(e) => setNeu({ ...neu, details: e.target.value })}
-              placeholder="z.B. Treffpunkt, Ausrüstung, Hinweise..."
-              rows={3}
-              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ddd", fontSize: "15px" }}
-            />
-          </div>
+        ))}
+
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <button
+            onClick={terminHinzufuegen}
+            style={{ padding: "10px 20px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}
+          >
+            ➕ Weiterer Termin
+          </button>
+          <button
+            onClick={alleSpeichern}
+            style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}
+          >
+            💾 Alle speichern
+          </button>
+          {gespeichert && (
+            <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>
+          )}
         </div>
-        <button
-          onClick={hinzufuegen}
-          style={{
-            padding: "12px 24px",
-            background: "#3355cc",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "15px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          ➕ Termin hinzufügen
-        </button>
-        {gespeichert && (
-          <span style={{ marginLeft: "16px", color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>
-        )}
       </div>
 
       {/* Bestehende Termine */}
