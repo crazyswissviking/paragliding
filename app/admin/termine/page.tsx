@@ -42,11 +42,15 @@ const leerTermin = (): NeuerTermin => ({
 
 const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
+const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
+
 export default function AdminTermine() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [loading, setLoading] = useState(true);
   const [neueTermine, setNeueTermine] = useState<NeuerTermin[]>([leerTermin()]);
   const [gespeichert, setGespeichert] = useState(false);
+  const [bearbeiten, setBearbeiten] = useState<Termin | null>(null);
+  const [bearbeitenGespeichert, setBearbeitenGespeichert] = useState(false);
 
   async function laden() {
     const { data } = await supabase.from("termine").select("*");
@@ -55,9 +59,7 @@ export default function AdminTermine() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    laden();
-  }, []);
+  useEffect(() => { laden(); }, []);
 
   function terminAendern(index: number, feld: keyof NeuerTermin, wert: string | number | boolean) {
     const updated = [...neueTermine];
@@ -65,13 +67,8 @@ export default function AdminTermine() {
     setNeueTermine(updated);
   }
 
-  function terminHinzufuegen() {
-    setNeueTermine([...neueTermine, leerTermin()]);
-  }
-
-  function terminEntfernen(index: number) {
-    setNeueTermine(neueTermine.filter((_, i) => i !== index));
-  }
+  function terminHinzufuegen() { setNeueTermine([...neueTermine, leerTermin()]); }
+  function terminEntfernen(index: number) { setNeueTermine(neueTermine.filter((_, i) => i !== index)); }
 
   async function alleSpeichern() {
     const gueltig = neueTermine.filter((t) => t.datum && t.wochentag && t.titel);
@@ -93,25 +90,88 @@ export default function AdminTermine() {
     laden();
   }
 
+  async function bearbeitenSpeichern() {
+    if (!bearbeiten) return;
+    await supabase.from("termine").update({
+      datum: bearbeiten.datum,
+      wochentag: bearbeiten.wochentag,
+      titel: bearbeiten.titel,
+      ort: bearbeiten.ort,
+      max_teilnehmer: bearbeiten.max_teilnehmer,
+      details: bearbeiten.details,
+    }).eq("id", bearbeiten.id);
+    setBearbeitenGespeichert(true);
+    setTimeout(() => {
+      setBearbeitenGespeichert(false);
+      setBearbeiten(null);
+    }, 1500);
+    laden();
+  }
+
   return (
     <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Admin – Termine verwalten</h2>
 
+      {/* Bearbeiten Modal */}
+      {bearbeiten && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "white", borderRadius: "16px", padding: "32px", maxWidth: "600px", width: "90%", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: "0", fontSize: "20px" }}>Termin bearbeiten</h3>
+              <button onClick={() => setBearbeiten(null)} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#888" }}>✕</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Datum (dd.mm.yyyy)</label>
+                <input type="text" value={bearbeiten.datum} onChange={(e) => setBearbeiten({ ...bearbeiten, datum: e.target.value })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Wochentag</label>
+                <select value={bearbeiten.wochentag} onChange={(e) => setBearbeiten({ ...bearbeiten, wochentag: e.target.value })} style={inputStyle}>
+                  {wochentage.map((w) => <option key={w} value={w}>{w}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
+                <input type="text" value={bearbeiten.titel} onChange={(e) => setBearbeiten({ ...bearbeiten, titel: e.target.value })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>
+                <input type="text" value={bearbeiten.ort} onChange={(e) => setBearbeiten({ ...bearbeiten, ort: e.target.value })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
+                <input type="number" value={bearbeiten.max_teilnehmer} onChange={(e) => setBearbeiten({ ...bearbeiten, max_teilnehmer: parseInt(e.target.value) })} style={inputStyle} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (Markdown: **fett**, - Aufzählung)</label>
+                <textarea value={bearbeiten.details} onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })} rows={5} style={{ ...inputStyle, resize: "vertical" }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
+              <button onClick={bearbeitenSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
+                💾 Speichern
+              </button>
+              <button onClick={() => setBearbeiten(null)} style={{ padding: "10px 24px", background: "#f5f5f5", color: "#555", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+                Abbrechen
+              </button>
+              {bearbeitenGespeichert && <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Neue Termine */}
       <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "24px", marginBottom: "30px" }}>
         <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neue Termine</h3>
-
         {neueTermine.map((neu, index) => (
           <div key={index} style={{ border: "1px solid #eee", borderRadius: "8px", padding: "16px", marginBottom: "16px", background: "#fafafa" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <p style={{ margin: "0", fontWeight: "bold", fontSize: "14px" }}>Termin {index + 1}</p>
               {neueTermine.length > 1 && (
-                <button
-                  onClick={() => terminEntfernen(index)}
-                  style={{ padding: "4px 10px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}
-                >
+                <button onClick={() => terminEntfernen(index)} style={{ padding: "4px 10px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
                   ✕ Entfernen
                 </button>
               )}
@@ -119,84 +179,42 @@ export default function AdminTermine() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Datum (dd.mm.yyyy)</label>
-                <input
-                  type="text"
-                  placeholder="z.B. 30.05.2026"
-                  value={neu.datum}
-                  onChange={(e) => terminAendern(index, "datum", e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                />
+                <input type="text" placeholder="z.B. 30.05.2026" value={neu.datum} onChange={(e) => terminAendern(index, "datum", e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Wochentag</label>
-                <select
-                  value={neu.wochentag}
-                  onChange={(e) => terminAendern(index, "wochentag", e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                >
+                <select value={neu.wochentag} onChange={(e) => terminAendern(index, "wochentag", e.target.value)} style={inputStyle}>
                   <option value="">-- Wochentag --</option>
-                  {wochentage.map((w) => (
-                    <option key={w} value={w}>{w}</option>
-                  ))}
+                  {wochentage.map((w) => <option key={w} value={w}>{w}</option>)}
                 </select>
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
-                <input
-                  type="text"
-                  value={neu.titel}
-                  onChange={(e) => terminAendern(index, "titel", e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                />
+                <input type="text" value={neu.titel} onChange={(e) => terminAendern(index, "titel", e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>
-                <input
-                  type="text"
-                  value={neu.ort}
-                  onChange={(e) => terminAendern(index, "ort", e.target.value)}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                />
+                <input type="text" value={neu.ort} onChange={(e) => terminAendern(index, "ort", e.target.value)} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
-                <input
-                  type="number"
-                  value={neu.max_teilnehmer}
-                  onChange={(e) => terminAendern(index, "max_teilnehmer", parseInt(e.target.value))}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                />
+                <input type="number" value={neu.max_teilnehmer} onChange={(e) => terminAendern(index, "max_teilnehmer", parseInt(e.target.value))} style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (optional)</label>
-                <textarea
-                  value={neu.details}
-                  onChange={(e) => terminAendern(index, "details", e.target.value)}
-                  placeholder="z.B. Treffpunkt, Ausrüstung..."
-                  rows={2}
-                  style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" }}
-                />
+                <textarea value={neu.details} onChange={(e) => terminAendern(index, "details", e.target.value)} placeholder="**Fett**, - Aufzählung" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
               </div>
             </div>
           </div>
         ))}
-
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <button
-            onClick={terminHinzufuegen}
-            style={{ padding: "10px 20px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}
-          >
+          <button onClick={terminHinzufuegen} style={{ padding: "10px 20px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
             ➕ Weiterer Termin
           </button>
-          <button
-            onClick={alleSpeichern}
-            style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}
-          >
+          <button onClick={alleSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
             💾 Alle speichern
           </button>
-          {gespeichert && (
-            <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>
-          )}
+          {gespeichert && <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>}
         </div>
       </div>
 
@@ -204,13 +222,7 @@ export default function AdminTermine() {
       <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>Bestehende Termine</h3>
       {loading && <p>Wird geladen...</p>}
       {!loading && termine.map((t) => (
-        <div key={t.id} style={{
-          border: "1px solid #ddd",
-          borderRadius: "12px",
-          padding: "16px 24px",
-          marginBottom: "12px",
-          opacity: t.aktiv ? 1 : 0.5,
-        }}>
+        <div key={t.id} style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "16px 24px", marginBottom: "12px", opacity: t.aktiv ? 1 : 0.5 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{t.wochentag}, {t.datum}</p>
@@ -218,34 +230,13 @@ export default function AdminTermine() {
               <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} Teilnehmer</p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={() => toggleAktiv(t)}
-                style={{
-                  padding: "8px 14px",
-                  background: t.aktiv ? "#e6f4ea" : "#f5f5f5",
-                  color: t.aktiv ? "#2d6a4f" : "#888",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  fontWeight: "bold",
-                }}
-              >
+              <button onClick={() => setBearbeiten(t)} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
+                ✏️ Bearbeiten
+              </button>
+              <button onClick={() => toggleAktiv(t)} style={{ padding: "8px 14px", background: t.aktiv ? "#e6f4ea" : "#f5f5f5", color: t.aktiv ? "#2d6a4f" : "#888", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
                 {t.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}
               </button>
-              <button
-                onClick={() => loeschen(t.id)}
-                style={{
-                  padding: "8px 14px",
-                  background: "#fdecea",
-                  color: "#c0392b",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  fontWeight: "bold",
-                }}
-              >
+              <button onClick={() => loeschen(t.id)} style={{ padding: "8px 14px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
                 🗑 Löschen
               </button>
             </div>
@@ -254,14 +245,12 @@ export default function AdminTermine() {
             <div style={{ marginTop: "12px", padding: "12px", background: "#f9f9f9", borderRadius: "8px", fontSize: "14px", color: "#555" }}>
               📝 <strong>Details:</strong>
               <div style={{ marginTop: "8px" }}>
-                <ReactMarkdown
-                  components={{
-                    p: ({ children }) => <p style={{ margin: "4px 0", color: "#555" }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ color: "#333" }}>{children}</strong>,
-                    ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px", color: "#555" }}>{children}</ul>,
-                    li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
-                  }}
-                >
+                <ReactMarkdown components={{
+                  p: ({ children }) => <p style={{ margin: "4px 0", color: "#555" }}>{children}</p>,
+                  strong: ({ children }) => <strong style={{ color: "#333" }}>{children}</strong>,
+                  ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px", color: "#555" }}>{children}</ul>,
+                  li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
+                }}>
                   {t.details}
                 </ReactMarkdown>
               </div>
