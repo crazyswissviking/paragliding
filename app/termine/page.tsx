@@ -107,15 +107,16 @@ export default function Termine() {
                   </span>
                 </div>
               </div>
- {t.bild_url && (
+
+              {istOffen && (
+                <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
+                  {t.bild_url && (
                     <img
                       src={t.bild_url}
                       alt={t.titel}
                       style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px", objectFit: "cover" }}
                     />
                   )}
-              {istOffen && (
-                <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
                   {t.details && (
                     <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
                       📝 <strong>Details:</strong>
