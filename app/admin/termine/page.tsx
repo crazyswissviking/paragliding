@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
 import ReactMarkdown from "react-markdown";
+import MDEditor from "@uiw/react-md-editor";
 
 type Termin = {
   id: number;
@@ -152,9 +153,14 @@ export default function AdminTermine() {
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
                 <input type="number" value={bearbeiten.max_teilnehmer} onChange={(e) => setBearbeiten({ ...bearbeiten, max_teilnehmer: parseInt(e.target.value) })} style={inputStyle} />
               </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (Markdown: **fett**, - Aufzählung)</label>
-                <textarea value={bearbeiten.details} onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })} rows={5} style={{ ...inputStyle, resize: "vertical" }} />
+             <div style={{ gridColumn: "1 / -1" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details</label>
+                <MDEditor
+                  value={bearbeiten.details}
+                  onChange={(val) => setBearbeiten({ ...bearbeiten, details: val || "" })}
+                  height={200}
+                  preview="edit"
+                />
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (von Cloudinary)</label>
