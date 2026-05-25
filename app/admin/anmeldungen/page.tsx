@@ -22,17 +22,20 @@ export default function AdminAnmeldungen() {
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function laden() {
-      const { data } = await supabase
-        .from("anmeldungen")
-        .select("*");
-      const sortiert = (data || []).sort((a, b) => parseDate(a.termin) - parseDate(b.termin));
-      setAnmeldungen(sortiert);
-      setLoading(false);
-    }
+  async function laden() {
+    const { data } = await supabase.from("anmeldungen").select("*");
+    const sortiert = (data || []).sort((a, b) => parseDate(a.termin) - parseDate(b.termin));
+    setAnmeldungen(sortiert);
+    setLoading(false);
+  }
+
+  useEffect(() => { laden(); }, []);
+
+  async function loeschen(id: number) {
+    if (!confirm("Anmeldung wirklich löschen?")) return;
+    await supabase.from("anmeldungen").delete().eq("id", id);
     laden();
-  }, []);
+  }
 
   return (
     <PasswortSchutz>
@@ -54,6 +57,7 @@ export default function AdminAnmeldungen() {
               <th style={th}>E-Mail</th>
               <th style={th}>Termin</th>
               <th style={th}>Angemeldet am</th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
@@ -70,6 +74,23 @@ export default function AdminAnmeldungen() {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
+                </td>
+                <td style={td}>
+                  <button
+                    onClick={() => loeschen(a.id)}
+                    style={{
+                      padding: "6px 12px",
+                      background: "#fdecea",
+                      color: "#c0392b",
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    🗑 Löschen
+                  </button>
                 </td>
               </tr>
             ))}
