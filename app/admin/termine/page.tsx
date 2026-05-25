@@ -13,6 +13,7 @@ type Termin = {
   max_teilnehmer: number;
   aktiv: boolean;
   details: string;
+  bild_url: string;
 };
 
 type NeuerTermin = {
@@ -23,6 +24,7 @@ type NeuerTermin = {
   max_teilnehmer: number;
   aktiv: boolean;
   details: string;
+  bild_url: string;
 };
 
 const parseDate = (d: string) => {
@@ -38,6 +40,7 @@ const leerTermin = (): NeuerTermin => ({
   max_teilnehmer: 6,
   aktiv: true,
   details: "",
+  bild_url: "",
 });
 
 const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
@@ -99,6 +102,7 @@ export default function AdminTermine() {
       ort: bearbeiten.ort,
       max_teilnehmer: bearbeiten.max_teilnehmer,
       details: bearbeiten.details,
+      bild_url: bearbeiten.bild_url,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => {
@@ -148,6 +152,10 @@ export default function AdminTermine() {
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (Markdown: **fett**, - Aufzählung)</label>
                 <textarea value={bearbeiten.details} onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })} rows={5} style={{ ...inputStyle, resize: "vertical" }} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (von Cloudinary)</label>
+                <input type="text" value={bearbeiten.bild_url} onChange={(e) => setBearbeiten({ ...bearbeiten, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
               </div>
             </div>
             <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
