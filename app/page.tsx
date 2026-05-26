@@ -34,33 +34,18 @@ export default function Home() {
           Unsere Events
         </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <a href="/termine" style={{
-            display: "block",
-            padding: "18px 24px",
-            background: "#3355cc",
-            color: "white",
-            borderRadius: "12px",
-            textDecoration: "none",
-            fontSize: "18px",
-            fontWeight: "bold",
-          }}>
-            📅 Events ansehen
-          </a>
-          <a href="/termine/anmelden" style={{
-            display: "block",
-            padding: "18px 24px",
-            background: "rgba(255,255,255,0.1)",
-            color: "white",
-            borderRadius: "12px",
-            textDecoration: "none",
-            fontSize: "18px",
-            fontWeight: "bold",
-            border: "1px solid rgba(255,255,255,0.2)",
-          }}>
-            ✍️ Jetzt anmelden
-          </a>
-        </div>
+        <a href="/termine" style={{
+          display: "block",
+          padding: "18px 24px",
+          background: "#3355cc",
+          color: "white",
+          borderRadius: "12px",
+          textDecoration: "none",
+          fontSize: "18px",
+          fontWeight: "bold",
+        }}>
+          📅 Events ansehen
+        </a>
       </div>
 
       {/* Admin Link klein unten links */}
