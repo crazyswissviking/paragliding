@@ -161,14 +161,13 @@ export default function AdminTermine() {
                     <textarea
                       value={bearbeiten.details}
                       onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })}
-                      rows={8}
                       placeholder={"**Fett**\n- Aufzählung 1\n- Aufzählung 2\n\nNeuer Absatz"}
-                      style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }}
+                      style={{ ...inputStyle, resize: "none", fontFamily: "monospace", height: "200px" }}
                     />
                   </div>
                   <div>
                     <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>👁 Vorschau</p>
-                    <div style={{ padding: "8px", border: "1px solid #ddd", borderRadius: "6px", minHeight: "160px", fontSize: "14px", color: "#333" }}>
+                    <div style={{ padding: "8px", border: "1px solid #ddd", borderRadius: "6px", height: "200px", overflowY: "auto", fontSize: "14px", color: "#333" }}>
                       <ReactMarkdown
                         components={{
                           p: ({ children }) => <p style={{ margin: "8px 0" }}>{children}</p>,
