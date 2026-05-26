@@ -26,7 +26,7 @@ export default function Home() {
       </div>
 
       {/* Inhalt */}
-      <div style={{ position: "relative", zIndex: 10 }}>
+      <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "400px" }}>
         <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "16px" }}>
           🪂 Swissgliders
         </h1>
@@ -34,7 +34,7 @@ export default function Home() {
           Unsere Events
         </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", maxWidth: "400px", margin: "0 auto" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <a href="/termine" style={{
             display: "block",
             padding: "18px 24px",
@@ -60,21 +60,21 @@ export default function Home() {
           }}>
             ✍️ Jetzt anmelden
           </a>
-          <a href="/admin/termine" style={{
-            display: "block",
-            padding: "18px 24px",
-            background: "rgba(255,255,255,0.05)",
-            color: "#aaa",
-            borderRadius: "12px",
-            textDecoration: "none",
-            fontSize: "16px",
-            fontWeight: "bold",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}>
-            🔒 Admin
-          </a>
         </div>
       </div>
+
+      {/* Admin Link klein unten links */}
+      <a href="/admin/termine" style={{
+        position: "absolute",
+        bottom: "16px",
+        left: "16px",
+        zIndex: 10,
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.25)",
+        textDecoration: "none",
+      }}>
+        Admin
+      </a>
     </main>
   );
 }
