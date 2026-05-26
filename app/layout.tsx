@@ -30,7 +30,6 @@ export default function RootLayout({
           {/* Desktop Links */}
           <div style={{ display: "flex", gap: "24px" }} className="desktop-nav">
             <a href="/termine" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>Termine</a>
-            <a href="/termine/anmelden" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>Anmelden</a>
           </div>
 
           {/* Mobile Hamburger */}
@@ -50,7 +49,6 @@ export default function RootLayout({
               gap: "8px",
             }}>
               <a href="/termine" style={{ color: "white", textDecoration: "none", fontSize: "15px", padding: "8px 12px", borderRadius: "8px" }}>📅 Termine</a>
-              <a href="/termine/anmelden" style={{ color: "white", textDecoration: "none", fontSize: "15px", padding: "8px 12px", borderRadius: "8px" }}>✍️ Anmelden</a>
             </div>
           </details>
         </nav>
