@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
 import ReactMarkdown from "react-markdown";
-import MDEditor from "@uiw/react-md-editor";
+
 
 type Termin = {
   id: number;
@@ -153,14 +153,35 @@ export default function AdminTermine() {
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
                 <input type="number" value={bearbeiten.max_teilnehmer} onChange={(e) => setBearbeiten({ ...bearbeiten, max_teilnehmer: parseInt(e.target.value) })} style={inputStyle} />
               </div>
-             <div style={{ gridColumn: "1 / -1" }}>
+             <<div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details</label>
-                <MDEditor
-                  value={bearbeiten.details}
-                  onChange={(val) => setBearbeiten({ ...bearbeiten, details: val || "" })}
-                  height={200}
-                  preview="edit"
-                />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>✏️ Bearbeiten</p>
+                    <textarea
+                      value={bearbeiten.details}
+                      onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })}
+                      rows={8}
+                      placeholder={"**Fett**\n- Aufzählung 1\n- Aufzählung 2\n\nNeuer Absatz"}
+                      style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }}
+                    />
+                  </div>
+                  <div>
+                    <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>👁 Vorschau</p>
+                    <div style={{ padding: "8px", border: "1px solid #ddd", borderRadius: "6px", minHeight: "160px", fontSize: "14px", color: "#333" }}>
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p style={{ margin: "4px 0" }}>{children}</p>,
+                          strong: ({ children }) => <strong style={{ color: "#000" }}>{children}</strong>,
+                          ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px" }}>{children}</ul>,
+                          li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
+                        }}
+                      >
+                        {bearbeiten.details || "*Noch kein Text...*"}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (von Cloudinary)</label>
