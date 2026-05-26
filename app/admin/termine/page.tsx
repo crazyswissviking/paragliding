@@ -171,10 +171,11 @@ export default function AdminTermine() {
                     <div style={{ padding: "8px", border: "1px solid #ddd", borderRadius: "6px", minHeight: "160px", fontSize: "14px", color: "#333" }}>
                       <ReactMarkdown
                         components={{
-                          p: ({ children }) => <p style={{ margin: "4px 0" }}>{children}</p>,
+                          p: ({ children }) => <p style={{ margin: "8px 0" }}>{children}</p>,
                           strong: ({ children }) => <strong style={{ color: "#000" }}>{children}</strong>,
-                          ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px" }}>{children}</ul>,
-                          li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
+                          ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>{children}</ul>,
+                          li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
+                          br: () => <br />,
                         }}
                       >
                         {bearbeiten.details || "*Noch kein Text...*"}
