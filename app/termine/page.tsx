@@ -77,7 +77,7 @@ export default function Termine() {
               const voll = belegt >= t.max_teilnehmer;
               return (
                 
-                  key={t.id}
+                 <a key={t.id}
                   href={`/termine/anmelden?termin=${encodeURIComponent(label)}`}
                   style={{ textDecoration: "none" }}
                 >
