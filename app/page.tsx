@@ -1,4 +1,54 @@
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabase";
+
+type Termin = {
+  id: number;
+  datum: string;
+  wochentag: string;
+  titel: string;
+  max_teilnehmer: number;
+  bild_url: string;
+};
+
+type Anmeldung = {
+  id: number;
+  termin: string;
+};
+
+const parseDate = (d: string) => {
+  const [day, month, year] = d.split(".").map(Number);
+  return new Date(year, month - 1, day).getTime();
+};
+
 export default function Home() {
+  const [highlights, setHighlights] = useState<Termin[]>([]);
+  const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
+
+  useEffect(() => {
+    async function laden() {
+      const { data: termineData } = await supabase
+        .from("termine")
+        .select("*")
+        .eq("aktiv", true);
+
+      const heute = new Date();
+      heute.setHours(0, 0, 0, 0);
+
+      const sortiert = (termineData || [])
+        .filter((t) => parseDate(t.datum) >= heute.getTime())
+        .sort((a, b) => parseDate(a.datum) - parseDate(b.datum))
+        .slice(0, 3);
+      setHighlights(sortiert);
+
+      const { data: anmeldungenData } = await supabase
+        .from("anmeldungen")
+        .select("id, termin");
+      setAnmeldungen(anmeldungenData || []);
+    }
+    laden();
+  }, []);
+
   return (
     <main style={{
       minHeight: "calc(100vh - 60px)",
@@ -26,25 +76,67 @@ export default function Home() {
       </div>
 
       {/* Inhalt */}
-      <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "400px" }}>
-        <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "16px" }}>
+      <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "700px" }}>
+        <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "8px" }}>
           🪂 Swissgliders
         </h1>
-        <p style={{ fontSize: "20px", color: "#aaa", marginBottom: "60px" }}>
+        <p style={{ fontSize: "20px", color: "#aaa", marginBottom: "40px" }}>
           Unsere Events
         </p>
 
+        {/* Nächste 3 Events */}
+        {highlights.length > 0 && (
+          <div style={{ marginBottom: "32px" }}>
+            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", marginBottom: "16px" }}>⭐ NÄCHSTE EVENTS</p>
+            <div style={{ display: "grid", gridTemplateColumns: highlights.length === 1 ? "1fr" : highlights.length === 2 ? "1fr 1fr" : "1fr 1fr 1fr", gap: "12px" }}>
+              {highlights.map((t) => {
+                const label = `${t.wochentag}, ${t.datum}`;
+                const belegt = anmeldungen.filter((a) => a.termin === label).length;
+                const voll = belegt >= t.max_teilnehmer;
+                return (
+                  <a key={t.id} href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} style={{ textDecoration: "none" }}>
+                    <div style={{
+                      border: "1px solid rgba(51,85,204,0.5)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      background: "rgba(51,85,204,0.15)",
+                      textAlign: "left",
+                    }}>
+                      {t.bild_url && (
+                        <img src={t.bild_url} alt={t.titel} style={{ width: "100%", borderRadius: "8px", marginBottom: "12px", height: "80px", objectFit: "cover" }} />
+                      )}
+                      <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#7799ff" }}>🌕 {t.wochentag}, {t.datum}</p>
+                      <p style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{t.titel}</p>
+                      <div style={{
+                        display: "inline-block",
+                        padding: "3px 8px",
+                        background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
+                        borderRadius: "6px",
+                        fontSize: "11px",
+                        color: voll ? "#e74c3c" : "#7799ff",
+                        fontWeight: "bold",
+                      }}>
+                        {voll ? "🔴 Voll" : `${t.max_teilnehmer - belegt} Plätze frei`}
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <a href="/termine" style={{
           display: "block",
-          padding: "18px 24px",
+          padding: "16px 24px",
           background: "#3355cc",
           color: "white",
           borderRadius: "12px",
           textDecoration: "none",
-          fontSize: "18px",
+          fontSize: "16px",
           fontWeight: "bold",
         }}>
-          📅 Events ansehen
+          📅 Alle Events ansehen
         </a>
       </div>
 
