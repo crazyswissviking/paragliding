@@ -38,7 +38,12 @@ export default function Termine() {
         .select("*")
         .eq("aktiv", true);
 
-      const sortiert = (termineData || []).sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
+      const heute = new Date();
+      heute.setHours(0, 0, 0, 0);
+
+      const sortiert = (termineData || [])
+        .filter((t) => parseDate(t.datum) >= heute.getTime())
+        .sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
       setTermine(sortiert);
 
       const { data: anmeldungenData } = await supabase
