@@ -66,7 +66,6 @@ export default function Termine() {
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Events</h2>
 
-      {/* Top 3 Highlights */}
       {highlights.length > 0 && (
         <div style={{ marginBottom: "32px" }}>
           <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", marginBottom: "12px" }}>⭐ NÄCHSTE EVENTS</p>
@@ -114,7 +113,6 @@ export default function Termine() {
         </div>
       )}
 
-      {/* Alle weiteren Events */}
       {rest.length > 0 && (
         <div>
           <p style={{ fontSize: "12px", fontWeight: "bold", color: "#aaa", letterSpacing: "1px", marginBottom: "12px" }}>WEITERE EVENTS</p>
