@@ -38,7 +38,7 @@ export default function Home() {
       const sortiert = (termineData || [])
         .filter((t) => parseDate(t.datum) >= heute.getTime())
         .sort((a, b) => parseDate(a.datum) - parseDate(b.datum))
-        .slice(0, 3);
+        .slice(0, 9);
       setHighlights(sortiert);
 
       const { data: anmeldungenData } = await supabase
@@ -88,7 +88,7 @@ export default function Home() {
         {highlights.length > 0 && (
           <div style={{ marginBottom: "32px" }}>
             <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", marginBottom: "16px" }}>⭐ NÄCHSTE EVENTS</p>
-            <div style={{ display: "grid", gridTemplateColumns: highlights.length === 1 ? "1fr" : highlights.length === 2 ? "1fr 1fr" : "1fr 1fr 1fr", gap: "12px" }}>
+            <<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
                 const belegt = anmeldungen.filter((a) => a.termin === label).length;
