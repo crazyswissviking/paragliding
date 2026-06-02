@@ -143,7 +143,7 @@ export default function HikeAndFlyPage() {
                 {/* Route Link */}
                 {a.route_url && (
                   
-                    href={a.route_url}
+                  <a  href={a.route_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
