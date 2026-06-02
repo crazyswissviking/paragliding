@@ -194,6 +194,18 @@ export default function Home() {
         </a>
       </div>
 
+<a href="/admin/hikeandfly" style={{
+        position: "absolute",
+        bottom: "16px",
+        left: "80px",
+        zIndex: 10,
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.25)",
+        textDecoration: "none",
+      }}>
+        H&F Admin
+      </a>
+
       {/* Admin Link klein unten links */}
       <a href="/admin/termine" style={{
         position: "absolute",
