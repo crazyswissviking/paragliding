@@ -4,7 +4,13 @@ import { supabase } from "../supabase";
 import ReactMarkdown from "react-markdown";
 import dynamic from "next/dynamic";
 
-const Karte = dynamic(() => import("./karte"), { ssr: false });
+import type { ComponentProps } from "react";
+import type KarteType from "./karte";
+
+const Karte = dynamic<ComponentProps<typeof KarteType>>(
+  () => import("./karte"),
+  { ssr: false }
+);
 
 type HikeAndFly = {
   id: number;
