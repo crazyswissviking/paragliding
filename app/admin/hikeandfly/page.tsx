@@ -21,6 +21,8 @@ type HikeAndFly = {
   bild_url: string;
   video_url: string;
   aktiv: boolean;
+  lat: number;
+  lng: number;
 };
 
 const leer = (): Omit<HikeAndFly, "id"> => ({
@@ -39,6 +41,8 @@ const leer = (): Omit<HikeAndFly, "id"> => ({
   bild_url: "",
   video_url: "",
   aktiv: true,
+  lat: 0,
+  lng: 0,
 });
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
@@ -93,6 +97,8 @@ export default function AdminHikeAndFly() {
       tempo_wanderweg: bearbeiten.tempo_wanderweg,
       tempo_sportlich: bearbeiten.tempo_sportlich,
       tempo_pb: bearbeiten.tempo_pb,
+      lat: bearbeiten.lat,
+      lng: bearbeiten.lng,
       route_url: bearbeiten.route_url,
       bild_url: bearbeiten.bild_url,
       video_url: bearbeiten.video_url,
@@ -167,6 +173,20 @@ export default function AdminHikeAndFly() {
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
                 <input type="text" value={bearbeiten.bild_url} onChange={(e) => setBearbeiten({ ...bearbeiten, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten (Startpunkt)</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Breitengrad (lat)</label>
+                    <input type="number" step="0.0001" value={bearbeiten.lat} onChange={(e) => setBearbeiten({ ...bearbeiten, lat: parseFloat(e.target.value) })} placeholder="z.B. 46.8182" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Längengrad (lng)</label>
+                    <input type="number" step="0.0001" value={bearbeiten.lng} onChange={(e) => setBearbeiten({ ...bearbeiten, lng: parseFloat(e.target.value) })} placeholder="z.B. 8.2275" style={inputStyle} />
+                  </div>
+                </div>
+                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten findest du auf Google Maps – Rechtsklick auf den Startpunkt → Koordinaten kopieren</p>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL</label>
@@ -263,6 +283,20 @@ export default function AdminHikeAndFly() {
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Route URL</label>
             <input type="text" value={neu.route_url} onChange={(e) => setNeu({ ...neu, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten (Startpunkt)</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Breitengrad (lat)</label>
+                <input type="number" step="0.0001" value={neu.lat} onChange={(e) => setNeu({ ...neu, lat: parseFloat(e.target.value) })} placeholder="z.B. 46.8182" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Längengrad (lng)</label>
+                <input type="number" step="0.0001" value={neu.lng} onChange={(e) => setNeu({ ...neu, lng: parseFloat(e.target.value) })} placeholder="z.B. 8.2275" style={inputStyle} />
+              </div>
+            </div>
+            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten findest du auf Google Maps – Rechtsklick auf den Startpunkt → Koordinaten kopieren</p>
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
