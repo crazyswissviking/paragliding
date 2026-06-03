@@ -8,7 +8,9 @@ type HikeAndFly = {
   id: number;
   titel: string;
   beschreibung: string;
-  ort: string;
+  startpunkt: string;
+  via: string;
+  ziel: string;
   schwierigkeit: string;
   strecke_km: number;
   hoehenmeter: number;
@@ -24,7 +26,9 @@ type HikeAndFly = {
 const leer = (): Omit<HikeAndFly, "id"> => ({
   titel: "",
   beschreibung: "",
-  ort: "",
+  startpunkt: "",
+  via: "",
+  ziel: "",
   schwierigkeit: "",
   strecke_km: 0,
   hoehenmeter: 0,
@@ -80,7 +84,9 @@ export default function AdminHikeAndFly() {
     await supabase.from("hikeandfly").update({
       titel: bearbeiten.titel,
       beschreibung: bearbeiten.beschreibung,
-      ort: bearbeiten.ort,
+      startpunkt: bearbeiten.startpunkt,
+      via: bearbeiten.via,
+      ziel: bearbeiten.ziel,
       schwierigkeit: bearbeiten.schwierigkeit,
       strecke_km: bearbeiten.strecke_km,
       hoehenmeter: bearbeiten.hoehenmeter,
@@ -119,8 +125,16 @@ export default function AdminHikeAndFly() {
                 <input type="text" value={bearbeiten.titel} onChange={(e) => setBearbeiten({ ...bearbeiten, titel: e.target.value })} style={inputStyle} />
               </div>
               <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>
-                <input type="text" value={bearbeiten.ort} onChange={(e) => setBearbeiten({ ...bearbeiten, ort: e.target.value })} style={inputStyle} />
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚩 Startpunkt</label>
+                <input type="text" value={bearbeiten.startpunkt} onChange={(e) => setBearbeiten({ ...bearbeiten, startpunkt: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>📍 Via</label>
+                <input type="text" value={bearbeiten.via} onChange={(e) => setBearbeiten({ ...bearbeiten, via: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏁 Ziel</label>
+                <input type="text" value={bearbeiten.ziel} onChange={(e) => setBearbeiten({ ...bearbeiten, ziel: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
@@ -166,7 +180,6 @@ export default function AdminHikeAndFly() {
                     <textarea
                       value={bearbeiten.beschreibung}
                       onChange={(e) => setBearbeiten({ ...bearbeiten, beschreibung: e.target.value })}
-                      rows={8}
                       placeholder={"**Fett**\n- Aufzählung 1\n- Aufzählung 2"}
                       style={{ ...inputStyle, resize: "none", fontFamily: "monospace", height: "200px" }}
                     />
@@ -212,8 +225,16 @@ export default function AdminHikeAndFly() {
             <input type="text" value={neu.titel} onChange={(e) => setNeu({ ...neu, titel: e.target.value })} placeholder="z.B. Möntschelen Runde" style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>
-            <input type="text" value={neu.ort} onChange={(e) => setNeu({ ...neu, ort: e.target.value })} placeholder="z.B. Engelberg" style={inputStyle} />
+            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚩 Startpunkt</label>
+            <input type="text" value={neu.startpunkt} onChange={(e) => setNeu({ ...neu, startpunkt: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>📍 Via</label>
+            <input type="text" value={neu.via} onChange={(e) => setNeu({ ...neu, via: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏁 Ziel</label>
+            <input type="text" value={neu.ziel} onChange={(e) => setNeu({ ...neu, ziel: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
           </div>
           <div>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
@@ -268,7 +289,7 @@ export default function AdminHikeAndFly() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{a.titel}</p>
-              <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>📍 {a.ort}</p>
+              <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏁 {a.ziel}</p>
               <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>🗺 {a.strecke_km} km · ⛰ {a.hoehenmeter} hm · {a.schwierigkeit}</p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
