@@ -4,6 +4,31 @@ import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
 import ReactMarkdown from "react-markdown";
 
+function lv95zuWgs84(e: number, n: number): { lat: number; lng: number } {
+  const e_ = (e - 2600000) / 1000000;
+  const n_ = (n - 1200000) / 1000000;
+
+  const lng =
+    2.6779094 +
+    4.728982 * e_ +
+    0.791484 * e_ * n_ +
+    0.1306 * e_ * n_ * n_ -
+    0.0436 * e_ * e_ * e_;
+
+  const lat =
+    16.9023892 +
+    3.238272 * n_ -
+    0.270978 * e_ * e_ -
+    0.002528 * n_ * n_ -
+    0.0447 * e_ * e_ * n_ -
+    0.014 * n_ * n_ * n_;
+
+  return {
+    lat: (lat * 100) / 36,
+    lng: (lng * 100) / 36,
+  };
+}
+
 type HikeAndFly = {
   id: number;
   titel: string;
@@ -174,19 +199,65 @@ export default function AdminHikeAndFly() {
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
                 <input type="text" value={bearbeiten.bild_url} onChange={(e) => setBearbeiten({ ...bearbeiten, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
               </div>
-              <div style={{ gridColumn: "1 / -1" }}>
+             <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten (Startpunkt)</label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
                   <div>
-                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Breitengrad (lat)</label>
-                    <input type="number" step="0.0001" value={bearbeiten.lat} onChange={(e) => setBearbeiten({ ...bearbeiten, lat: parseFloat(e.target.value) })} placeholder="z.B. 46.8182" style={inputStyle} />
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>LV95 Ost (E)</label>
+                    <input
+                      type="number"
+                      placeholder="z.B. 2600000"
+                      style={inputStyle}
+                      onChange={(e) => {
+                        const east = parseFloat(e.target.value);
+                        if (east && bearbeiten.lng) {
+                          const { lat, lng } = lv95zuWgs84(east, bearbeiten.lng);
+                          setBearbeiten({ ...bearbeiten, lat: Math.round(lat * 100000) / 100000, lng: Math.round(lng * 100000) / 100000 });
+                        }
+                      }}
+                    />
                   </div>
                   <div>
-                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Längengrad (lng)</label>
-                    <input type="number" step="0.0001" value={bearbeiten.lng} onChange={(e) => setBearbeiten({ ...bearbeiten, lng: parseFloat(e.target.value) })} placeholder="z.B. 8.2275" style={inputStyle} />
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>LV95 Nord (N)</label>
+                    <input
+                      type="number"
+                      placeholder="z.B. 1200000"
+                      style={inputStyle}
+                      onChange={(e) => {
+                        const north = parseFloat(e.target.value);
+                        if (north && bearbeiten.lat) {
+                          const { lat, lng } = lv95zuWgs84(bearbeiten.lat, north);
+                          setBearbeiten({ ...bearbeiten, lat: Math.round(lat * 100000) / 100000, lng: Math.round(lng * 100000) / 100000 });
+                        }
+                      }}
+                    />
                   </div>
                 </div>
-                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten findest du auf Google Maps – Rechtsklick auf den Startpunkt → Koordinaten kopieren</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const e = parseFloat((document.getElementById("lv95-e-bearbeiten") as HTMLInputElement)?.value);
+                    const n = parseFloat((document.getElementById("lv95-n-bearbeiten") as HTMLInputElement)?.value);
+                    if (e && n) {
+                      const { lat, lng } = lv95zuWgs84(e, n);
+                      setBearbeiten({ ...bearbeiten, lat: Math.round(lat * 100000) / 100000, lng: Math.round(lng * 100000) / 100000 });
+                    }
+                  }}
+                  style={{ padding: "6px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}
+                >
+                  🔄 Umrechnen
+                </button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Breitengrad (lat) – WGS84</label>
+                    <input type="number" step="0.00001" value={bearbeiten.lat} onChange={(e) => setBearbeiten({ ...bearbeiten, lat: parseFloat(e.target.value) })} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Längengrad (lng) – WGS84</label>
+                    <input type="number" step="0.00001" value={bearbeiten.lng} onChange={(e) => setBearbeiten({ ...bearbeiten, lng: parseFloat(e.target.value) })} style={inputStyle} />
+                  </div>
+                </div>
+                <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#888" }}>💡 LV95 Koordinaten findest du auf map.geo.admin.ch – Rechtsklick → Koordinaten anzeigen</p>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL</label>
@@ -281,8 +352,42 @@ export default function AdminHikeAndFly() {
             <input type="text" value={neu.tempo_pb} onChange={(e) => setNeu({ ...neu, tempo_pb: e.target.value })} placeholder="z.B. 1h 45min" style={inputStyle} />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Route URL</label>
-            <input type="text" value={neu.route_url} onChange={(e) => setNeu({ ...neu, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
+            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten (Startpunkt)</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>LV95 Ost (E)</label>
+                <input id="lv95-e-neu" type="number" placeholder="z.B. 2600000" style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>LV95 Nord (N)</label>
+                <input id="lv95-n-neu" type="number" placeholder="z.B. 1200000" style={inputStyle} />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const e = parseFloat((document.getElementById("lv95-e-neu") as HTMLInputElement)?.value);
+                const n = parseFloat((document.getElementById("lv95-n-neu") as HTMLInputElement)?.value);
+                if (e && n) {
+                  const { lat, lng } = lv95zuWgs84(e, n);
+                  setNeu({ ...neu, lat: Math.round(lat * 100000) / 100000, lng: Math.round(lng * 100000) / 100000 });
+                }
+              }}
+              style={{ padding: "6px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}
+            >
+              🔄 Umrechnen
+            </button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Breitengrad (lat) – WGS84</label>
+                <input type="number" step="0.00001" value={neu.lat} onChange={(e) => setNeu({ ...neu, lat: parseFloat(e.target.value) })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Längengrad (lng) – WGS84</label>
+                <input type="number" step="0.00001" value={neu.lng} onChange={(e) => setNeu({ ...neu, lng: parseFloat(e.target.value) })} style={inputStyle} />
+              </div>
+            </div>
+            <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#888" }}>💡 LV95 Koordinaten findest du auf map.geo.admin.ch – Rechtsklick → Koordinaten anzeigen</p>
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten (Startpunkt)</label>
