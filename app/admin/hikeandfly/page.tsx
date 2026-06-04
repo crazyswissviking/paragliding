@@ -104,44 +104,52 @@ export default function AdminHikeAndFly() {
     setLv95: (v: { e: number; n: number }) => void;
     lat: number; lng: number;
     setLatLng: (lat: number, lng: number) => void;
-  }) => (
-    <div style={{ gridColumn: "1 / -1" }}>
-      <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten (Startpunkt)</label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "8px" }}>
-        <div>
-          <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>LV95 Ost (E)</label>
-          <input type="number" placeholder="z.B. 2683000" value={lv95.e || ""} onChange={(e) => setLv95({ ...lv95, e: parseFloat(e.target.value) })} style={inputStyle} />
+  }) => {
+    const [eingabe, setEingabe] = useState("");
+
+    const umrechnen = (wert: string) => {
+      const clean = wert.replace(/'/g, "").replace(/\s/g, "");
+      const parts = clean.split(",");
+      if (parts.length === 2) {
+        const e = parseFloat(parts[0]);
+        const n = parseFloat(parts[1]);
+        if (e && n) {
+          setLv95({ e, n });
+          const { lat: newLat, lng: newLng } = lv95zuWgs84(e, n);
+          setLatLng(Math.round(newLat * 100000) / 100000, Math.round(newLng * 100000) / 100000);
+        }
+      }
+    };
+
+    return (
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten LV95</label>
+        <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+          <input
+            type="text"
+            placeholder="z.B. 2'607'997, 1'172'283"
+            value={eingabe}
+            onChange={(e) => setEingabe(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && umrechnen(eingabe)}
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button
+            type="button"
+            onClick={() => umrechnen(eingabe)}
+            style={{ padding: "8px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}
+          >
+            🔄 Umrechnen
+          </button>
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>LV95 Nord (N)</label>
-          <input type="number" placeholder="z.B. 1249000" value={lv95.n || ""} onChange={(e) => setLv95({ ...lv95, n: parseFloat(e.target.value) })} style={inputStyle} />
-        </div>
+        {lat !== 0 && lng !== 0 && (
+          <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>
+            ✅ WGS84: {lat}, {lng}
+          </p>
+        )}
+        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren und direkt einfügen</p>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          if (lv95.e && lv95.n) {
-            const { lat: newLat, lng: newLng } = lv95zuWgs84(lv95.e, lv95.n);
-            setLatLng(Math.round(newLat * 100000) / 100000, Math.round(newLng * 100000) / 100000);
-          }
-        }}
-        style={{ padding: "6px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}
-      >
-        🔄 Umrechnen
-      </button>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-        <div>
-          <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Breitengrad (lat) – WGS84</label>
-          <input type="number" step="0.00001" value={lat || ""} onChange={(e) => setLatLng(parseFloat(e.target.value), lng)} style={inputStyle} />
-        </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "4px", fontSize: "12px", color: "#888" }}>Längengrad (lng) – WGS84</label>
-          <input type="number" step="0.00001" value={lng || ""} onChange={(e) => setLatLng(lat, parseFloat(e.target.value))} style={inputStyle} />
-        </div>
-      </div>
-      <p style={{ margin: "8px 0 0", fontSize: "12px", color: "#888" }}>💡 LV95 Koordinaten findest du auf map.geo.admin.ch – Rechtsklick → Koordinaten anzeigen</p>
-    </div>
-  );
+    );
+  };
 
   return (
     <PasswortSchutz>
