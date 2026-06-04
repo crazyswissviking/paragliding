@@ -75,7 +75,7 @@ export default function HikeAndFlyPage() {
           }}
         >
           <option value="">-- Abenteuer wählen --</option>
-          {abenteuer.map((a) => (
+          {[...abenteuer].sort((a, b) => a.titel.localeCompare(b.titel)).map((a) => (
             <option key={a.id} value={a.id} style={{ background: "#1a1a2e" }}>
               🥾 {a.titel}
             </option>
