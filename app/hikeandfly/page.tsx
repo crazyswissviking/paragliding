@@ -36,6 +36,7 @@ export default function HikeAndFlyPage() {
   const [abenteuer, setAbenteuer] = useState<HikeAndFly[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null);
+  const [sortierung, setSortierung] = useState<"az" | "laenge" | "hoehe" | "schwierigkeit">("az");
 
   useEffect(() => {
     async function laden() {
@@ -99,11 +100,39 @@ export default function HikeAndFlyPage() {
         </div>
       )}
 
+      {/* Sortierung */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+        <span style={{ fontSize: "14px", color: "#aaa" }}>Sortieren:</span>
+        <select
+          value={sortierung}
+          onChange={(e) => setSortierung(e.target.value as "az" | "laenge" | "hoehe" | "schwierigkeit")}
+          style={{
+            padding: "8px 12px",
+            borderRadius: "8px",
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.05)",
+            color: "#fff",
+            fontSize: "14px",
+            cursor: "pointer",
+          }}
+        >
+          <option value="az" style={{ background: "#1a1a2e" }}>🔤 A-Z</option>
+          <option value="laenge" style={{ background: "#1a1a2e" }}>🗺 Länge</option>
+          <option value="hoehe" style={{ background: "#1a1a2e" }}>⛰ Höhenmeter</option>
+          <option value="schwierigkeit" style={{ background: "#1a1a2e" }}>💪 Schwierigkeit</option>
+        </select>
+      </div>
       {abenteuer.length === 0 && (
         <p style={{ color: "#666", textAlign: "center", marginTop: "40px" }}>Noch keine Abenteuer erfasst.</p>
       )}
 
-      {abenteuer.map((a) => {
+      {[...abenteuer].sort((a, b) => {
+        if (sortierung === "az") return a.titel.localeCompare(b.titel);
+        if (sortierung === "laenge") return b.strecke_km - a.strecke_km;
+        if (sortierung === "hoehe") return b.hoehenmeter - a.hoehenmeter;
+        if (sortierung === "schwierigkeit") return a.schwierigkeit.localeCompare(b.schwierigkeit);
+        return 0;
+      }).map((a) => {
         const istOffen = offen === a.id;
         return (
           <div key={a.id} id={`abenteuer-${a.id}`} style={{
