@@ -52,8 +52,36 @@ export default function HikeAndFlyPage() {
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "900px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🥾 Hike & Fly</h1>
-      <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Unsere Abenteuer</h2>
-
+<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
+        <h2 style={{ fontWeight: "normal", color: "#aaa", margin: "0" }}>Unsere Abenteuer</h2>
+        <select
+          onChange={(e) => {
+            const id = parseInt(e.target.value);
+            if (!id) return;
+            setOffen(id);
+            setAusgewaehlt(id);
+            setTimeout(() => {
+              document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+          }}
+          style={{
+            padding: "8px 12px",
+            borderRadius: "8px",
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.05)",
+            color: "#fff",
+            fontSize: "14px",
+            cursor: "pointer",
+          }}
+        >
+          <option value="">-- Abenteuer wählen --</option>
+          {abenteuer.map((a) => (
+            <option key={a.id} value={a.id} style={{ background: "#1a1a2e" }}>
+              🥾 {a.titel}
+            </option>
+          ))}
+        </select>
+      </div>
       {/* Karte */}
       {abenteuer.filter((a) => a.lat && a.lng).length > 0 && (
         <div style={{ marginBottom: "32px", borderRadius: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
