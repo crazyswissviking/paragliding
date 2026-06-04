@@ -27,8 +27,9 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
     const karte = L.map("hike-karte", { zoomControl: true });
     mapRef.current = karte;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
+    L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg", {
+      attribution: "© swisstopo",
+      maxZoom: 18,
     }).addTo(karte);
 
     const icon = L.divIcon({
