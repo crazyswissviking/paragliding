@@ -218,6 +218,17 @@ export default function Home() {
       }}>
         Admin
       </a>
+      <a href="/upload" style={{
+        position: "absolute",
+        bottom: "16px",
+        left: "80px",
+        zIndex: 10,
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.25)",
+        textDecoration: "none",
+      }}>
+        Upload
+      </a>
     </main>
   );
 }
