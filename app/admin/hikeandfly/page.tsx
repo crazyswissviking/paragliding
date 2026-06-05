@@ -186,11 +186,11 @@ export default function AdminHikeAndFly() {
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
                 <select value={bearbeiten.schwierigkeit} onChange={(e) => setBearbeiten({ ...bearbeiten, schwierigkeit: e.target.value })} style={inputStyle}>
                   <option value="">-- Wählen --</option>
-                  <option value="🛋️ Gemütlich">🛋️ Gemütlich – Sonntagsspaziergang</option>
-                  <option value="🥾 Moderat">🥾 Moderat – Für Fit-Gebliebene</option>
-                  <option value="💪 Fordernd">💪 Fordernd – Beine werden müde</option>
-                  <option value="🔥 Brutal">🔥 Brutal – Knie hassen dich danach</option>
-                  <option value="💀 Endgegner">💀 Endgegner – Nur für Wahnsinnige</option>
+                  <option value="🛋️ Gemütlich">🛋️ Wanderwegweiser gemütlich – ich kann noch reden</option>
+                  <option value="🥾 Moderat">🥾 Huiii – da geht der Puls schon hoch</option>
+                  <option value="💪 Fordernd">💪 Wandern ist so schön haben sie gesagt</option>
+                  <option value="🔥 Brutal">🔥 Ich meditiere mich hoch</option>
+                  <option value="💀 Endgegner">💀 Warum nur – und wo ist das Sauerstoffzelt?</option>
                 </select>
               </div>
               <div>
