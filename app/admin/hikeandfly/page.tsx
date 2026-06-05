@@ -184,7 +184,14 @@ export default function AdminHikeAndFly() {
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
-                <input type="text" value={bearbeiten.schwierigkeit} onChange={(e) => setBearbeiten({ ...bearbeiten, schwierigkeit: e.target.value })} style={inputStyle} />
+                <select value={bearbeiten.schwierigkeit} onChange={(e) => setBearbeiten({ ...bearbeiten, schwierigkeit: e.target.value })} style={inputStyle}>
+                  <option value="">-- Wählen --</option>
+                  <option value="🛋️ Gemütlich">🛋️ Gemütlich – Sonntagsspaziergang</option>
+                  <option value="🥾 Moderat">🥾 Moderat – Für Fit-Gebliebene</option>
+                  <option value="💪 Fordernd">💪 Fordernd – Beine werden müde</option>
+                  <option value="🔥 Brutal">🔥 Brutal – Knie hassen dich danach</option>
+                  <option value="💀 Endgegner">💀 Endgegner – Nur für Wahnsinnige</option>
+                </select>
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Strecke (km)</label>
@@ -274,7 +281,14 @@ export default function AdminHikeAndFly() {
           </div>
           <div>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
-            <input type="text" value={neu.schwierigkeit} onChange={(e) => setNeu({ ...neu, schwierigkeit: e.target.value })} placeholder="z.B. Mittel" style={inputStyle} />
+            <select value={neu.schwierigkeit} onChange={(e) => setNeu({ ...neu, schwierigkeit: e.target.value })} style={inputStyle}>
+              <option value="">-- Wählen --</option>
+              <option value="🛋️ Gemütlich">🛋️ Gemütlich – Sonntagsspaziergang</option>
+              <option value="🥾 Moderat">🥾 Moderat – Für Fit-Gebliebene</option>
+              <option value="💪 Fordernd">💪 Fordernd – Beine werden müde</option>
+              <option value="🔥 Brutal">🔥 Brutal – Knie hassen dich danach</option>
+              <option value="💀 Endgegner">💀 Endgegner – Nur für Wahnsinnige</option>
+            </select>
           </div>
           <div>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Strecke (km)</label>
