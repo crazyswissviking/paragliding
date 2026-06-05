@@ -207,28 +207,22 @@ export default function Home() {
       </a>
 
       {/* Admin Link klein unten links */}
-      <a href="/admin/termine" style={{
+     {/* Links unten links */}
+      <div style={{
         position: "absolute",
         bottom: "16px",
         left: "16px",
         zIndex: 10,
-        fontSize: "11px",
-        color: "rgba(255,255,255,0.25)",
-        textDecoration: "none",
+        display: "flex",
+        gap: "16px",
       }}>
-        Admin
-      </a>
-      <a href="/upload" style={{
-        position: "absolute",
-        bottom: "16px",
-        left: "80px",
-        zIndex: 10,
-        fontSize: "11px",
-        color: "rgba(255,255,255,0.25)",
-        textDecoration: "none",
-      }}>
-        Upload
-      </a>
+        <a href="/admin/termine" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
+          Admin
+        </a>
+        <a href="/upload" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
+          Upload
+        </a>
+      </div>
     </main>
   );
 }
