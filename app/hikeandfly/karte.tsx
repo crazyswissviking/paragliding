@@ -87,5 +87,5 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
     }
   }, [ausgewaehlt]);
 
-  return <div id="hike-karte" style={{ height: "400px", width: "100%" }} />;
+  return <div id="hike-karte" style={{ height: "800px", width: "100%" }} />;
 }
