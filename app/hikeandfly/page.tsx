@@ -30,6 +30,9 @@ type HikeAndFly = {
   video_url: string;
   lat: number;
   lng: number;
+  landeplatz: string;
+  landeplatz_lat: number;
+  landeplatz_lng: number;
 };
 
 export default function HikeAndFlyPage() {
@@ -53,7 +56,7 @@ export default function HikeAndFlyPage() {
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "900px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🥾 Hike & Fly</h1>
-<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
         <h2 style={{ fontWeight: "normal", color: "#aaa", margin: "0" }}>Unsere Abenteuer</h2>
         <select
           onChange={(e) => {
@@ -65,24 +68,15 @@ export default function HikeAndFlyPage() {
               document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
             }, 100);
           }}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "8px",
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#fff",
-            fontSize: "14px",
-            cursor: "pointer",
-          }}
+          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "14px", cursor: "pointer" }}
         >
           <option value="">-- Abenteuer wählen --</option>
           {[...abenteuer].sort((a, b) => a.titel.localeCompare(b.titel)).map((a) => (
-            <option key={a.id} value={a.id} style={{ background: "#1a1a2e" }}>
-              🥾 {a.titel}
-            </option>
+            <option key={a.id} value={a.id} style={{ background: "#1a1a2e" }}>🥾 {a.titel}</option>
           ))}
         </select>
       </div>
+
       {/* Karte */}
       {abenteuer.filter((a) => a.lat && a.lng).length > 0 && (
         <div style={{ marginBottom: "32px", borderRadius: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
@@ -106,15 +100,7 @@ export default function HikeAndFlyPage() {
         <select
           value={sortierung}
           onChange={(e) => setSortierung(e.target.value as "az" | "laenge" | "hoehe" | "schwierigkeit")}
-          style={{
-            padding: "8px 12px",
-            borderRadius: "8px",
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: "rgba(255,255,255,0.05)",
-            color: "#fff",
-            fontSize: "14px",
-            cursor: "pointer",
-          }}
+          style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "14px", cursor: "pointer" }}
         >
           <option value="az" style={{ background: "#1a1a2e" }}>🔤 A-Z</option>
           <option value="laenge" style={{ background: "#1a1a2e" }}>🗺 Länge</option>
@@ -122,6 +108,7 @@ export default function HikeAndFlyPage() {
           <option value="schwierigkeit" style={{ background: "#1a1a2e" }}>💪 Schwierigkeit</option>
         </select>
       </div>
+
       {abenteuer.length === 0 && (
         <p style={{ color: "#666", textAlign: "center", marginTop: "40px" }}>Noch keine Abenteuer erfasst.</p>
       )}
@@ -180,15 +167,13 @@ export default function HikeAndFlyPage() {
                   <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
                     📝 <strong>Beschreibung:</strong>
                     <div style={{ marginTop: "8px" }}>
-                      <ReactMarkdown
-                        components={{
-                          p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
-                          strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
-                          ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
-                          li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
-                          br: () => <br />,
-                        }}
-                      >
+                      <ReactMarkdown components={{
+                        p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
+                        strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
+                        ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
+                        li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
+                        br: () => <br />,
+                      }}>
                         {a.beschreibung}
                       </ReactMarkdown>
                     </div>
@@ -211,6 +196,11 @@ export default function HikeAndFlyPage() {
                     </div>
                   </div>
                 </div>
+                {a.landeplatz && (
+                  <div style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(0,200,100,0.1)", borderRadius: "8px", fontSize: "14px", color: "#6fcf97" }}>
+                    🟢 <strong>Landeplatz:</strong> {a.landeplatz}
+                  </div>
+                )}
                 {a.route_url && (
                   <a href={a.route_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
                     🗺 Wanderroute ansehen

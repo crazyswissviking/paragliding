@@ -31,6 +31,9 @@ type HikeAndFly = {
   aktiv: boolean;
   lat: number;
   lng: number;
+  landeplatz: string;
+  landeplatz_lat: number;
+  landeplatz_lng: number;
 };
 
 const leer = (): Omit<HikeAndFly, "id"> => ({
@@ -38,9 +41,18 @@ const leer = (): Omit<HikeAndFly, "id"> => ({
   schwierigkeit: "", strecke_km: 0, hoehenmeter: 0, tempo_wanderweg: "",
   tempo_sportlich: "", tempo_pb: "", route_url: "", bild_url: "",
   video_url: "", aktiv: true, lat: 0, lng: 0,
+  landeplatz: "", landeplatz_lat: 0, landeplatz_lng: 0,
 });
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
+
+const schwierigkeiten = [
+  { value: "🛋️ Ich kann noch singen", label: "🛋️ Ich kann noch singen – Wanderwegweiser-Tempo" },
+  { value: "🥾 Ich kann noch reden", label: "🥾 Ich kann noch reden – wird wärmer, aber alles gut" },
+  { value: "😅 Ich flüstere nur noch", label: "😅 Ich flüstere nur noch – Puls sagt hallo, Beine auch" },
+  { value: "🔥 Ich denke nur noch", label: "🔥 Ich denke nur noch – Sprechen ist Luxus" },
+  { value: "💀 Wandern ist so schön haben sie gesagt", label: "💀 Wandern ist so schön haben sie gesagt – wo ist das Sauerstoffzelt" },
+];
 
 export default function AdminHikeAndFly() {
   const [abenteuer, setAbenteuer] = useState<HikeAndFly[]>([]);
@@ -51,6 +63,8 @@ export default function AdminHikeAndFly() {
   const [bearbeitenGespeichert, setBearbeitenGespeichert] = useState(false);
   const [lv95Neu, setLv95Neu] = useState({ e: 0, n: 0 });
   const [lv95Bearbeiten, setLv95Bearbeiten] = useState({ e: 0, n: 0 });
+  const [lv95LandeplatzNeu, setLv95LandeplatzNeu] = useState({ e: 0, n: 0 });
+  const [lv95LandeplatzBearbeiten, setLv95LandeplatzBearbeiten] = useState({ e: 0, n: 0 });
 
   async function laden() {
     const { data } = await supabase.from("hikeandfly").select("*").order("id", { ascending: true });
@@ -65,6 +79,7 @@ export default function AdminHikeAndFly() {
     await supabase.from("hikeandfly").insert([neu]);
     setNeu(leer());
     setLv95Neu({ e: 0, n: 0 });
+    setLv95LandeplatzNeu({ e: 0, n: 0 });
     setGespeichert(true);
     setTimeout(() => setGespeichert(false), 2000);
     laden();
@@ -91,6 +106,9 @@ export default function AdminHikeAndFly() {
       tempo_sportlich: bearbeiten.tempo_sportlich, tempo_pb: bearbeiten.tempo_pb,
       lat: bearbeiten.lat, lng: bearbeiten.lng, route_url: bearbeiten.route_url,
       bild_url: bearbeiten.bild_url, video_url: bearbeiten.video_url,
+      landeplatz: bearbeiten.landeplatz,
+      landeplatz_lat: bearbeiten.landeplatz_lat,
+      landeplatz_lng: bearbeiten.landeplatz_lng,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
@@ -98,12 +116,13 @@ export default function AdminHikeAndFly() {
   }
 
   const KoordBlock = ({
-    lv95, setLv95, lat, lng, setLatLng
+    lv95, setLv95, lat, lng, setLatLng, label
   }: {
     lv95: { e: number; n: number };
     setLv95: (v: { e: number; n: number }) => void;
     lat: number; lng: number;
     setLatLng: (lat: number, lng: number) => void;
+    label?: string;
   }) => {
     const [eingabe, setEingabe] = useState("");
 
@@ -123,7 +142,7 @@ export default function AdminHikeAndFly() {
 
     return (
       <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Koordinaten LV95</label>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 {label || "Koordinaten"} LV95</label>
         <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
           <input
             type="text"
@@ -133,23 +152,77 @@ export default function AdminHikeAndFly() {
             onKeyDown={(e) => e.key === "Enter" && umrechnen(eingabe)}
             style={{ ...inputStyle, flex: 1 }}
           />
-          <button
-            type="button"
-            onClick={() => umrechnen(eingabe)}
-            style={{ padding: "8px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}
-          >
+          <button type="button" onClick={() => umrechnen(eingabe)} style={{ padding: "8px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
             🔄 Umrechnen
           </button>
         </div>
         {lat !== 0 && lng !== 0 && (
-          <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>
-            ✅ WGS84: {lat}, {lng}
-          </p>
+          <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>✅ WGS84: {lat}, {lng}</p>
         )}
         <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren und direkt einfügen</p>
       </div>
     );
   };
+
+  const Formularfelder = ({ data, set }: { data: Omit<HikeAndFly, "id">; set: (v: any) => void }) => (
+    <>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
+        <input type="text" value={data.titel} onChange={(e) => set({ ...data, titel: e.target.value })} placeholder="z.B. Möntschelen Runde" style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚩 Startpunkt</label>
+        <input type="text" value={data.startpunkt} onChange={(e) => set({ ...data, startpunkt: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>📍 Via</label>
+        <input type="text" value={data.via} onChange={(e) => set({ ...data, via: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏁 Ziel</label>
+        <input type="text" value={data.ziel} onChange={(e) => set({ ...data, ziel: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
+        <select value={data.schwierigkeit} onChange={(e) => set({ ...data, schwierigkeit: e.target.value })} style={inputStyle}>
+          <option value="">-- Wählen --</option>
+          {schwierigkeiten.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Strecke (km)</label>
+        <input type="number" value={data.strecke_km} onChange={(e) => set({ ...data, strecke_km: parseFloat(e.target.value) })} style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Höhenmeter</label>
+        <input type="number" value={data.hoehenmeter} onChange={(e) => set({ ...data, hoehenmeter: parseInt(e.target.value) })} style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚶 Tempo Wanderwegweiser</label>
+        <input type="text" value={data.tempo_wanderweg} onChange={(e) => set({ ...data, tempo_wanderweg: e.target.value })} placeholder="z.B. 3h 30min" style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏃 Tempo H&F Sportlich</label>
+        <input type="text" value={data.tempo_sportlich} onChange={(e) => set({ ...data, tempo_sportlich: e.target.value })} placeholder="z.B. 2h 15min" style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏆 Tempo H&F PB</label>
+        <input type="text" value={data.tempo_pb} onChange={(e) => set({ ...data, tempo_pb: e.target.value })} placeholder="z.B. 1h 45min" style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Route URL</label>
+        <input type="text" value={data.route_url} onChange={(e) => set({ ...data, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
+        <input type="text" value={data.bild_url} onChange={(e) => set({ ...data, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL</label>
+        <input type="text" value={data.video_url} onChange={(e) => set({ ...data, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+      </div>
+    </>
+  );
 
   return (
     <PasswortSchutz>
@@ -166,72 +239,13 @@ export default function AdminHikeAndFly() {
               <button onClick={() => setBearbeiten(null)} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#888" }}>✕</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <Formularfelder data={bearbeiten} set={setBearbeiten} />
+              <KoordBlock label="Startpunkt" lv95={lv95Bearbeiten} setLv95={setLv95Bearbeiten} lat={bearbeiten.lat} lng={bearbeiten.lng} setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, lat, lng })} />
               <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
-                <input type="text" value={bearbeiten.titel} onChange={(e) => setBearbeiten({ ...bearbeiten, titel: e.target.value })} style={inputStyle} />
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
+                <input type="text" value={bearbeiten.landeplatz} onChange={(e) => setBearbeiten({ ...bearbeiten, landeplatz: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
               </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚩 Startpunkt</label>
-                <input type="text" value={bearbeiten.startpunkt} onChange={(e) => setBearbeiten({ ...bearbeiten, startpunkt: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>📍 Via</label>
-                <input type="text" value={bearbeiten.via} onChange={(e) => setBearbeiten({ ...bearbeiten, via: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏁 Ziel</label>
-                <input type="text" value={bearbeiten.ziel} onChange={(e) => setBearbeiten({ ...bearbeiten, ziel: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
-                <select value={bearbeiten.schwierigkeit} onChange={(e) => setBearbeiten({ ...bearbeiten, schwierigkeit: e.target.value })} style={inputStyle}>
-                  <option value="">-- Wählen --</option>
-                  <option value="🛋️ Ich kann noch singen">🛋️ Ich kann noch singen – Wanderwegweiser-Tempo</option>
-                  <option value="🥾 Ich kann noch reden">🥾 Ich kann noch reden – wird wärmer, aber alles gut</option>
-                  <option value="😅 Ich flüstere nur noch">😅 Ich flüstere nur noch – Puls sagt hallo, Beine auch</option>
-                  <option value="🔥 Ich denke nur noch">🔥 Ich denke nur noch – Sprechen ist Luxus</option>
-                  <option value="💀 Wandern ist so schön haben sie gesagt">💀 Wandern ist so schön haben sie gesagt – wo ist das Sauerstoffzelt</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Strecke (km)</label>
-                <input type="number" value={bearbeiten.strecke_km} onChange={(e) => setBearbeiten({ ...bearbeiten, strecke_km: parseFloat(e.target.value) })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Höhenmeter</label>
-                <input type="number" value={bearbeiten.hoehenmeter} onChange={(e) => setBearbeiten({ ...bearbeiten, hoehenmeter: parseInt(e.target.value) })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚶 Tempo Wanderwegweiser</label>
-                <input type="text" value={bearbeiten.tempo_wanderweg} onChange={(e) => setBearbeiten({ ...bearbeiten, tempo_wanderweg: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏃 Tempo H&F Sportlich</label>
-                <input type="text" value={bearbeiten.tempo_sportlich} onChange={(e) => setBearbeiten({ ...bearbeiten, tempo_sportlich: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏆 Tempo H&F PB</label>
-                <input type="text" value={bearbeiten.tempo_pb} onChange={(e) => setBearbeiten({ ...bearbeiten, tempo_pb: e.target.value })} style={inputStyle} />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Route URL</label>
-                <input type="text" value={bearbeiten.route_url} onChange={(e) => setBearbeiten({ ...bearbeiten, route_url: e.target.value })} style={inputStyle} />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
-                <input type="text" value={bearbeiten.bild_url} onChange={(e) => setBearbeiten({ ...bearbeiten, bild_url: e.target.value })} style={inputStyle} />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL</label>
-                <input type="text" value={bearbeiten.video_url} onChange={(e) => setBearbeiten({ ...bearbeiten, video_url: e.target.value })} style={inputStyle} />
-              </div>
-              <KoordBlock
-                lv95={lv95Bearbeiten}
-                setLv95={setLv95Bearbeiten}
-                lat={bearbeiten.lat}
-                lng={bearbeiten.lng}
-                setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, lat, lng })}
-              />
+              <KoordBlock label="Landeplatz" lv95={lv95LandeplatzBearbeiten} setLv95={setLv95LandeplatzBearbeiten} lat={bearbeiten.landeplatz_lat} lng={bearbeiten.landeplatz_lng} setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, landeplatz_lat: lat, landeplatz_lng: lng })} />
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Beschreibung</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -263,72 +277,13 @@ export default function AdminHikeAndFly() {
       <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "24px", marginBottom: "30px" }}>
         <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neues Abenteuer</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          <Formularfelder data={neu} set={setNeu} />
+          <KoordBlock label="Startpunkt" lv95={lv95Neu} setLv95={setLv95Neu} lat={neu.lat} lng={neu.lng} setLatLng={(lat, lng) => setNeu({ ...neu, lat, lng })} />
           <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
-            <input type="text" value={neu.titel} onChange={(e) => setNeu({ ...neu, titel: e.target.value })} placeholder="z.B. Möntschelen Runde" style={inputStyle} />
+            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
+            <input type="text" value={neu.landeplatz} onChange={(e) => setNeu({ ...neu, landeplatz: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
           </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚩 Startpunkt</label>
-            <input type="text" value={neu.startpunkt} onChange={(e) => setNeu({ ...neu, startpunkt: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>📍 Via</label>
-            <input type="text" value={neu.via} onChange={(e) => setNeu({ ...neu, via: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏁 Ziel</label>
-            <input type="text" value={neu.ziel} onChange={(e) => setNeu({ ...neu, ziel: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
-            <select value={neu.schwierigkeit} onChange={(e) => setNeu({ ...neu, schwierigkeit: e.target.value })} style={inputStyle}>
-              <option value="">-- Wählen --</option>
-              <option value="🛋️ Ich kann noch singen">🛋️ Ich kann noch singen – Wanderwegweiser-Tempo</option>
-                  <option value="🥾 Ich kann noch reden">🥾 Ich kann noch reden – wird wärmer, aber alles gut</option>
-                  <option value="😅 Ich flüstere nur noch">😅 Ich flüstere nur noch – Puls sagt hallo, Beine auch</option>
-                  <option value="🔥 Ich denke nur noch">🔥 Ich denke nur noch – Sprechen ist Luxus</option>
-                  <option value="💀 Wandern ist so schön haben sie gesagt">💀 Wandern ist so schön haben sie gesagt – wo ist das Sauerstoffzelt</option>
-            </select>
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Strecke (km)</label>
-            <input type="number" value={neu.strecke_km} onChange={(e) => setNeu({ ...neu, strecke_km: parseFloat(e.target.value) })} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Höhenmeter</label>
-            <input type="number" value={neu.hoehenmeter} onChange={(e) => setNeu({ ...neu, hoehenmeter: parseInt(e.target.value) })} style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚶 Tempo Wanderwegweiser</label>
-            <input type="text" value={neu.tempo_wanderweg} onChange={(e) => setNeu({ ...neu, tempo_wanderweg: e.target.value })} placeholder="z.B. 3h 30min" style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏃 Tempo H&F Sportlich</label>
-            <input type="text" value={neu.tempo_sportlich} onChange={(e) => setNeu({ ...neu, tempo_sportlich: e.target.value })} placeholder="z.B. 2h 15min" style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏆 Tempo H&F PB</label>
-            <input type="text" value={neu.tempo_pb} onChange={(e) => setNeu({ ...neu, tempo_pb: e.target.value })} placeholder="z.B. 1h 45min" style={inputStyle} />
-          </div>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Route URL</label>
-            <input type="text" value={neu.route_url} onChange={(e) => setNeu({ ...neu, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
-          </div>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
-            <input type="text" value={neu.bild_url} onChange={(e) => setNeu({ ...neu, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
-          </div>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL</label>
-            <input type="text" value={neu.video_url} onChange={(e) => setNeu({ ...neu, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
-          </div>
-          <KoordBlock
-            lv95={lv95Neu}
-            setLv95={setLv95Neu}
-            lat={neu.lat}
-            lng={neu.lng}
-            setLatLng={(lat, lng) => setNeu({ ...neu, lat, lng })}
-          />
+          <KoordBlock label="Landeplatz" lv95={lv95LandeplatzNeu} setLv95={setLv95LandeplatzNeu} lat={neu.landeplatz_lat} lng={neu.landeplatz_lng} setLatLng={(lat, lng) => setNeu({ ...neu, landeplatz_lat: lat, landeplatz_lng: lng })} />
         </div>
         <div style={{ marginTop: "16px", display: "flex", gap: "12px", alignItems: "center" }}>
           <button onClick={hinzufuegen} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
@@ -347,10 +302,11 @@ export default function AdminHikeAndFly() {
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{a.titel}</p>
               <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏁 {a.ziel}</p>
-              <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>🗺 {a.strecke_km} km · ⛰ {a.hoehenmeter} hm · {a.schwierigkeit}</p>
+              <p style={{ margin: "0 0 2px", fontSize: "13px", color: "#aaa" }}>🗺 {a.strecke_km} km · ⛰ {a.hoehenmeter} hm · {a.schwierigkeit}</p>
+              {a.landeplatz && <p style={{ margin: "0", fontSize: "13px", color: "#2d6a4f" }}>🟢 Landeplatz: {a.landeplatz}</p>}
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => { setBearbeiten(a); setLv95Bearbeiten({ e: 0, n: 0 }); }} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>✏️ Bearbeiten</button>
+              <button onClick={() => { setBearbeiten(a); setLv95Bearbeiten({ e: 0, n: 0 }); setLv95LandeplatzBearbeiten({ e: 0, n: 0 }); }} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>✏️ Bearbeiten</button>
               <button onClick={() => toggleAktiv(a)} style={{ padding: "8px 14px", background: a.aktiv ? "#e6f4ea" : "#f5f5f5", color: a.aktiv ? "#2d6a4f" : "#888", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>{a.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}</button>
               <button onClick={() => loeschen(a.id)} style={{ padding: "8px 14px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>🗑 Löschen</button>
             </div>
