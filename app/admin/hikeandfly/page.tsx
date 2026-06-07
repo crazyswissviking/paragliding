@@ -49,11 +49,12 @@ const leer = (): HikeAndFlyOhneId => ({
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
 const schwierigkeiten = [
-  { value: "🛋️ Ich kann noch singen", label: "🛋️ Ich kann noch singen – Wanderwegweiser-Tempo" },
-  { value: "🥾 Ich kann noch reden", label: "🥾 Ich kann noch reden – wird wärmer, aber alles gut" },
-  { value: "😅 Ich flüstere nur noch", label: "😅 Ich flüstere nur noch – Puls sagt hallo, Beine auch" },
-  { value: "🔥 Ich denke nur noch", label: "🔥 Ich denke nur noch – Sprechen ist Luxus" },
-  { value: "💀 Wandern ist so schön haben sie gesagt", label: "💀 Wandern ist so schön haben sie gesagt – wo ist das Sauerstoffzelt" },
+  { value: "T1 Wandern", label: "🟡 T1 – Wandern · Weg gut markiert, keine Absturzgefahr" },
+  { value: "T2 Bergwandern", label: "🟡 T2 – Bergwandern · Trittsicherheit erforderlich, teils weglos" },
+  { value: "T3 Anspruchsvolles Bergwandern", label: "🔴 T3 – Anspruchsvolles Bergwandern · Schwindelfreiheit, gute Kondition" },
+  { value: "T4 Alpinwandern", label: "🔴 T4 – Alpinwandern · Alpine Erfahrung, Hände nötig" },
+  { value: "T5 Anspruchsvolles Alpinwandern", label: "⚪ T5 – Anspruchsvolles Alpinwandern · Erfahrung, Orientierung im Gelände" },
+  { value: "T6 Schwieriges Alpinwandern", label: "⚪ T6 – Schwieriges Alpinwandern · Expedition, höchste Anforderungen" },
 ];
 
 // ── KoordBlock ausserhalb der Hauptkomponente ──────────────────────────────
