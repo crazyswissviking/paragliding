@@ -33,6 +33,8 @@ type HikeAndFly = {
   landeplatz: string;
   landeplatz_lat: number;
   landeplatz_lng: number;
+  startplatz_hoehe: number;
+  landeplatz_hoehe: number;
 };
 
 export default function HikeAndFlyPage() {
@@ -179,6 +181,26 @@ export default function HikeAndFlyPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Höhen */}
+                {(a.startplatz_hoehe > 0 || a.landeplatz_hoehe > 0) && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "16px" }}>
+                    {a.startplatz_hoehe > 0 && (
+                      <div style={{ padding: "10px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", textAlign: "center" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#7799ff" }}>🏔 Startplatz Höhe</p>
+                        <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold", color: "#fff" }}>{a.startplatz_hoehe} m</p>
+                      </div>
+                    )}
+                    {a.landeplatz_hoehe > 0 && (
+                      <div style={{ padding: "10px", background: "rgba(0,200,100,0.1)", borderRadius: "8px", textAlign: "center" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#6fcf97" }}>🟢 Landeplatz Höhe</p>
+                        <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold", color: "#fff" }}>{a.landeplatz_hoehe} m</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Zeiten */}
                 <div style={{ marginBottom: "16px" }}>
                   <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>⏱ Zeiten:</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
@@ -196,6 +218,7 @@ export default function HikeAndFlyPage() {
                     </div>
                   </div>
                 </div>
+
                 {a.landeplatz && (
                   <div style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(0,200,100,0.1)", borderRadius: "8px", fontSize: "14px", color: "#6fcf97" }}>
                     🟢 <strong>Landeplatz:</strong> {a.landeplatz}
