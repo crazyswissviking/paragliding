@@ -64,7 +64,11 @@ function KoordBlock({ lat, lng, setLatLng, label, onHoehe }: {
   onHoehe?: (hoehe: number) => void;
 }) {
   const [eingabe, setEingabe] = useState("");
-  const setHoehe = onHoehe || (() => {});
+  const [hoehe, setHoeheLokal] = useState(0);
+  const setHoehe = (h: number) => {
+    setHoeheLokal(h);
+    if (onHoehe) onHoehe(h);
+  };
 
 const umrechnen = async (wert: string) => {
     const clean = wert.replace(/'/g, "").replace(/\s/g, "");
@@ -108,7 +112,9 @@ const umrechnen = async (wert: string) => {
         </button>
       </div>
       {lat !== 0 && lng !== 0 && (
-        <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>✅ WGS84: {lat}, {lng}</p>
+        <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>
+          ✅ WGS84: {lat}, {lng}{hoehe > 0 ? ` · ⛰ ${hoehe}m` : ""}
+        </p>
       )}
       <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren und direkt einfügen</p>
     </div>
