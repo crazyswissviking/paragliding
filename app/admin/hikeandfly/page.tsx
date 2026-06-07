@@ -139,8 +139,8 @@ function Formularfelder({ data, set }: { data: HikeAndFlyOhneId; set: (v: HikeAn
         <input type="text" value={data.via} onChange={(e) => set({ ...data, via: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
       </div>
       <div>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏁 Ziel</label>
-        <input type="text" value={data.ziel} onChange={(e) => set({ ...data, ziel: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏔 Startplatz</label>
+        <input type="text" value={data.ziel} onChange={(e) => set({ ...data, ziel: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
       </div>
       <div>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Schwierigkeit</label>
@@ -330,7 +330,7 @@ export default function AdminHikeAndFly() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{a.titel}</p>
-              <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏁 {a.ziel}</p>
+              <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏔 {a.ziel}</p>
               <p style={{ margin: "0 0 2px", fontSize: "13px", color: "#aaa" }}>🗺 {a.strecke_km} km · ⛰ {a.hoehenmeter} hm · {a.schwierigkeit}</p>
               {a.landeplatz && <p style={{ margin: "0", fontSize: "13px", color: "#2d6a4f" }}>🟢 Landeplatz: {a.landeplatz}</p>}
             </div>

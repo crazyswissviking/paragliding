@@ -141,7 +141,7 @@ export default function HikeAndFlyPage() {
             >
               <div>
                 <h3 style={{ margin: "0 0 4px", fontSize: "18px", color: "#fff" }}>{a.titel}</h3>
-                <p style={{ margin: "0 0 4px", color: "#888", fontSize: "14px" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏁 {a.ziel}</p>
+                <p style={{ margin: "0 0 4px", color: "#888", fontSize: "14px" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏔 {a.ziel}</p>
                 <div style={{ display: "flex", gap: "12px", marginTop: "6px", flexWrap: "wrap" }}>
                   {a.strecke_km > 0 && <span style={{ fontSize: "12px", color: "#aaa" }}>🗺 {a.strecke_km} km</span>}
                   {a.hoehenmeter > 0 && <span style={{ fontSize: "12px", color: "#aaa" }}>⛰ {a.hoehenmeter} hm</span>}
