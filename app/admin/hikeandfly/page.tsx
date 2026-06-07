@@ -60,21 +60,14 @@ const schwierigkeiten = [
   { value: "T6 Schwieriges Alpinwandern", label: "⚪ T6 – Schwieriges Alpinwandern · Expedition, höchste Anforderungen" },
 ];
 
-function KoordBlock({ lat, lng, setLatLng, label, onHoehe }: {
+function KoordBlock({ lat, lng, setLatLng, label }: {
   lat: number; lng: number;
   setLatLng: (lat: number, lng: number) => void;
   label?: string;
-  onHoehe?: (hoehe: number) => void;
 }) {
   const [eingabe, setEingabe] = useState("");
-  const [hoehe, setHoeheLokal] = useState(0);
 
-  const setHoehe = (h: number) => {
-    setHoeheLokal(h);
-    if (onHoehe) onHoehe(h);
-  };
-
-  const umrechnen = async (wert: string) => {
+  const umrechnen = (wert: string) => {
     const clean = wert.replace(/'/g, "").replace(/\s/g, "");
     const parts = clean.split(",");
     if (parts.length === 2) {
@@ -82,16 +75,7 @@ function KoordBlock({ lat, lng, setLatLng, label, onHoehe }: {
       const n = parseFloat(parts[1]);
       if (e && n) {
         const { lat: newLat, lng: newLng } = lv95zuWgs84(e, n);
-        const lat = Math.round(newLat * 100000) / 100000;
-        const lng = Math.round(newLng * 100000) / 100000;
-        setLatLng(lat, lng);
-        try {
-          const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
-          const data = await res.json();
-          if (data.elevation?.[0]) setHoehe(Math.round(data.elevation[0]));
-        } catch (e) {
-          console.error("Höhe konnte nicht geladen werden");
-        }
+        setLatLng(Math.round(newLat * 100000) / 100000, Math.round(newLng * 100000) / 100000);
       }
     }
   };
@@ -113,9 +97,7 @@ function KoordBlock({ lat, lng, setLatLng, label, onHoehe }: {
         </button>
       </div>
       {lat !== 0 && lng !== 0 && (
-        <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>
-          ✅ WGS84: {lat}, {lng}{hoehe > 0 ? ` · ⛰ ${hoehe}m` : ""}
-        </p>
+        <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>✅ WGS84: {lat}, {lng}</p>
       )}
       <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren und direkt einfügen</p>
     </div>
@@ -155,6 +137,14 @@ function Formularfelder({ data, set }: { data: HikeAndFlyOhneId; set: (v: HikeAn
       <div>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Höhenmeter</label>
         <input type="number" value={data.hoehenmeter} onChange={(e) => set({ ...data, hoehenmeter: parseInt(e.target.value) })} style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏔 Startplatz Höhe (m)</label>
+        <input type="number" value={data.startplatz_hoehe} onChange={(e) => set({ ...data, startplatz_hoehe: parseInt(e.target.value) })} style={inputStyle} />
+      </div>
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Höhe (m)</label>
+        <input type="number" value={data.landeplatz_hoehe} onChange={(e) => set({ ...data, landeplatz_hoehe: parseInt(e.target.value) })} style={inputStyle} />
       </div>
       <div>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚶 Tempo Wanderwegweiser</label>
@@ -256,24 +246,12 @@ export default function AdminHikeAndFly() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <Formularfelder data={bearbeiten} set={(v) => setBearbeiten({ ...bearbeiten, ...v })} />
-              <KoordBlock
-                label="Startpunkt"
-                lat={bearbeiten.lat}
-                lng={bearbeiten.lng}
-                setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, lat, lng })}
-                onHoehe={(h) => setBearbeiten((prev) => prev ? { ...prev, startplatz_hoehe: h } : prev)}
-              />
+              <KoordBlock label="Startpunkt" lat={bearbeiten.lat} lng={bearbeiten.lng} setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, lat, lng })} />
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
                 <input type="text" value={bearbeiten.landeplatz} onChange={(e) => setBearbeiten({ ...bearbeiten, landeplatz: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
               </div>
-              <KoordBlock
-                label="Landeplatz"
-                lat={bearbeiten.landeplatz_lat}
-                lng={bearbeiten.landeplatz_lng}
-                setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, landeplatz_lat: lat, landeplatz_lng: lng })}
-                onHoehe={(h) => setBearbeiten((prev) => prev ? { ...prev, landeplatz_hoehe: h } : prev)}
-              />
+              <KoordBlock label="Landeplatz" lat={bearbeiten.landeplatz_lat} lng={bearbeiten.landeplatz_lng} setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, landeplatz_lat: lat, landeplatz_lng: lng })} />
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Beschreibung</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -306,24 +284,12 @@ export default function AdminHikeAndFly() {
         <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neues Abenteuer</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <Formularfelder data={neu} set={setNeu} />
-          <KoordBlock
-            label="Startpunkt"
-            lat={neu.lat}
-            lng={neu.lng}
-            setLatLng={(lat, lng) => setNeu({ ...neu, lat, lng })}
-            onHoehe={(h) => setNeu((prev) => ({ ...prev, startplatz_hoehe: h }))}
-          />
+          <KoordBlock label="Startpunkt" lat={neu.lat} lng={neu.lng} setLatLng={(lat, lng) => setNeu({ ...neu, lat, lng })} />
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
             <input type="text" value={neu.landeplatz} onChange={(e) => setNeu({ ...neu, landeplatz: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
           </div>
-          <KoordBlock
-            label="Landeplatz"
-            lat={neu.landeplatz_lat}
-            lng={neu.landeplatz_lng}
-            setLatLng={(lat, lng) => setNeu({ ...neu, landeplatz_lat: lat, landeplatz_lng: lng })}
-            onHoehe={(h) => setNeu((prev) => ({ ...prev, landeplatz_hoehe: h }))}
-          />
+          <KoordBlock label="Landeplatz" lat={neu.landeplatz_lat} lng={neu.landeplatz_lng} setLatLng={(lat, lng) => setNeu({ ...neu, landeplatz_lat: lat, landeplatz_lng: lng })} />
         </div>
         <div style={{ marginTop: "16px", display: "flex", gap: "12px", alignItems: "center" }}>
           <button onClick={hinzufuegen} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
@@ -343,7 +309,9 @@ export default function AdminHikeAndFly() {
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{a.titel}</p>
               <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏔 {a.ziel}</p>
               <p style={{ margin: "0 0 2px", fontSize: "13px", color: "#aaa" }}>🗺 {a.strecke_km} km · ⛰ {a.hoehenmeter} hm · {a.schwierigkeit}</p>
-              <p style={{ margin: "0 0 2px", fontSize: "13px", color: "#aaa" }}>🏔 Startplatz: {a.startplatz_hoehe}m · 🟢 Landeplatz: {a.landeplatz_hoehe}m</p>
+              {(a.startplatz_hoehe > 0 || a.landeplatz_hoehe > 0) && (
+                <p style={{ margin: "0 0 2px", fontSize: "13px", color: "#aaa" }}>🏔 {a.startplatz_hoehe}m · 🟢 {a.landeplatz_hoehe}m</p>
+              )}
               {a.landeplatz && <p style={{ margin: "0", fontSize: "13px", color: "#2d6a4f" }}>🟢 {a.landeplatz}</p>}
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
