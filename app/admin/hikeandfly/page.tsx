@@ -57,14 +57,16 @@ const schwierigkeiten = [
 ];
 
 // ── KoordBlock ausserhalb der Hauptkomponente ──────────────────────────────
-function KoordBlock({ lat, lng, setLatLng, label }: {
+function KoordBlock({ lat, lng, setLatLng, label, onHoehe }: {
   lat: number; lng: number;
   setLatLng: (lat: number, lng: number) => void;
   label?: string;
+  onHoehe?: (hoehe: number) => void;
 }) {
   const [eingabe, setEingabe] = useState("");
+  const setHoehe = onHoehe || (() => {});
 
-  const umrechnen = (wert: string) => {
+const umrechnen = async (wert: string) => {
     const clean = wert.replace(/'/g, "").replace(/\s/g, "");
     const parts = clean.split(",");
     if (parts.length === 2) {
@@ -72,7 +74,19 @@ function KoordBlock({ lat, lng, setLatLng, label }: {
       const n = parseFloat(parts[1]);
       if (e && n) {
         const { lat: newLat, lng: newLng } = lv95zuWgs84(e, n);
-        setLatLng(Math.round(newLat * 100000) / 100000, Math.round(newLng * 100000) / 100000);
+        const lat = Math.round(newLat * 100000) / 100000;
+        const lng = Math.round(newLng * 100000) / 100000;
+        setLatLng(lat, lng);
+
+        try {
+          const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
+          const data = await res.json();
+          if (data.elevation?.[0]) {
+            setHoehe(Math.round(data.elevation[0]));
+          }
+        } catch (e) {
+          console.error("Höhe konnte nicht geladen werden");
+        }
       }
     }
   };
@@ -236,7 +250,13 @@ export default function AdminHikeAndFly() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <Formularfelder data={bearbeiten} set={(v) => setBearbeiten({ ...bearbeiten, ...v })} />
-              <KoordBlock label="Startpunkt" lat={bearbeiten.lat} lng={bearbeiten.lng} setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, lat, lng })} />
+              <KoordBlock
+                label="Startpunkt"
+                lat={bearbeiten.lat}
+                lng={bearbeiten.lng}
+                setLatLng={(lat, lng) => setBearbeiten({ ...bearbeiten, lat, lng })}
+                onHoehe={(h) => setBearbeiten((prev) => prev ? { ...prev, hoehenmeter: h } : prev)}
+              />
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
                 <input type="text" value={bearbeiten.landeplatz} onChange={(e) => setBearbeiten({ ...bearbeiten, landeplatz: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
@@ -274,7 +294,13 @@ export default function AdminHikeAndFly() {
         <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neues Abenteuer</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <Formularfelder data={neu} set={setNeu} />
-          <KoordBlock label="Startpunkt" lat={neu.lat} lng={neu.lng} setLatLng={(lat, lng) => setNeu({ ...neu, lat, lng })} />
+          <KoordBlock
+            label="Startpunkt"
+            lat={neu.lat}
+            lng={neu.lng}
+            setLatLng={(lat, lng) => setNeu({ ...neu, lat, lng })}
+            onHoehe={(h) => setNeu((prev) => ({ ...prev, hoehenmeter: h }))}
+          />
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
             <input type="text" value={neu.landeplatz} onChange={(e) => setNeu({ ...neu, landeplatz: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
