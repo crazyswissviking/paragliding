@@ -42,6 +42,7 @@ export default function HikeAndFlyPage() {
   const [offen, setOffen] = useState<number | null>(null);
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null);
   const [sortierung, setSortierung] = useState<"az" | "laenge" | "hoehe" | "schwierigkeit">("az");
+  const [hoverOffen, setHoverOffen] = useState<number | null>(null);
 
   useEffect(() => {
     async function laden() {
@@ -123,6 +124,8 @@ export default function HikeAndFlyPage() {
         return 0;
       }).map((a) => {
         const istOffen = offen === a.id;
+        const istHover = hoverOffen === a.id;
+
         return (
           <div key={a.id} id={`abenteuer-${a.id}`} style={{
             border: ausgewaehlt === a.id ? "1px solid rgba(51,85,204,0.8)" : "1px solid rgba(255,255,255,0.15)",
@@ -130,8 +133,12 @@ export default function HikeAndFlyPage() {
             marginBottom: "16px",
             overflow: "hidden",
           }}>
+            {/* Header mit Hover/Touch Overlay */}
             <div
-              onClick={() => { setOffen(istOffen ? null : a.id); setAusgewaehlt(a.id); }}
+              onClick={() => { setOffen(istOffen ? null : a.id); setAusgewaehlt(a.id); setHoverOffen(null); }}
+              onMouseEnter={() => setHoverOffen(a.id)}
+              onMouseLeave={() => setHoverOffen(null)}
+              onTouchStart={(e) => { e.preventDefault(); setHoverOffen(istHover ? null : a.id); }}
               style={{
                 padding: "20px 24px",
                 display: "flex",
@@ -139,8 +146,39 @@ export default function HikeAndFlyPage() {
                 alignItems: "center",
                 cursor: "pointer",
                 background: istOffen ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
+                position: "relative",
+                minHeight: "80px",
               }}
             >
+              {/* Overlay */}
+              <div style={{
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: "rgba(20,30,60,0.96)",
+                padding: "16px 24px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: "6px",
+                opacity: istHover ? 1 : 0,
+                transition: "opacity 0.2s",
+                pointerEvents: istHover ? "auto" : "none",
+                zIndex: 5,
+              }}>
+                {a.startpunkt && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>🚩 <strong>Startpunkt:</strong> {a.startpunkt}</p>}
+                {a.startplatz_hoehe > 0 && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>🏔 <strong>Startplatzhöhe:</strong> {a.startplatz_hoehe} m</p>}
+                {a.landeplatz && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>🟢 <strong>Landeplatz:</strong> {a.landeplatz}</p>}
+                {a.landeplatz_hoehe > 0 && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>⛰ <strong>Landeplatz Höhe:</strong> {a.landeplatz_hoehe} m</p>}
+                {a.schwierigkeit && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>💪 <strong>Schwierigkeit:</strong> {a.schwierigkeit}</p>}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setOffen(a.id); setHoverOffen(null); }}
+                  style={{ marginTop: "8px", fontSize: "12px", color: "#7799ff", background: "rgba(51,85,204,0.3)", border: "none", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", alignSelf: "flex-start" }}
+                >
+                  Details ansehen ▼
+                </button>
+              </div>
+
+              {/* Normaler Inhalt */}
               <div>
                 <h3 style={{ margin: "0 0 4px", fontSize: "18px", color: "#fff" }}>{a.titel}</h3>
                 <p style={{ margin: "0 0 4px", color: "#888", fontSize: "14px" }}>🚩 {a.startpunkt} → 📍 {a.via} → 🏔 {a.ziel}</p>
@@ -155,6 +193,7 @@ export default function HikeAndFlyPage() {
               </span>
             </div>
 
+            {/* Details */}
             {istOffen && (
               <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
                 {a.bild_url && (
@@ -182,7 +221,6 @@ export default function HikeAndFlyPage() {
                   </div>
                 )}
 
-                {/* Höhen */}
                 {(a.startplatz_hoehe > 0 || a.landeplatz_hoehe > 0) && (
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "16px" }}>
                     {a.startplatz_hoehe > 0 && (
@@ -200,7 +238,6 @@ export default function HikeAndFlyPage() {
                   </div>
                 )}
 
-                {/* Zeiten */}
                 <div style={{ marginBottom: "16px" }}>
                   <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>⏱ Zeiten:</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
