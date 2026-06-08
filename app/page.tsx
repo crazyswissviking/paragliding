@@ -190,7 +190,7 @@ export default function Home() {
         {/* Blog */}
         {blogBeitraege.length > 0 && (
           <div style={{ marginTop: "32px", width: "100%" }}>
-            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", marginBottom: "16px" }}>📖 NEUESTE BLOG BEITRÄGE</p>
+<div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {blogBeitraege.map((b) => (
                 <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
