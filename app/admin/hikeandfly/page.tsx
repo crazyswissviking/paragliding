@@ -3,6 +3,20 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
 import ReactMarkdown from "react-markdown";
+const CLOUD_NAME = "dnfnng4mm";
+const UPLOAD_PRESET = "li5gwyqb";
+
+async function cloudinaryUpload(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  const data = await res.json();
+  return data.secure_url;
+}
 
 function lv95zuWgs84(e: number, n: number): { lat: number; lng: number } {
   const e_ = (e - 2600000) / 1000000;
@@ -164,11 +178,39 @@ function Formularfelder({ data, set }: { data: HikeAndFlyOhneId; set: (v: HikeAn
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL</label>
-        <input type="text" value={data.bild_url} onChange={(e) => set({ ...data, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input type="text" value={data.bild_url} onChange={(e) => set({ ...data, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
+          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
+            📁 Upload
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const url = await cloudinaryUpload(file);
+              set({ ...data, bild_url: url });
+            }} />
+          </label>
+        </div>
+        {data.bild_url && (
+          <img src={data.bild_url} alt="Vorschau" style={{ marginTop: "8px", width: "100%", maxHeight: "150px", objectFit: "cover", borderRadius: "6px" }} />
+        )}
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL</label>
-        <input type="text" value={data.video_url} onChange={(e) => set({ ...data, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input type="text" value={data.video_url} onChange={(e) => set({ ...data, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
+          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
+            📁 Upload
+            <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const url = await cloudinaryUpload(file);
+              set({ ...data, video_url: url });
+            }} />
+          </label>
+        </div>
+        {data.video_url && (
+          <video src={data.video_url} controls style={{ marginTop: "8px", width: "100%", maxHeight: "150px", borderRadius: "6px" }} />
+        )}
       </div>
     </>
   );
