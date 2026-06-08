@@ -146,7 +146,7 @@ export default function BlogPage() {
                       {b.startpunkt_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.startpunkt_lv95}</p>}
                       {b.startpunkt_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.startpunkt_hoehe} m</p>}
                       
-                        href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&E=${b.startpunkt_lng}&N=${b.startpunkt_lat}&zoom=8`}
+                        <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&E=${b.startpunkt_lng}&N=${b.startpunkt_lat}&zoom=8`}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}
@@ -161,7 +161,7 @@ export default function BlogPage() {
                       {b.landeplatz_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.landeplatz_lv95}</p>}
                       {b.landeplatz_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.landeplatz_hoehe} m</p>}
                       
-                        href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&E=${b.landeplatz_lng}&N=${b.landeplatz_lat}&zoom=8`}
+                        <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&E=${b.landeplatz_lng}&N=${b.landeplatz_lat}&zoom=8`}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none" }}
@@ -175,7 +175,7 @@ export default function BlogPage() {
 
               {/* Route Link */}
               {b.route_url && (
-                
+                <a
                   href={b.route_url}
                   target="_blank"
                   rel="noopener noreferrer"
