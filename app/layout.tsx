@@ -32,8 +32,6 @@ export default function RootLayout({
             <a href="/blog" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>
   📖 Blog
 </a>
-            <a href="/termine" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>Termine</a>
-          
             <a href="/hikeandfly" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>
   🥾 Hike & Fly
 </a>
