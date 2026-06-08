@@ -7,6 +7,7 @@ type Punkt = {
   id: number;
   titel: string;
   startpunkt: string;
+  ziel: string;
   lat: number;
   lng: number;
   landeplatz?: string;
@@ -65,7 +66,7 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
       const tooltipInhalt = `
         <div style="min-width:180px">
           <p style="margin:0 0 6px;font-weight:bold;font-size:14px">${a.titel}</p>
-          ${a.startpunkt ? `<p style="margin:0 0 3px;font-size:12px">🚩 <strong>Start:</strong> ${a.startpunkt}</p>` : ""}
+          ${a.ziel ? `<p style="margin:0 0 3px;font-size:12px">🚩 <strong>Startplatz:</strong> ${a.ziel}</p>` : ""}
           ${a.startplatz_hoehe ? `<p style="margin:0 0 3px;font-size:12px">🏔 <strong>Höhe:</strong> ${a.startplatz_hoehe} m</p>` : ""}
           ${a.landeplatz ? `<p style="margin:0 0 3px;font-size:12px">🟢 <strong>Landeplatz:</strong> ${a.landeplatz}</p>` : ""}
           ${a.landeplatz_hoehe ? `<p style="margin:0 0 3px;font-size:12px">⛰ <strong>Landehöhe:</strong> ${a.landeplatz_hoehe} m</p>` : ""}
