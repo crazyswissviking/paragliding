@@ -89,7 +89,10 @@ export default function Home() {
 
         {highlights.length > 0 && (
           <div style={{ marginBottom: "32px" }}>
-            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", marginBottom: "16px" }}>⭐ NÄCHSTE EVENTS</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0" }}>⭐ NÄCHSTE EVENTS</p>
+              <a href="/termine" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>(Alle Events ansehen)</a>
+            </div>
            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}> 
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
@@ -184,20 +187,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        <a href="/termine" style={{
-          display: "block",
-          padding: "16px 24px",
-          background: "#3355cc",
-          color: "white",
-          borderRadius: "12px",
-          textDecoration: "none",
-          fontSize: "16px",
-          fontWeight: "bold",
-        }}>
-          📅 Alle Events ansehen
-        </a>
-
         {/* Blog */}
         {blogBeitraege.length > 0 && (
           <div style={{ marginTop: "32px", width: "100%" }}>
