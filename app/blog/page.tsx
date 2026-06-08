@@ -127,9 +127,14 @@ export default function BlogPage() {
                       <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#7799ff", fontWeight: "bold" }}>🚩 Startplatz</p>
                       {b.startpunkt_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.startpunkt_lv95}</p>}
                       {b.startpunkt_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.startpunkt_hoehe} m</p>}
-                      <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&E=${b.startpunkt_lng}&N=${b.startpunkt_lat}&zoom=8`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>
-                        🗺 Auf Karte anzeigen
-                      </a>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&E=${b.startpunkt_lng}&N=${b.startpunkt_lat}&zoom=8`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
+                          🇨🇭 Swisstopo
+                        </a>
+                        <a href={`https://www.openstreetmap.org/?mlat=${b.startpunkt_lat}&mlon=${b.startpunkt_lng}&zoom=14`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
+                          🗺 OpenStreetMap
+                        </a>
+                      </div>
                     </div>
                   )}
                   {b.landeplatz_lat !== 0 && (
@@ -137,9 +142,14 @@ export default function BlogPage() {
                       <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#6fcf97", fontWeight: "bold" }}>🟢 Landeplatz</p>
                       {b.landeplatz_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.landeplatz_lv95}</p>}
                       {b.landeplatz_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.landeplatz_hoehe} m</p>}
-                      <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&E=${b.landeplatz_lng}&N=${b.landeplatz_lat}&zoom=8`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none" }}>
-                        🗺 Auf Karte anzeigen
-                      </a>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&E=${b.landeplatz_lng}&N=${b.landeplatz_lat}&zoom=8`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
+                          🇨🇭 Swisstopo
+                        </a>
+                        <a href={`https://www.openstreetmap.org/?mlat=${b.landeplatz_lat}&mlon=${b.landeplatz_lng}&zoom=14`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
+                          🗺 OpenStreetMap
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>
