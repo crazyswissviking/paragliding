@@ -28,6 +28,7 @@ export default function Home() {
   const [highlights, setHighlights] = useState<Termin[]>([]);
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
+  const [blogBeitraege, setBlogBeitraege] = useState<{ id: number; titel: string; text: string; bilder: string[]; erstellt_am: string }[]>([]);
 
   useEffect(() => {
     async function laden() {
@@ -42,13 +43,20 @@ export default function Home() {
       const sortiert = (termineData || [])
         .filter((t) => parseDate(t.datum) >= heute.getTime())
         .sort((a, b) => parseDate(a.datum) - parseDate(b.datum))
-        .slice(0, 9);
+        .slice(0, 2);
       setHighlights(sortiert);
 
       const { data: anmeldungenData } = await supabase
         .from("anmeldungen")
         .select("id, termin");
       setAnmeldungen(anmeldungenData || []);
+      const { data: blogData } = await supabase
+        .from("blog")
+        .select("id, titel, text, bilder, erstellt_am")
+        .eq("aktiv", true)
+        .order("erstellt_am", { ascending: false })
+        .limit(3);
+      setBlogBeitraege(blogData || []);
     }
     laden();
   }, []);
@@ -78,9 +86,6 @@ export default function Home() {
         <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "8px" }}>
           🪂 Swissgliders
         </h1>
-        <p style={{ fontSize: "20px", color: "#aaa", marginBottom: "40px" }}>
-          Unsere Events
-        </p>
 
         {highlights.length > 0 && (
           <div style={{ marginBottom: "32px" }}>
@@ -192,6 +197,31 @@ export default function Home() {
         }}>
           📅 Alle Events ansehen
         </a>
+
+        {/* Blog */}
+        {blogBeitraege.length > 0 && (
+          <div style={{ marginTop: "32px", width: "100%" }}>
+            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", marginBottom: "16px" }}>📖 NEUESTE BLOG BEITRÄGE</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {blogBeitraege.map((b) => (
+                <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
+                  <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", display: "flex", gap: "0", background: "rgba(255,255,255,0.05)" }}>
+                    {b.bilder && b.bilder.length > 0 && (
+                      <img src={b.bilder[0]} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "cover", flexShrink: 0 }} />
+                    )}
+                    <div style={{ padding: "12px" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
+                      <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{b.titel}</p>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+            <a href="/blog" style={{ display: "block", marginTop: "12px", padding: "12px 24px", background: "rgba(255,255,255,0.05)", color: "#aaa", borderRadius: "12px", textDecoration: "none", fontSize: "14px", textAlign: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
+              📖 Alle Beiträge lesen
+            </a>
+          </div>
+        )}
       </div>
 
 {/* Links unten links */}
