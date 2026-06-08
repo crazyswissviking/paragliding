@@ -40,7 +40,7 @@ export default function BlogPage() {
   }, []);
 
   function swisstopoUrl(lat: number, lng: number): string {
-    return `https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&crosshair=marker&center=${lng},${lat}&z=10&sr=4326`;
+    return `https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&crosshair=marker&swisssearch=${lat},${lng}`;
   }
 
   function osmUrl(lat: number, lng: number): string {
