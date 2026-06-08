@@ -70,7 +70,7 @@ export default function Home() {
       alignItems: "center",
       justifyContent: "flex-start",
       paddingTop: "16px",
-      padding: "0px 40px 40px 40px",
+      padding: "10px 40px 40px 40px",
       textAlign: "center",
       overflow: "hidden",
     }}>
