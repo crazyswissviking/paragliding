@@ -69,7 +69,7 @@ export default function Home() {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      padding: "40px",
+      padding: "16px 40px 40px 40px",
       textAlign: "center",
       overflow: "hidden",
     }}>
@@ -83,7 +83,7 @@ export default function Home() {
 
       {/* Inhalt */}
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "700px" }}>
-        <h1 style={{ fontSize: "48px", fontWeight: "bold", color: "#ffffff", marginBottom: "8px" }}>
+        <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#ffffff", marginBottom: "4px", marginTop: "0" }}>
           🪂 Swissgliders
         </h1>
 
