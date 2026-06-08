@@ -39,6 +39,14 @@ export default function BlogPage() {
     laden();
   }, []);
 
+  function swisstopoUrl(lat: number, lng: number): string {
+    return `https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&crosshair=marker&center=${lng},${lat}&z=10&sr=4326`;
+  }
+
+  function osmUrl(lat: number, lng: number): string {
+    return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=14`;
+  }
+
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>📖 Blog</h1>
@@ -128,9 +136,10 @@ export default function BlogPage() {
                       {b.startpunkt_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.startpunkt_lv95}</p>}
                       {b.startpunkt_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.startpunkt_hoehe} m</p>}
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                       <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&crosshair=marker&center=${b.startpunkt_lng},${b.startpunkt_lat}&z=10&sr=4326`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
+                        <a href={swisstopoUrl(b.startpunkt_lat, b.startpunkt_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
+                          🇨🇭 Swisstopo
                         </a>
-                        <a href={`https://www.openstreetmap.org/?mlat=${b.startpunkt_lat}&mlon=${b.startpunkt_lng}&zoom=14`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
+                        <a href={osmUrl(b.startpunkt_lat, b.startpunkt_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
                           🗺 OpenStreetMap
                         </a>
                       </div>
@@ -142,10 +151,10 @@ export default function BlogPage() {
                       {b.landeplatz_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.landeplatz_lv95}</p>}
                       {b.landeplatz_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.landeplatz_hoehe} m</p>}
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                        <a href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&crosshair=marker&center=${b.landeplatz_lng},${b.landeplatz_lat}&z=10&sr=4326`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
+                        <a href={swisstopoUrl(b.landeplatz_lat, b.landeplatz_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
                           🇨🇭 Swisstopo
                         </a>
-                        <a href={`https://www.openstreetmap.org/?mlat=${b.landeplatz_lat}&mlon=${b.landeplatz_lng}&zoom=14`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
+                        <a href={osmUrl(b.landeplatz_lat, b.landeplatz_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
                           🗺 OpenStreetMap
                         </a>
                       </div>
