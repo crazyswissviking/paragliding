@@ -138,7 +138,7 @@ export default function HikeAndFlyPage() {
               onClick={() => { setOffen(istOffen ? null : a.id); setAusgewaehlt(a.id); setHoverOffen(null); }}
               onMouseEnter={() => setHoverOffen(a.id)}
               onMouseLeave={() => setHoverOffen(null)}
-              onTouchStart={(e) => { e.preventDefault(); setHoverOffen(istHover ? null : a.id); }}
+              onTouchEnd={(e) => { e.preventDefault(); setHoverOffen(istHover ? null : a.id); }}
               style={{
                 padding: "20px 24px",
                 display: "flex",
@@ -151,20 +151,23 @@ export default function HikeAndFlyPage() {
               }}
             >
               {/* Overlay */}
-              <div style={{
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                background: "rgba(20,30,60,0.96)",
-                padding: "16px 24px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                gap: "6px",
-                opacity: istHover ? 1 : 0,
-                transition: "opacity 0.2s",
-                pointerEvents: istHover ? "auto" : "none",
-                zIndex: 5,
-              }}>
+              <div
+                onMouseEnter={() => setHoverOffen(a.id)}
+                onMouseLeave={() => setHoverOffen(null)}
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  background: "rgba(20,30,60,0.96)",
+                  padding: "16px 24px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  gap: "6px",
+                  opacity: istHover ? 1 : 0,
+                  transition: "opacity 0.2s",
+                  pointerEvents: istHover ? "auto" : "none",
+                  zIndex: 5,
+                }}>
                 {a.startpunkt && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>🚩 <strong>Startpunkt:</strong> {a.startpunkt}</p>}
                 {a.startplatz_hoehe > 0 && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>🏔 <strong>Startplatzhöhe:</strong> {a.startplatz_hoehe} m</p>}
                 {a.landeplatz && <p style={{ margin: "0", fontSize: "13px", color: "#fff" }}>🟢 <strong>Landeplatz:</strong> {a.landeplatz}</p>}
