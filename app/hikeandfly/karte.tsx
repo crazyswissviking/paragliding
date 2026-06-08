@@ -29,6 +29,7 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
   const landeMarkersRef = useRef<Record<number, L.Marker>>({});
   const layerRef = useRef<L.TileLayer | null>(null);
   const [kartentyp, setKartentyp] = useState<"osm" | "swisstopo">("osm");
+  const [touchAusgewaehlt, setTouchAusgewaehlt] = useState<number | null>(null);
 
   const tiles = {
     osm: { url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "© OpenStreetMap" },
@@ -47,14 +48,14 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
     const startIcon = L.divIcon({
       html: `<div style="background:#3355cc;border-radius:50%;width:10px;height:10px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
       className: "",
-      iconSize: [10, 10],
+      iconSize: [14, 14],
       iconAnchor: [5, 5],
     });
 
     const landeIcon = L.divIcon({
       html: `<div style="background:#2d6a4f;border-radius:50%;width:10px;height:10px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
       className: "",
-      iconSize: [10, 10],
+      iconSize: [14, 14],
       iconAnchor: [5, 5],
     });
 
@@ -76,7 +77,16 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
         .addTo(karte)
         .bindTooltip(tooltipInhalt, { direction: "top", offset: [0, -8], opacity: 1 });
 
-      marker.on("click", () => onAuswaehlen(a.id));
+      marker.on("click", () => {
+        setTouchAusgewaehlt((prev) => {
+          if (prev === a.id) {
+            onAuswaehlen(a.id);
+            return null;
+          }
+          return a.id;
+        });
+      });
+
       markersRef.current[a.id] = marker;
       alleBounds.push([a.lat, a.lng]);
 
@@ -113,6 +123,17 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
       }
     }
   }, [ausgewaehlt]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (touchAusgewaehlt && markersRef.current[touchAusgewaehlt]) {
+      markersRef.current[touchAusgewaehlt].openTooltip();
+      mapRef.current.panTo(markersRef.current[touchAusgewaehlt].getLatLng());
+      if (landeMarkersRef.current[touchAusgewaehlt]) {
+        landeMarkersRef.current[touchAusgewaehlt].addTo(mapRef.current);
+      }
+    }
+  }, [touchAusgewaehlt]);
 
   useEffect(() => {
     if (!mapRef.current || !layerRef.current) return;
