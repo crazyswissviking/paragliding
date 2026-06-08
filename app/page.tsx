@@ -68,8 +68,9 @@ export default function Home() {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
-      padding: "16px 40px 40px 40px",
+      justifyContent: "flex-start",
+      paddingTop: "16px",
+      padding: "0px 40px 40px 40px",
       textAlign: "center",
       overflow: "hidden",
     }}>
