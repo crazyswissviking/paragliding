@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
 
@@ -53,6 +53,7 @@ const leer = (): BlogOhneId => ({
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
+// ── KoordBlock ausserhalb ──────────────────────────────────────────────────
 function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
   lv95Label: string;
   lat: number; lng: number; hoehe: number;
@@ -87,6 +88,94 @@ function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
   );
 }
 
+// ── Formular ausserhalb ────────────────────────────────────────────────────
+function Formular({ data, set, uploadLoading, onBilderHochladen }: {
+  data: BlogOhneId | Blog;
+  set: (v: any) => void;
+  uploadLoading: boolean;
+  onBilderHochladen: (files: FileList | null) => void;
+}) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
+        <input type="text" value={data.titel} onChange={(e) => set({ ...data, titel: e.target.value })} placeholder="Blog Titel" style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Blog Text (Markdown)</label>
+        <textarea value={data.text} onChange={(e) => set({ ...data, text: e.target.value })} rows={6} placeholder="Beschreibe dein Abenteuer..." style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>💡 Tipps & Tricks (eine Zeile pro Tipp)</label>
+        <textarea value={data.tipps} onChange={(e) => set({ ...data, tipps: e.target.value })} rows={4} placeholder={"Tipp 1\nTipp 2\nTipp 3"} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Bildergalerie</label>
+        <label style={{ display: "inline-block", padding: "8px 14px", background: uploadLoading ? "#aaa" : "#3355cc", color: "white", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}>
+          {uploadLoading ? "⏳ Wird hochgeladen..." : "📁 Bilder hochladen"}
+          <input type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => onBilderHochladen(e.target.files)} disabled={uploadLoading} />
+        </label>
+        {data.bilder && data.bilder.length > 0 && (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+            {data.bilder.map((url: string, i: number) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
+                <button onClick={() => set({ ...data, bilder: data.bilder.filter((_: string, j: number) => j !== i) })} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🎥 Video</label>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input type="text" value={data.video_url} onChange={(e) => set({ ...data, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
+          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
+            📁 Upload
+            <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const url = await cloudinaryUpload(file);
+              set({ ...data, video_url: url });
+            }} />
+          </label>
+        </div>
+      </div>
+      <KoordBlock
+        lv95Label="Startplatz Koordinaten"
+        lat={data.startpunkt_lat}
+        lng={data.startpunkt_lng}
+        hoehe={data.startpunkt_hoehe}
+        onKoord={(lat, lng, lv95) => set({ ...data, startpunkt_lat: lat, startpunkt_lng: lng, startpunkt_lv95: lv95 })}
+      />
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏔 Startplatz Höhe (m)</label>
+        <input type="number" value={data.startpunkt_hoehe} onChange={(e) => set({ ...data, startpunkt_hoehe: parseInt(e.target.value) })} style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
+        <input type="text" value={data.landeplatz_lv95} onChange={(e) => set({ ...data, landeplatz_lv95: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
+      </div>
+      <KoordBlock
+        lv95Label="Landeplatz Koordinaten"
+        lat={data.landeplatz_lat}
+        lng={data.landeplatz_lng}
+        hoehe={data.landeplatz_hoehe}
+        onKoord={(lat, lng, lv95) => set({ ...data, landeplatz_lat: lat, landeplatz_lng: lng, landeplatz_lv95: lv95 })}
+      />
+      <div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Höhe (m)</label>
+        <input type="number" value={data.landeplatz_hoehe} onChange={(e) => set({ ...data, landeplatz_hoehe: parseInt(e.target.value) })} style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Route URL</label>
+        <input type="text" value={data.route_url} onChange={(e) => set({ ...data, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
+      </div>
+    </div>
+  );
+}
+
+// ── Hauptkomponente ────────────────────────────────────────────────────────
 export default function AdminBlog() {
   const [beitraege, setBeitraege] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,87 +241,6 @@ export default function AdminBlog() {
     setUploadLoading(false);
   }
 
-  const Formular = ({ data, set }: { data: BlogOhneId | Blog; set: (v: any) => void }) => (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
-        <input type="text" value={data.titel} onChange={(e) => set({ ...data, titel: e.target.value })} placeholder="Blog Titel" style={inputStyle} />
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Blog Text (Markdown)</label>
-        <textarea value={data.text} onChange={(e) => set({ ...data, text: e.target.value })} rows={6} placeholder="Beschreibe dein Abenteuer..." style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }} />
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>💡 Tipps & Tricks (eine Zeile pro Tipp)</label>
-        <textarea value={data.tipps} onChange={(e) => set({ ...data, tipps: e.target.value })} rows={4} placeholder={"Tipp 1\nTipp 2\nTipp 3"} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }} />
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Bildergalerie</label>
-        <label style={{ display: "inline-block", padding: "8px 14px", background: uploadLoading ? "#aaa" : "#3355cc", color: "white", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}>
-          {uploadLoading ? "⏳ Wird hochgeladen..." : "📁 Bilder hochladen"}
-          <input type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => bilderHochladen(e.target.files, data, set)} disabled={uploadLoading} />
-        </label>
-        {data.bilder && data.bilder.length > 0 && (
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-            {data.bilder.map((url, i) => (
-              <div key={i} style={{ position: "relative" }}>
-                <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
-                <button onClick={() => set({ ...data, bilder: data.bilder.filter((_: string, j: number) => j !== i) })} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🎥 Video</label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input type="text" value={data.video_url} onChange={(e) => set({ ...data, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
-          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
-            📁 Upload
-            <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setUploadLoading(true);
-              const url = await cloudinaryUpload(file);
-              set({ ...data, video_url: url });
-              setUploadLoading(false);
-            }} />
-          </label>
-        </div>
-      </div>
-      <KoordBlock
-        lv95Label="Startplatz Koordinaten"
-        lat={data.startpunkt_lat}
-        lng={data.startpunkt_lng}
-        hoehe={data.startpunkt_hoehe}
-        onKoord={(lat, lng, lv95) => set({ ...data, startpunkt_lat: lat, startpunkt_lng: lng, startpunkt_lv95: lv95 })}
-      />
-      <div>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏔 Startplatz Höhe (m)</label>
-        <input type="number" value={data.startpunkt_hoehe} onChange={(e) => set({ ...data, startpunkt_hoehe: parseInt(e.target.value) })} style={inputStyle} />
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
-        <input type="text" value={data.landeplatz_lv95} onChange={(e) => set({ ...data, landeplatz_lv95: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
-      </div>
-      <KoordBlock
-        lv95Label="Landeplatz Koordinaten"
-        lat={data.landeplatz_lat}
-        lng={data.landeplatz_lng}
-        hoehe={data.landeplatz_hoehe}
-        onKoord={(lat, lng, lv95) => set({ ...data, landeplatz_lat: lat, landeplatz_lng: lng, landeplatz_lv95: lv95 })}
-      />
-      <div>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Höhe (m)</label>
-        <input type="number" value={data.landeplatz_hoehe} onChange={(e) => set({ ...data, landeplatz_hoehe: parseInt(e.target.value) })} style={inputStyle} />
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Route URL</label>
-        <input type="text" value={data.route_url} onChange={(e) => set({ ...data, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
-      </div>
-    </div>
-  );
-
   return (
     <PasswortSchutz>
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
@@ -246,7 +254,12 @@ export default function AdminBlog() {
               <h3 style={{ margin: "0", fontSize: "20px" }}>Beitrag bearbeiten</h3>
               <button onClick={() => setBearbeiten(null)} style={{ background: "none", border: "none", fontSize: "24px", cursor: "pointer", color: "#888" }}>✕</button>
             </div>
-            <Formular data={bearbeiten} set={(v) => setBearbeiten({ ...bearbeiten, ...v })} />
+            <Formular
+              data={bearbeiten}
+              set={(v) => setBearbeiten({ ...bearbeiten, ...v })}
+              uploadLoading={uploadLoading}
+              onBilderHochladen={(files) => bilderHochladen(files, bearbeiten, (v) => setBearbeiten({ ...bearbeiten, ...v }))}
+            />
             <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
               <button onClick={speichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>💾 Speichern</button>
               <button onClick={() => setBearbeiten(null)} style={{ padding: "10px 24px", background: "#f5f5f5", color: "#555", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>Abbrechen</button>
@@ -258,7 +271,12 @@ export default function AdminBlog() {
 
       <div style={{ border: "1px solid #ddd", borderRadius: "12px", padding: "24px", marginBottom: "30px" }}>
         <h3 style={{ margin: "0 0 20px", fontSize: "18px" }}>Neuer Beitrag</h3>
-        <Formular data={neu} set={setNeu} />
+        <Formular
+          data={neu}
+          set={setNeu}
+          uploadLoading={uploadLoading}
+          onBilderHochladen={(files) => bilderHochladen(files, neu, setNeu)}
+        />
         <div style={{ marginTop: "16px", display: "flex", gap: "12px", alignItems: "center" }}>
           <button onClick={hinzufuegen} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
             ➕ Beitrag hinzufügen
