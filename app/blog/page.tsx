@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "../../supabase";
-import PasswortSchutz from "../passwort";
+import { supabase } from "../supabase";
+import ReactMarkdown from "react-markdown";
 
 const CLOUD_NAME = "dnfnng4mm";
 const UPLOAD_PRESET = "li5gwyqb";
