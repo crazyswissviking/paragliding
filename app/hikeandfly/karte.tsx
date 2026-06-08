@@ -12,6 +12,9 @@ type Punkt = {
   landeplatz?: string;
   landeplatz_lat?: number;
   landeplatz_lng?: number;
+  startplatz_hoehe?: number;
+  landeplatz_hoehe?: number;
+  schwierigkeit?: string;
 };
 
 type Props = {
@@ -42,32 +45,44 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
     layerRef.current = L.tileLayer(t.url, { attribution: t.attribution, maxZoom: 19 }).addTo(karte);
 
     const startIcon = L.divIcon({
-      html: `<div style="background:#3355cc;border-radius:50%;width:14px;height:14px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
+      html: `<div style="background:#3355cc;border-radius:50%;width:10px;height:10px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
       className: "",
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
+      iconSize: [10, 10],
+      iconAnchor: [5, 5],
     });
 
     const landeIcon = L.divIcon({
-      html: `<div style="background:#2d6a4f;border-radius:50%;width:14px;height:14px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
+      html: `<div style="background:#2d6a4f;border-radius:50%;width:10px;height:10px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
       className: "",
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
+      iconSize: [10, 10],
+      iconAnchor: [5, 5],
     });
 
     const alleBounds: [number, number][] = [];
 
     abenteuer.forEach((a) => {
+      const tooltipInhalt = `
+        <div style="min-width:180px">
+          <p style="margin:0 0 6px;font-weight:bold;font-size:14px">${a.titel}</p>
+          ${a.startpunkt ? `<p style="margin:0 0 3px;font-size:12px">🚩 <strong>Start:</strong> ${a.startpunkt}</p>` : ""}
+          ${a.startplatz_hoehe ? `<p style="margin:0 0 3px;font-size:12px">🏔 <strong>Höhe:</strong> ${a.startplatz_hoehe} m</p>` : ""}
+          ${a.landeplatz ? `<p style="margin:0 0 3px;font-size:12px">🟢 <strong>Landeplatz:</strong> ${a.landeplatz}</p>` : ""}
+          ${a.landeplatz_hoehe ? `<p style="margin:0 0 3px;font-size:12px">⛰ <strong>Landehöhe:</strong> ${a.landeplatz_hoehe} m</p>` : ""}
+          ${a.schwierigkeit ? `<p style="margin:0;font-size:12px">💪 <strong>Schwierigkeit:</strong> ${a.schwierigkeit}</p>` : ""}
+        </div>
+      `;
+
       const marker = L.marker([a.lat, a.lng], { icon: startIcon })
         .addTo(karte)
-        .bindPopup(`<strong>${a.titel}</strong><br/>🚩 ${a.startpunkt}`);
+        .bindTooltip(tooltipInhalt, { direction: "top", offset: [0, -8], opacity: 1 });
+
       marker.on("click", () => onAuswaehlen(a.id));
       markersRef.current[a.id] = marker;
       alleBounds.push([a.lat, a.lng]);
 
       if (a.landeplatz_lat && a.landeplatz_lng) {
         const landeMarker = L.marker([a.landeplatz_lat, a.landeplatz_lng], { icon: landeIcon })
-          .bindPopup(`<strong>${a.titel}</strong><br/>🟢 Landeplatz: ${a.landeplatz}`);
+          .bindTooltip(`<strong>${a.titel}</strong><br/>🟢 Landeplatz: ${a.landeplatz}`, { direction: "top", offset: [0, -8], opacity: 1 });
         landeMarkersRef.current[a.id] = landeMarker;
       }
     });
@@ -85,19 +100,14 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
 
   useEffect(() => {
     if (!mapRef.current) return;
-
-    // Alle Landemarker entfernen
     Object.values(landeMarkersRef.current).forEach((m) => {
       if (mapRef.current) m.removeFrom(mapRef.current);
     });
-
     if (ausgewaehlt) {
-      // Startpunkt Popup öffnen
       if (markersRef.current[ausgewaehlt]) {
-        markersRef.current[ausgewaehlt].openPopup();
+        markersRef.current[ausgewaehlt].openTooltip();
         mapRef.current.panTo(markersRef.current[ausgewaehlt].getLatLng());
       }
-      // Landemarker einblenden
       if (landeMarkersRef.current[ausgewaehlt] && mapRef.current) {
         landeMarkersRef.current[ausgewaehlt].addTo(mapRef.current);
       }
