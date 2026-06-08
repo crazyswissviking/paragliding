@@ -1,0 +1,193 @@
+"use client";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabase";
+import ReactMarkdown from "react-markdown";
+
+type Blog = {
+  id: number;
+  titel: string;
+  text: string;
+  tipps: string;
+  bilder: string[];
+  video_url: string;
+  startpunkt_lv95: string;
+  startpunkt_lat: number;
+  startpunkt_lng: number;
+  startpunkt_hoehe: number;
+  landeplatz_lv95: string;
+  landeplatz_lat: number;
+  landeplatz_lng: number;
+  landeplatz_hoehe: number;
+  route_url: string;
+  erstellt_am: string;
+};
+
+export default function BlogPage() {
+  const [beitraege, setBeitraege] = useState<Blog[]>([]);
+  const [tippOffen, setTippOffen] = useState<number | null>(null);
+  const [bildIndex, setBildIndex] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    async function laden() {
+      const { data } = await supabase
+        .from("blog")
+        .select("*")
+        .eq("aktiv", true)
+        .order("erstellt_am", { ascending: false });
+      setBeitraege(data || []);
+    }
+    laden();
+  }, []);
+
+  return (
+    <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
+      <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>📖 Blog</h1>
+      <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Berichte & Erlebnisse</h2>
+
+      {beitraege.length === 0 && (
+        <p style={{ color: "#666", textAlign: "center", marginTop: "40px" }}>Noch keine Beiträge.</p>
+      )}
+
+      {beitraege.map((b) => {
+        const tippIstOffen = tippOffen === b.id;
+        const aktuellesBild = bildIndex[b.id] || 0;
+        const tipps = b.tipps ? b.tipps.split("\n").filter((t) => t.trim()) : [];
+
+        return (
+          <div key={b.id} style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "16px", marginBottom: "32px", overflow: "hidden" }}>
+
+            {/* Bildergalerie */}
+            {b.bilder && b.bilder.length > 0 && (
+              <div style={{ position: "relative" }}>
+                <img
+                  src={b.bilder[aktuellesBild]}
+                  alt={b.titel}
+                  style={{ width: "100%", height: "300px", objectFit: "cover" }}
+                />
+                {b.bilder.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setBildIndex((prev) => ({ ...prev, [b.id]: Math.max(0, aktuellesBild - 1) }))}
+                      style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellesBild === 0 ? "none" : "block" }}
+                    >‹</button>
+                    <button
+                      onClick={() => setBildIndex((prev) => ({ ...prev, [b.id]: Math.min(b.bilder.length - 1, aktuellesBild + 1) }))}
+                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellesBild === b.bilder.length - 1 ? "none" : "block" }}
+                    >›</button>
+                    <div style={{ position: "absolute", bottom: "10px", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "6px" }}>
+                      {b.bilder.map((_, i) => (
+                        <div key={i} onClick={() => setBildIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === aktuellesBild ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer" }} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div style={{ padding: "24px" }}>
+              {/* Datum & Titel */}
+              <p style={{ margin: "0 0 8px", fontSize: "12px", color: "#aaa" }}>
+                {new Date(b.erstellt_am).toLocaleDateString("de-CH")}
+              </p>
+              <h2 style={{ margin: "0 0 16px", fontSize: "24px", color: "#fff" }}>{b.titel}</h2>
+
+              {/* Text */}
+              {b.text && (
+                <div style={{ marginBottom: "20px", fontSize: "15px", color: "#ccc", lineHeight: "1.7" }}>
+                  <ReactMarkdown components={{
+                    p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
+                    strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
+                    ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
+                    li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
+                    br: () => <br />,
+                  }}>
+                    {b.text}
+                  </ReactMarkdown>
+                </div>
+              )}
+
+              {/* Tipps Toolbox */}
+              {tipps.length > 0 && (
+                <div style={{ marginBottom: "20px" }}>
+                  <button
+                    onClick={() => setTippOffen(tippIstOffen ? null : b.id)}
+                    style={{ width: "100%", padding: "12px 16px", background: "rgba(255,165,0,0.15)", border: "1px solid rgba(255,165,0,0.3)", borderRadius: "10px", color: "#ffaa44", cursor: "pointer", fontSize: "14px", fontWeight: "bold", textAlign: "left", display: "flex", justifyContent: "space-between" }}
+                  >
+                    <span>💡 Tipps & Tricks ({tipps.length})</span>
+                    <span>{tippIstOffen ? "▲" : "▼"}</span>
+                  </button>
+                  {tippIstOffen && (
+                    <div style={{ padding: "16px", background: "rgba(255,165,0,0.08)", border: "1px solid rgba(255,165,0,0.2)", borderTop: "none", borderRadius: "0 0 10px 10px" }}>
+                      <ul style={{ margin: "0", paddingLeft: "20px" }}>
+                        {tipps.map((t, i) => (
+                          <li key={i} style={{ color: "#ffcc88", fontSize: "14px", marginBottom: "8px" }}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Video */}
+              {b.video_url && (
+                <div style={{ marginBottom: "20px" }}>
+                  <video controls style={{ width: "100%", borderRadius: "10px", maxHeight: "400px" }}>
+                    <source src={b.video_url} type="video/mp4" />
+                  </video>
+                </div>
+              )}
+
+              {/* Start & Landeplatz */}
+              {(b.startpunkt_lat !== 0 || b.landeplatz_lat !== 0) && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                  {b.startpunkt_lat !== 0 && (
+                    <div style={{ padding: "14px", background: "rgba(51,85,204,0.2)", borderRadius: "10px" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#7799ff", fontWeight: "bold" }}>🚩 Startplatz</p>
+                      {b.startpunkt_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.startpunkt_lv95}</p>}
+                      {b.startpunkt_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.startpunkt_hoehe} m</p>}
+                      
+                        href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&E=${b.startpunkt_lng}&N=${b.startpunkt_lat}&zoom=8`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}
+                      >
+                        🗺 Auf Karte anzeigen →
+                      </a>
+                    </div>
+                  )}
+                  {b.landeplatz_lat !== 0 && (
+                    <div style={{ padding: "14px", background: "rgba(0,200,100,0.1)", borderRadius: "10px" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#6fcf97", fontWeight: "bold" }}>🟢 Landeplatz</p>
+                      {b.landeplatz_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.landeplatz_lv95}</p>}
+                      {b.landeplatz_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.landeplatz_hoehe} m</p>}
+                      
+                        href={`https://map.geo.admin.ch/?lang=de&topic=ech&bgLayer=ch.swisstopo.pixelkarte-farbe&layers=&E=${b.landeplatz_lng}&N=${b.landeplatz_lat}&zoom=8`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none" }}
+                      >
+                        🗺 Auf Karte anzeigen →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Route Link */}
+              {b.route_url && (
+                
+                  href={b.route_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}
+                >
+                  🗺 Wanderroute ansehen
+                </a>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </main>
+  );
+}

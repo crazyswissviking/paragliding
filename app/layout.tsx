@@ -29,6 +29,9 @@ export default function RootLayout({
 
           {/* Desktop Links */}
           <div style={{ display: "flex", gap: "24px" }} className="desktop-nav">
+            <a href="/blog" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>
+  📖 Blog
+</a>
             <a href="/termine" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>Termine</a>
           
             <a href="/hikeandfly" style={{ color: "rgba(255,255,255,0.85)", textDecoration: "none", fontSize: "15px" }}>
@@ -52,6 +55,10 @@ export default function RootLayout({
               flexDirection: "column",
               gap: "8px",
             }}>
+              
+              <a href="/blog" style={{ color: "white", textDecoration: "none", fontSize: "15px", padding: "8px 12px", borderRadius: "8px" }}>
+  📖 Blog
+</a>
               <a href="/termine" style={{ color: "white", textDecoration: "none", fontSize: "15px", padding: "8px 12px", borderRadius: "8px" }}>📅 Termine</a>
               
               <a href="/hikeandfly" style={{ color: "white", textDecoration: "none", fontSize: "15px", padding: "8px 12px", borderRadius: "8px" }}>🥾 Hike & Fly</a>
