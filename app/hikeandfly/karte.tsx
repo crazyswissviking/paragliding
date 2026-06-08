@@ -44,15 +44,15 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
     const startIcon = L.divIcon({
       html: `<div style="background:#3355cc;border-radius:50%;width:14px;height:14px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
       className: "",
-      iconSize: [10, 10],
-      iconAnchor: [5, 5],
+      iconSize: [12, 12],
+      iconAnchor: [7, 7],
     });
 
     const landeIcon = L.divIcon({
       html: `<div style="background:#2d6a4f;border-radius:50%;width:14px;height:14px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>`,
       className: "",
-      iconSize: [10, 10],
-      iconAnchor: [5, 5],
+      iconSize: [12, 12],
+      iconAnchor: [7, 7],
     });
 
     const alleBounds: [number, number][] = [];
