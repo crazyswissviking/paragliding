@@ -4,6 +4,17 @@ import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
 import ReactMarkdown from "react-markdown";
 
+const CLOUD_NAME = "dnfnng4mm";
+const UPLOAD_PRESET = "li5gwyqb";
+
+async function cloudinaryUpload(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { method: "POST", body: formData });
+  const data = await res.json();
+  return data.secure_url;
+}
 
 type Termin = {
   id: number;
@@ -16,6 +27,7 @@ type Termin = {
   details: string;
   bild_url: string;
   video_url: string;
+  bilder: string[];
 };
 
 type NeuerTermin = {
@@ -28,6 +40,7 @@ type NeuerTermin = {
   details: string;
   bild_url: string;
   video_url: string;
+  bilder: string[];
 };
 
 const parseDate = (d: string) => {
@@ -36,19 +49,95 @@ const parseDate = (d: string) => {
 };
 
 const leerTermin = (): NeuerTermin => ({
-  datum: "",
-  wochentag: "",
-  titel: "Vollmond-/Nachtflug",
-  ort: "Wird noch bekanntgegeben",
-  max_teilnehmer: 6,
-  aktiv: true,
-  details: "",
-  bild_url: "",
-  video_url: "",
+  datum: "", wochentag: "", titel: "Vollmond-/Nachtflug",
+  ort: "Wird noch bekanntgegeben", max_teilnehmer: 6,
+  aktiv: true, details: "", bild_url: "", video_url: "", bilder: [],
 });
 
 const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
+
+// ── MediaUpload ausserhalb ─────────────────────────────────────────────────
+function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilder }: {
+  bildUrl: string;
+  videoUrl: string;
+  bilder: string[];
+  onBildUrl: (url: string) => void;
+  onVideoUrl: (url: string) => void;
+  onBilder: (bilder: string[]) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  return (
+    <>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Bildergalerie</label>
+        <label style={{ display: "inline-block", padding: "8px 14px", background: uploading ? "#aaa" : "#3355cc", color: "white", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}>
+          {uploading ? "⏳ Wird hochgeladen..." : "📁 Bilder hochladen"}
+          <input type="file" accept="image/*" multiple style={{ display: "none" }} disabled={uploading} onChange={async (e) => {
+            if (!e.target.files) return;
+            setUploading(true);
+            const urls: string[] = [];
+            for (const file of Array.from(e.target.files)) {
+              const url = await cloudinaryUpload(file);
+              urls.push(url);
+            }
+            onBilder([...bilder, ...urls]);
+            setUploading(false);
+          }} />
+        </label>
+        {bilder.length > 0 && (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+            {bilder.map((url, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
+                <button onClick={() => onBilder(bilder.filter((_, j) => j !== i))} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🎥 Video</label>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input type="text" value={videoUrl} onChange={(e) => onVideoUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
+          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
+            📁 Upload
+            <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUploading(true);
+              const url = await cloudinaryUpload(file);
+              onVideoUrl(url);
+              setUploading(false);
+            }} />
+          </label>
+        </div>
+        {videoUrl && (
+          <video src={videoUrl} controls style={{ marginTop: "8px", width: "100%", maxHeight: "150px", borderRadius: "6px" }} />
+        )}
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Hauptbild URL (optional, alternativ zu Galerie)</label>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input type="text" value={bildUrl} onChange={(e) => onBildUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
+          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
+            📁 Upload
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUploading(true);
+              const url = await cloudinaryUpload(file);
+              onBildUrl(url);
+              setUploading(false);
+            }} />
+          </label>
+        </div>
+        {bildUrl && <img src={bildUrl} style={{ marginTop: "8px", width: "100%", maxHeight: "150px", objectFit: "cover", borderRadius: "6px" }} />}
+      </div>
+    </>
+  );
+}
 
 export default function AdminTermine() {
   const [termine, setTermine] = useState<Termin[]>([]);
@@ -67,7 +156,7 @@ export default function AdminTermine() {
 
   useEffect(() => { laden(); }, []);
 
-  function terminAendern(index: number, feld: keyof NeuerTermin, wert: string | number | boolean) {
+  function terminAendern(index: number, feld: keyof NeuerTermin, wert: any) {
     const updated = [...neueTermine];
     updated[index] = { ...updated[index], [feld]: wert };
     setNeueTermine(updated);
@@ -99,20 +188,14 @@ export default function AdminTermine() {
   async function bearbeitenSpeichern() {
     if (!bearbeiten) return;
     await supabase.from("termine").update({
-      datum: bearbeiten.datum,
-      wochentag: bearbeiten.wochentag,
-      titel: bearbeiten.titel,
-      ort: bearbeiten.ort,
-      max_teilnehmer: bearbeiten.max_teilnehmer,
-      details: bearbeiten.details,
-      bild_url: bearbeiten.bild_url,
-      video_url: bearbeiten.video_url,
+      datum: bearbeiten.datum, wochentag: bearbeiten.wochentag,
+      titel: bearbeiten.titel, ort: bearbeiten.ort,
+      max_teilnehmer: bearbeiten.max_teilnehmer, details: bearbeiten.details,
+      bild_url: bearbeiten.bild_url, video_url: bearbeiten.video_url,
+      bilder: bearbeiten.bilder,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
-    setTimeout(() => {
-      setBearbeitenGespeichert(false);
-      setBearbeiten(null);
-    }, 1500);
+    setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
     laden();
   }
 
@@ -153,52 +236,35 @@ export default function AdminTermine() {
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
                 <input type="number" value={bearbeiten.max_teilnehmer} onChange={(e) => setBearbeiten({ ...bearbeiten, max_teilnehmer: parseInt(e.target.value) })} style={inputStyle} />
               </div>
-             <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details</label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
                     <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>✏️ Bearbeiten</p>
-                    <textarea
-                      value={bearbeiten.details}
-                      onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })}
-                      placeholder={"**Fett**\n- Aufzählung 1\n- Aufzählung 2\n\nNeuer Absatz"}
-                      style={{ ...inputStyle, resize: "none", fontFamily: "monospace", height: "200px" }}
-                    />
+                    <textarea value={bearbeiten.details} onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })} placeholder={"**Fett**\n- Aufzählung"} style={{ ...inputStyle, resize: "none", fontFamily: "monospace", height: "200px" }} />
                   </div>
                   <div>
                     <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>👁 Vorschau</p>
                     <div style={{ padding: "8px", border: "1px solid #ddd", borderRadius: "6px", height: "200px", overflowY: "auto", fontSize: "14px", color: "#333" }}>
-                      <ReactMarkdown
-                        components={{
-                          p: ({ children }) => <p style={{ margin: "8px 0" }}>{children}</p>,
-                          strong: ({ children }) => <strong style={{ color: "#000" }}>{children}</strong>,
-                          ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>{children}</ul>,
-                          li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
-                          br: () => <br />,
-                        }}
-                      >
+                      <ReactMarkdown components={{ p: ({ children }) => <p style={{ margin: "8px 0" }}>{children}</p>, strong: ({ children }) => <strong style={{ color: "#000" }}>{children}</strong>, ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>{children}</ul>, li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>, br: () => <br /> }}>
                         {bearbeiten.details || "*Noch kein Text...*"}
                       </ReactMarkdown>
                     </div>
                   </div>
                 </div>
               </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (von Cloudinary)</label>
-                <input type="text" value={bearbeiten.bild_url} onChange={(e) => setBearbeiten({ ...bearbeiten, bild_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL (von Cloudinary)</label>
-                <input type="text" value={bearbeiten.video_url} onChange={(e) => setBearbeiten({ ...bearbeiten, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
-              </div>
+              <MediaUpload
+                bildUrl={bearbeiten.bild_url}
+                videoUrl={bearbeiten.video_url}
+                bilder={bearbeiten.bilder || []}
+                onBildUrl={(url) => setBearbeiten({ ...bearbeiten, bild_url: url })}
+                onVideoUrl={(url) => setBearbeiten({ ...bearbeiten, video_url: url })}
+                onBilder={(b) => setBearbeiten({ ...bearbeiten, bilder: b })}
+              />
             </div>
             <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
-              <button onClick={bearbeitenSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
-                💾 Speichern
-              </button>
-              <button onClick={() => setBearbeiten(null)} style={{ padding: "10px 24px", background: "#f5f5f5", color: "#555", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
-                Abbrechen
-              </button>
+              <button onClick={bearbeitenSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>💾 Speichern</button>
+              <button onClick={() => setBearbeiten(null)} style={{ padding: "10px 24px", background: "#f5f5f5", color: "#555", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>Abbrechen</button>
               {bearbeitenGespeichert && <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>}
             </div>
           </div>
@@ -213,9 +279,7 @@ export default function AdminTermine() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <p style={{ margin: "0", fontWeight: "bold", fontSize: "14px" }}>Termin {index + 1}</p>
               {neueTermine.length > 1 && (
-                <button onClick={() => terminEntfernen(index)} style={{ padding: "4px 10px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
-                  ✕ Entfernen
-                </button>
+                <button onClick={() => terminEntfernen(index)} style={{ padding: "4px 10px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>✕ Entfernen</button>
               )}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -246,24 +310,20 @@ export default function AdminTermine() {
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (optional)</label>
                 <textarea value={neu.details} onChange={(e) => terminAendern(index, "details", e.target.value)} placeholder="**Fett**, - Aufzählung" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
               </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Bild URL (optional)</label>
-                <input type="text" value={neu.bild_url} onChange={(e) => terminAendern(index, "bild_url", e.target.value)} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Video URL (optional)</label>
-                <input type="text" value={neu.video_url} onChange={(e) => terminAendern(index, "video_url", e.target.value)} placeholder="https://res.cloudinary.com/..." style={inputStyle} />
-              </div>
+              <MediaUpload
+                bildUrl={neu.bild_url}
+                videoUrl={neu.video_url}
+                bilder={neu.bilder || []}
+                onBildUrl={(url) => terminAendern(index, "bild_url", url)}
+                onVideoUrl={(url) => terminAendern(index, "video_url", url)}
+                onBilder={(b) => terminAendern(index, "bilder", b)}
+              />
             </div>
           </div>
         ))}
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          <button onClick={terminHinzufuegen} style={{ padding: "10px 20px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
-            ➕ Weiterer Termin
-          </button>
-          <button onClick={alleSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
-            💾 Alle speichern
-          </button>
+          <button onClick={terminHinzufuegen} style={{ padding: "10px 20px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>➕ Weiterer Termin</button>
+          <button onClick={alleSpeichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>💾 Alle speichern</button>
           {gespeichert && <span style={{ color: "#2d6a4f", fontWeight: "bold" }}>✅ Gespeichert!</span>}
         </div>
       </div>
@@ -277,35 +337,14 @@ export default function AdminTermine() {
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{t.wochentag}, {t.datum}</p>
               <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>{t.titel}</p>
-              <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} Teilnehmer</p>
+              <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} · {t.bilder?.length > 0 ? `${t.bilder.length} Bilder` : ""} {t.video_url ? "· Video ✓" : ""}</p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setBearbeiten(t)} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
-                ✏️ Bearbeiten
-              </button>
-              <button onClick={() => toggleAktiv(t)} style={{ padding: "8px 14px", background: t.aktiv ? "#e6f4ea" : "#f5f5f5", color: t.aktiv ? "#2d6a4f" : "#888", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
-                {t.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}
-              </button>
-              <button onClick={() => loeschen(t.id)} style={{ padding: "8px 14px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
-                🗑 Löschen
-              </button>
+              <button onClick={() => setBearbeiten(t)} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>✏️ Bearbeiten</button>
+              <button onClick={() => toggleAktiv(t)} style={{ padding: "8px 14px", background: t.aktiv ? "#e6f4ea" : "#f5f5f5", color: t.aktiv ? "#2d6a4f" : "#888", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>{t.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}</button>
+              <button onClick={() => loeschen(t.id)} style={{ padding: "8px 14px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>🗑 Löschen</button>
             </div>
           </div>
-          {t.details && (
-            <div style={{ marginTop: "12px", padding: "12px", background: "#f9f9f9", borderRadius: "8px", fontSize: "14px", color: "#555" }}>
-              📝 <strong>Details:</strong>
-              <div style={{ marginTop: "8px" }}>
-                <ReactMarkdown components={{
-                  p: ({ children }) => <p style={{ margin: "4px 0", color: "#555" }}>{children}</p>,
-                  strong: ({ children }) => <strong style={{ color: "#333" }}>{children}</strong>,
-                  ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "20px", color: "#555" }}>{children}</ul>,
-                  li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
-                }}>
-                  {t.details}
-                </ReactMarkdown>
-              </div>
-            </div>
-          )}
         </div>
       ))}
     </main>
