@@ -151,7 +151,7 @@ export default function BlogPage() {
                         rel="noopener noreferrer"
                         style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}
                       >
-                        🗺 Auf Karte anzeigen →
+                        🗺 Auf Karte anzeigen &#8594;
                       </a>
                     </div>
                   )}
@@ -166,7 +166,7 @@ export default function BlogPage() {
                         rel="noopener noreferrer"
                         style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none" }}
                       >
-                        🗺 Auf Karte anzeigen →
+                        🗺 Auf Karte anzeigen &#8594;
                       </a>
                     </div>
                   )}
