@@ -88,14 +88,21 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
         });
       });
 
-      markersRef.current[a.id] = marker;
-      alleBounds.push([a.lat, a.lng]);
-
       if (a.landeplatz_lat && a.landeplatz_lng) {
         const landeMarker = L.marker([a.landeplatz_lat, a.landeplatz_lng], { icon: landeIcon })
           .bindTooltip(`<strong>${a.titel}</strong><br/>🟢 Landeplatz: ${a.landeplatz}`, { direction: "top", offset: [0, -8], opacity: 1 });
         landeMarkersRef.current[a.id] = landeMarker;
+
+        marker.on("mouseover", () => {
+          if (mapRef.current) landeMarker.addTo(mapRef.current);
+        });
+        marker.on("mouseout", () => {
+          if (mapRef.current) landeMarker.removeFrom(mapRef.current);
+        });
       }
+
+      markersRef.current[a.id] = marker;
+      alleBounds.push([a.lat, a.lng]);
     });
 
     if (alleBounds.length > 0) {
@@ -157,7 +164,7 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
           🇨🇭 Swisstopo
         </button>
       </div>
-      <div id="hike-karte" style={{ height: "500px", width: "100%" }} />
+      <div id="hike-karte" style={{ height: "400px", width: "100%" }} />
     </div>
   );
 }
