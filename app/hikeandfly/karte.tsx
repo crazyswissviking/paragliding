@@ -164,7 +164,7 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
           🇨🇭 Swisstopo
         </button>
       </div>
-      <div id="hike-karte" style={{ height: "400px", width: "100%" }} />
+      <div id="hike-karte" style={{ height: "500px", width: "100%" }} />
     </div>
   );
 }
