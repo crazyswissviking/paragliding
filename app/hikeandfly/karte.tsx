@@ -107,7 +107,7 @@ export default function Karte({ abenteuer, ausgewaehlt, onAuswaehlen }: Props) {
 
     if (alleBounds.length > 0) {
       const bounds = L.latLngBounds(alleBounds);
-      karte.fitBounds(bounds, { padding: [40, 40] });
+      karte.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
     }
 
     return () => {
