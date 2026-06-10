@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-
 function urlsZuLinks(text: string): string {
   return text.replace(/(https?:\/\/[^\s]+)/g, "[$1]($1)");
 }
@@ -150,7 +148,6 @@ export default function Termine() {
                               a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "#7799ff", textDecoration: "underline" }}>{children}</a>,
                             }}
                           >
-                          {t.details}
                           {urlsZuLinks(t.details || "")}
                         </ReactMarkdown>
                       </div>
