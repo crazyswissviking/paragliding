@@ -4,6 +4,10 @@ import { supabase } from "../supabase";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+function urlsZuLinks(text: string): string {
+  return text.replace(/(https?:\/\/[^\s]+)/g, "[$1]($1)");
+}
+
 type Termin = {
   id: number;
   datum: string;
@@ -148,6 +152,7 @@ export default function Termine() {
                             }}
                           >
                           {t.details}
+                          {urlsZuLinks(t.details)}
                         </ReactMarkdown>
                       </div>
                     </div>
