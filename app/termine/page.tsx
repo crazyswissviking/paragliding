@@ -136,14 +136,15 @@ export default function Termine() {
                       📝 <strong>Details:</strong>
                       <div style={{ marginTop: "8px" }}>
                         <ReactMarkdown
-                          components={{
-                            p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
-                            strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
-                            ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
-                            li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
-                            br: () => <br />,
-                          }}
-                        >
+                            components={{
+                              p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
+                              strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
+                              ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
+                              li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
+                              br: () => <br />,
+                              a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "#7799ff", textDecoration: "underline" }}>{children}</a>,
+                            }}
+                          >
                           {t.details}
                         </ReactMarkdown>
                       </div>
