@@ -141,7 +141,6 @@ export default function Termine() {
                       📝 <strong>Details:</strong>
                       <div style={{ marginTop: "8px" }}>
                         <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
                             components={{
                               p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
                               strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
@@ -152,7 +151,7 @@ export default function Termine() {
                             }}
                           >
                           {t.details}
-                          {urlsZuLinks(t.details)}
+                          {urlsZuLinks(t.details || "")}
                         </ReactMarkdown>
                       </div>
                     </div>
