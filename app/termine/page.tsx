@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Termin = {
   id: number;
@@ -136,6 +137,7 @@ export default function Termine() {
                       📝 <strong>Details:</strong>
                       <div style={{ marginTop: "8px" }}>
                         <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
                             components={{
                               p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
                               strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
