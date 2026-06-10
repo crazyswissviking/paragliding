@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 function urlsZuLinks(text: string): string {
-  return text.replace(/(https?:\/\/[^\s]+)/g, "[$1]($1)");
+  return text.replace(/(https?:\/\/[^\s\)\]]+)/g, (url) => `[${url}](${url})`);
 }
 
 type Termin = {
@@ -139,6 +140,7 @@ export default function Termine() {
                       📝 <strong>Details:</strong>
                       <div style={{ marginTop: "8px" }}>
                         <ReactMarkdown
+                        rehypePlugins={[rehypeRaw]}
                             components={{
                               p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
                               strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
