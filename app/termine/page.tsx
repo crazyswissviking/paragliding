@@ -3,8 +3,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-function urlsZuLinks(text: string): string {
-  return text.replace(/(https?:\/\/[^\s\)\]]+)/g, (url) => `[${url}](${url})`);
+function TextMitLinks({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return (
+    <span style={style}>
+      {parts.map((part, i) =>
+        part.match(/^https?:\/\//) ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{ color: "#7799ff", textDecoration: "underline", wordBreak: "break-all" }}>{part}</a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </span>
+  );
 }
 
 type Termin = {
@@ -138,20 +149,12 @@ export default function Termine() {
                   {t.details && (
                     <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
                       📝 <strong>Details:</strong>
-                      <div style={{ marginTop: "8px" }}>
-                        <ReactMarkdown
-                        rehypePlugins={[rehypeRaw]}
-                            components={{
-                              p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
-                              strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
-                              ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
-                              li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
-                              br: () => <br />,
-                              a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "#7799ff", textDecoration: "underline" }}>{children}</a>,
-                            }}
-                          >
-                          {urlsZuLinks(t.details || "")}
-                        </ReactMarkdown>
+                      <div style={{ marginTop: "8px", whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
+                        {t.details.split("\n").map((zeile, i) => (
+                          <p key={i} style={{ margin: "4px 0" }}>
+                            <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
+                          </p>
+                        ))}
                       </div>
                     </div>
                   )}
