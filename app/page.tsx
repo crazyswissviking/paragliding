@@ -84,6 +84,10 @@ export default function Home() {
 
       {/* Inhalt */}
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "700px" }}>
+        <h1 style={{ fontSize: "20px", fontWeight: "bold", color: "#ffffff", marginBottom: "20px", marginTop: "0" }}>
+          🪂 Swissgliders 
+        </h1>
+
         {highlights.length > 0 && (
           <div style={{ marginBottom: "32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
