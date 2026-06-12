@@ -24,7 +24,7 @@ export default function RootLayout({
           zIndex: 20,
         }}>
           <a href="https://www.vikingfly.ch" style={{ color: "white", fontWeight: "bold", fontSize: "18px", textDecoration: "none" }}>
-            🪂 Swissgliders Members
+            🪂
           </a>
 
           {/* Desktop Links */}

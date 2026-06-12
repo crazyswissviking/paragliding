@@ -97,42 +97,36 @@ function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilde
           </div>
         )}
       </div>
-      <div style={{ gridColumn: "1 / -1" }}>
+     <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🎥 Video</label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input type="text" value={videoUrl} onChange={(e) => onVideoUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
-          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
-            📁 Upload
-            <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setUploading(true);
-              const url = await cloudinaryUpload(file);
-              onVideoUrl(url);
-              setUploading(false);
-            }} />
-          </label>
-        </div>
+        <label style={{ display: "inline-block", padding: "8px 14px", background: uploading ? "#aaa" : "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
+          📁 Video hochladen
+          <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setUploading(true);
+            const url = await cloudinaryUpload(file);
+            onVideoUrl(url);
+            setUploading(false);
+          }} />
+        </label>
         {videoUrl && (
           <video src={videoUrl} controls style={{ marginTop: "8px", width: "100%", maxHeight: "150px", borderRadius: "6px" }} />
         )}
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Hauptbild URL (optional, alternativ zu Galerie)</label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input type="text" value={bildUrl} onChange={(e) => onBildUrl(e.target.value)} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
-          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
-            📁 Upload
-            <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setUploading(true);
-              const url = await cloudinaryUpload(file);
-              onBildUrl(url);
-              setUploading(false);
-            }} />
-          </label>
-        </div>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Hauptbild</label>
+        <label style={{ display: "inline-block", padding: "8px 14px", background: uploading ? "#aaa" : "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
+          📁 Bild hochladen
+          <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setUploading(true);
+            const url = await cloudinaryUpload(file);
+            onBildUrl(url);
+            setUploading(false);
+          }} />
+        </label>
         {bildUrl && <img src={bildUrl} style={{ marginTop: "8px", width: "100%", maxHeight: "150px", objectFit: "cover", borderRadius: "6px" }} />}
       </div>
     </>
