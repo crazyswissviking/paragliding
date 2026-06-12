@@ -84,7 +84,7 @@ export default function Home() {
 
       {/* Inhalt */}
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "700px" }}>
-        <h1 style={{ fontSize: "20px", fontWeight: "bold", color: "#ffffff", marginBottom: "20px", marginTop: "0" }}>
+        <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "#ffffff", marginBottom: "20px", marginTop: "0" }}>
           🪂 Swissgliders 
         </h1>
 
