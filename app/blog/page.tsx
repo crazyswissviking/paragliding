@@ -182,13 +182,12 @@ export default function BlogPage() {
               )}
                {b.strava_url && (
                 <div style={{ marginTop: "16px" }}>
-                  <div
-                    className="strava-embed-placeholder"
-                    data-embed-type="activity"
-                    data-embed-id={b.strava_url}
-                    data-style="standard"
+                  <iframe
+                    src={`https://www.strava.com/activities/${b.strava_url}/embed`}
+                    style={{ width: "100%", height: "350px", border: "none", borderRadius: "10px" }}
+                    scrolling="no"
+                    allowFullScreen
                   />
-                  <script src="https://strava-embeds.com/embed.js" async />
                 </div>
               )}
             </div>
