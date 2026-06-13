@@ -163,7 +163,7 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚴 Strava Embed ID</label>
         <input type="text" value={data.strava_url} onChange={(e) => set({ ...data, strava_url: e.target.value })} placeholder="z.B. 18902399174" style={inputStyle} />
-        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Nur die Zahl aus data-embed-id="..." einfügen</p>
+        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Nur die Activity-ID einfügen z.B. 18902399174</p>
       </div>
     </div>
   );

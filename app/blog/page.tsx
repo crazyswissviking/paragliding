@@ -181,14 +181,14 @@ export default function BlogPage() {
                 </a>
               )}
                {b.strava_url && (
-                <div style={{ marginTop: "16px" }}>
-                  <iframe
-                    src={`https://www.strava.com/activities/${b.strava_url}/embed`}
-                    style={{ width: "100%", height: "350px", border: "none", borderRadius: "10px" }}
-                    scrolling="no"
-                    allowFullScreen
-                  />
-                </div>
+                
+                  href={`https://www.strava.com/activities/${b.strava_url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginTop: "16px", padding: "10px 20px", background: "#fc4c02", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}
+                >
+                  🚴 Auf Strava ansehen
+                </a>
               )}
             </div>
           </div>
