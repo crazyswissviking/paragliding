@@ -20,6 +20,7 @@ type Blog = {
   landeplatz_lng: number;
   landeplatz_hoehe: number;
   route_url: string;
+  strava_url: string;
   erstellt_am: string;
 };
 
@@ -178,6 +179,15 @@ export default function BlogPage() {
                 <a href={b.route_url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
                   🗺 Wanderroute ansehen
                 </a>
+              )}
+               {b.strava_url && (
+                <div style={{ marginTop: "16px" }}>
+                  <iframe
+                    src={`https://www.strava.com/activities/${b.strava_url.split("/activities/")[1]?.split("/")[0]}/embed`}
+                    style={{ width: "100%", height: "200px", border: "none", borderRadius: "10px" }}
+                    allowFullScreen
+                  />
+                </div>
               )}
             </div>
           </div>

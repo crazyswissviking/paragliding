@@ -40,6 +40,7 @@ type Blog = {
   landeplatz_lng: number;
   landeplatz_hoehe: number;
   route_url: string;
+  strava_url: string;
   aktiv: boolean;
 };
 
@@ -49,7 +50,7 @@ const leer = (): BlogOhneId => ({
   titel: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
   startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
   landeplatz_lv95: "", landeplatz_lat: 0, landeplatz_lng: 0, landeplatz_hoehe: 0,
-  route_url: "", aktiv: true,
+  route_url: "", strava_url: "", aktiv: true,
 });
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
@@ -159,6 +160,11 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Route URL</label>
         <input type="text" value={data.route_url} onChange={(e) => set({ ...data, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
       </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚴 Strava Activity URL</label>
+        <input type="text" value={data.strava_url} onChange={(e) => set({ ...data, strava_url: e.target.value })} placeholder="https://www.strava.com/activities/12345678" style={inputStyle} />
+        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Strava Activity Link einfügen – wird als Widget eingebettet</p>
+      </div>
     </div>
   );
 }
@@ -199,6 +205,7 @@ export default function AdminBlog() {
       landeplatz_lv95: bearbeiten.landeplatz_lv95, landeplatz_lat: bearbeiten.landeplatz_lat,
       landeplatz_lng: bearbeiten.landeplatz_lng, landeplatz_hoehe: bearbeiten.landeplatz_hoehe,
       route_url: bearbeiten.route_url,
+      strava_url: bearbeiten.strava_url,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
