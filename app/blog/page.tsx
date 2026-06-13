@@ -182,7 +182,7 @@ export default function BlogPage() {
               )}
                {b.strava_url && (
                 
-                  href={`https://www.strava.com/activities/${b.strava_url}`}
+                  <a href={`https://www.strava.com/activities/${b.strava_url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginTop: "16px", padding: "10px 20px", background: "#fc4c02", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}
