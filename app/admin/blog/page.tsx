@@ -29,6 +29,7 @@ type Blog = {
   text: string;
   tipps: string;
   bilder: string[];
+  medien: string[];
   video_url: string;
   startpunkt_lv95: string;
   startpunkt_lat: number;
@@ -45,7 +46,7 @@ type Blog = {
 type BlogOhneId = Omit<Blog, "id">;
 
 const leer = (): BlogOhneId => ({
-  titel: "", text: "", tipps: "", bilder: [], video_url: "",
+  titel: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
   startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
   landeplatz_lv95: "", landeplatz_lat: 0, landeplatz_lng: 0, landeplatz_hoehe: 0,
   route_url: "", aktiv: true,
@@ -53,7 +54,6 @@ const leer = (): BlogOhneId => ({
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
-// ── KoordBlock ausserhalb ──────────────────────────────────────────────────
 function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
   lv95Label: string;
   lat: number; lng: number; hoehe: number;
@@ -83,17 +83,16 @@ function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
       </div>
       {lat !== 0 && lng !== 0 && <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>✅ WGS84: {lat}, {lng}</p>}
       {hoehe > 0 && <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>⛰ Höhe: {hoehe} m</p>}
-      <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren und direkt einfügen</p>
+      <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren</p>
     </div>
   );
 }
 
-// ── Formular ausserhalb ────────────────────────────────────────────────────
-function Formular({ data, set, uploadLoading, onBilderHochladen }: {
+function Formular({ data, set, uploadLoading, onMedienHochladen }: {
   data: BlogOhneId | Blog;
   set: (v: any) => void;
   uploadLoading: boolean;
-  onBilderHochladen: (files: FileList | null) => void;
+  onMedienHochladen: (files: FileList | null) => void;
 }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -110,36 +109,25 @@ function Formular({ data, set, uploadLoading, onBilderHochladen }: {
         <textarea value={data.tipps} onChange={(e) => set({ ...data, tipps: e.target.value })} rows={4} placeholder={"Tipp 1\nTipp 2\nTipp 3"} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace" }} />
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Bildergalerie</label>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>📸 Bilder & Videos</label>
         <label style={{ display: "inline-block", padding: "8px 14px", background: uploadLoading ? "#aaa" : "#3355cc", color: "white", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}>
-          {uploadLoading ? "⏳ Wird hochgeladen..." : "📁 Bilder hochladen"}
-          <input type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => onBilderHochladen(e.target.files)} disabled={uploadLoading} />
+          {uploadLoading ? "⏳ Wird hochgeladen..." : "📁 Bilder & Videos hochladen"}
+          <input type="file" accept="image/*,video/*" multiple style={{ display: "none" }} disabled={uploadLoading} onChange={(e) => onMedienHochladen(e.target.files)} />
         </label>
-        {data.bilder && data.bilder.length > 0 && (
+        {(data.medien || []).length > 0 && (
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-            {data.bilder.map((url: string, i: number) => (
+            {(data.medien || []).map((url: string, i: number) => (
               <div key={i} style={{ position: "relative" }}>
-                <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
-                <button onClick={() => set({ ...data, bilder: data.bilder.filter((_: string, j: number) => j !== i) })} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
+                {url.includes("/video/") ? (
+                  <video src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
+                ) : (
+                  <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
+                )}
+                <button onClick={() => set({ ...data, medien: (data.medien || []).filter((_: string, j: number) => j !== i) })} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
               </div>
             ))}
           </div>
         )}
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🎥 Video</label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input type="text" value={data.video_url} onChange={(e) => set({ ...data, video_url: e.target.value })} placeholder="https://res.cloudinary.com/..." style={{ ...inputStyle, flex: 1 }} />
-          <label style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>
-            📁 Upload
-            <input type="file" accept="video/*" style={{ display: "none" }} onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const url = await cloudinaryUpload(file);
-              set({ ...data, video_url: url });
-            }} />
-          </label>
-        </div>
       </div>
       <KoordBlock
         lv95Label="Startplatz Koordinaten"
@@ -175,7 +163,6 @@ function Formular({ data, set, uploadLoading, onBilderHochladen }: {
   );
 }
 
-// ── Hauptkomponente ────────────────────────────────────────────────────────
 export default function AdminBlog() {
   const [beitraege, setBeitraege] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -206,7 +193,7 @@ export default function AdminBlog() {
     if (!bearbeiten) return;
     await supabase.from("blog").update({
       titel: bearbeiten.titel, text: bearbeiten.text, tipps: bearbeiten.tipps,
-      bilder: bearbeiten.bilder, video_url: bearbeiten.video_url,
+      bilder: bearbeiten.bilder, medien: bearbeiten.medien, video_url: bearbeiten.video_url,
       startpunkt_lv95: bearbeiten.startpunkt_lv95, startpunkt_lat: bearbeiten.startpunkt_lat,
       startpunkt_lng: bearbeiten.startpunkt_lng, startpunkt_hoehe: bearbeiten.startpunkt_hoehe,
       landeplatz_lv95: bearbeiten.landeplatz_lv95, landeplatz_lat: bearbeiten.landeplatz_lat,
@@ -229,7 +216,7 @@ export default function AdminBlog() {
     laden();
   }
 
-  async function bilderHochladen(files: FileList | null, data: BlogOhneId | Blog, set: (v: any) => void) {
+  async function medienHochladen(files: FileList | null, data: BlogOhneId | Blog, set: (v: any) => void) {
     if (!files) return;
     setUploadLoading(true);
     const urls: string[] = [];
@@ -237,7 +224,7 @@ export default function AdminBlog() {
       const url = await cloudinaryUpload(file);
       urls.push(url);
     }
-    set({ ...data, bilder: [...(data.bilder || []), ...urls] });
+    set({ ...data, medien: [...(data.medien || []), ...urls] });
     setUploadLoading(false);
   }
 
@@ -258,7 +245,7 @@ export default function AdminBlog() {
               data={bearbeiten}
               set={(v) => setBearbeiten({ ...bearbeiten, ...v })}
               uploadLoading={uploadLoading}
-              onBilderHochladen={(files) => bilderHochladen(files, bearbeiten, (v) => setBearbeiten({ ...bearbeiten, ...v }))}
+              onMedienHochladen={(files) => medienHochladen(files, bearbeiten, (v) => setBearbeiten({ ...bearbeiten, ...v }))}
             />
             <div style={{ display: "flex", gap: "12px", alignItems: "center", marginTop: "20px" }}>
               <button onClick={speichern} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>💾 Speichern</button>
@@ -275,7 +262,7 @@ export default function AdminBlog() {
           data={neu}
           set={setNeu}
           uploadLoading={uploadLoading}
-          onBilderHochladen={(files) => bilderHochladen(files, neu, setNeu)}
+          onMedienHochladen={(files) => medienHochladen(files, neu, setNeu)}
         />
         <div style={{ marginTop: "16px", display: "flex", gap: "12px", alignItems: "center" }}>
           <button onClick={hinzufuegen} style={{ padding: "10px 24px", background: "#3355cc", color: "white", border: "none", borderRadius: "8px", fontSize: "14px", cursor: "pointer", fontWeight: "bold" }}>
@@ -293,7 +280,7 @@ export default function AdminBlog() {
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{b.titel}</p>
               <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>
-                {b.bilder?.length || 0} Bilder · {b.video_url ? "Video ✓" : "Kein Video"} · {b.tipps ? "Tipps ✓" : "Keine Tipps"}
+                {(b.medien?.length || 0)} Medien · {b.tipps ? "Tipps ✓" : "Keine Tipps"}
               </p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>

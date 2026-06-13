@@ -9,6 +9,7 @@ type Blog = {
   text: string;
   tipps: string;
   bilder: string[];
+  medien: string[];
   video_url: string;
   startpunkt_lv95: string;
   startpunkt_lat: number;
@@ -25,7 +26,7 @@ type Blog = {
 export default function BlogPage() {
   const [beitraege, setBeitraege] = useState<Blog[]>([]);
   const [tippOffen, setTippOffen] = useState<number | null>(null);
-  const [bildIndex, setBildIndex] = useState<Record<number, number>>({});
+  const [medienIndex, setMedienIndex] = useState<Record<number, number>>({});
 
   useEffect(() => {
     async function laden() {
@@ -58,24 +59,50 @@ export default function BlogPage() {
 
       {beitraege.map((b) => {
         const tippIstOffen = tippOffen === b.id;
-        const aktuellesBild = bildIndex[b.id] || 0;
+        const aktuellerIndex = medienIndex[b.id] || 0;
         const tipps = b.tipps ? b.tipps.split("\n").filter((t) => t.trim()) : [];
+
+        // Alle Medien kombinieren: neue medien[] + alte bilder[]
+        const alleMedian = [
+          ...(b.medien || []),
+          ...(b.bilder || []),
+          ...(b.video_url ? [b.video_url] : []),
+        ];
+
+        const isVideo = (url: string) => url.includes("/video/") || url.endsWith(".mp4") || url.endsWith(".mov");
 
         return (
           <div key={b.id} style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "16px", marginBottom: "32px", overflow: "hidden" }}>
 
-            {/* Bildergalerie */}
-            {b.bilder && b.bilder.length > 0 && (
+            {/* Medien Galerie */}
+            {alleMedian.length > 0 && (
               <div style={{ position: "relative" }}>
-                <img src={b.bilder[aktuellesBild]} alt={b.titel} style={{ width: "100%", height: "300px", objectFit: "cover" }} />
-                {b.bilder.length > 1 && (
+                {isVideo(alleMedian[aktuellerIndex]) ? (
+                  <video controls style={{ width: "100%", height: "300px", objectFit: "cover" }}>
+                    <source src={alleMedian[aktuellerIndex]} type="video/mp4" />
+                  </video>
+                ) : (
+                  <img src={alleMedian[aktuellerIndex]} alt={b.titel} style={{ width: "100%", height: "300px", objectFit: "cover" }} />
+                )}
+                {alleMedian.length > 1 && (
                   <>
-                    <button onClick={() => setBildIndex((prev) => ({ ...prev, [b.id]: Math.max(0, aktuellesBild - 1) }))} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellesBild === 0 ? "none" : "block" }}>&#8249;</button>
-                    <button onClick={() => setBildIndex((prev) => ({ ...prev, [b.id]: Math.min(b.bilder.length - 1, aktuellesBild + 1) }))} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellesBild === b.bilder.length - 1 ? "none" : "block" }}>&#8250;</button>
+                    <button
+                      onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: Math.max(0, aktuellerIndex - 1) }))}
+                      style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellerIndex === 0 ? "none" : "block" }}
+                    >&#8249;</button>
+                    <button
+                      onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: Math.min(alleMedian.length - 1, aktuellerIndex + 1) }))}
+                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellerIndex === alleMedian.length - 1 ? "none" : "block" }}
+                    >&#8250;</button>
                     <div style={{ position: "absolute", bottom: "10px", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "6px" }}>
-                      {b.bilder.map((_, i) => (
-                        <div key={i} onClick={() => setBildIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === aktuellesBild ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer" }} />
+                      {alleMedian.map((url, i) => (
+                        <div key={i} onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === aktuellerIndex ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "6px" }}>
+                          {isVideo(url) ? "▶" : ""}
+                        </div>
                       ))}
+                    </div>
+                    <div style={{ position: "absolute", bottom: "10px", right: "10px", background: "rgba(0,0,0,0.5)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "12px" }}>
+                      {aktuellerIndex + 1} / {alleMedian.length} {isVideo(alleMedian[aktuellerIndex]) ? "🎥" : "📸"}
                     </div>
                   </>
                 )}
@@ -120,14 +147,6 @@ export default function BlogPage() {
                 </div>
               )}
 
-              {b.video_url && (
-                <div style={{ marginBottom: "20px" }}>
-                  <video controls style={{ width: "100%", borderRadius: "10px", maxHeight: "400px" }}>
-                    <source src={b.video_url} type="video/mp4" />
-                  </video>
-                </div>
-              )}
-
               {(b.startpunkt_lat !== 0 || b.landeplatz_lat !== 0) && (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
                   {b.startpunkt_lat !== 0 && (
@@ -136,12 +155,8 @@ export default function BlogPage() {
                       {b.startpunkt_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.startpunkt_lv95}</p>}
                       {b.startpunkt_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.startpunkt_hoehe} m</p>}
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                        <a href={swisstopoUrl(b.startpunkt_lat, b.startpunkt_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
-                          🇨🇭 Swisstopo
-                        </a>
-                        <a href={osmUrl(b.startpunkt_lat, b.startpunkt_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>
-                          🗺 OpenStreetMap
-                        </a>
+                        <a href={swisstopoUrl(b.startpunkt_lat, b.startpunkt_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>🇨🇭 Swisstopo</a>
+                        <a href={osmUrl(b.startpunkt_lat, b.startpunkt_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none", padding: "4px 8px", background: "rgba(51,85,204,0.2)", borderRadius: "6px" }}>🗺 OpenStreetMap</a>
                       </div>
                     </div>
                   )}
@@ -151,12 +166,8 @@ export default function BlogPage() {
                       {b.landeplatz_lv95 && <p style={{ margin: "0 0 4px", fontSize: "13px", color: "#ccc" }}>{b.landeplatz_lv95}</p>}
                       {b.landeplatz_hoehe > 0 && <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#aaa" }}>⛰ {b.landeplatz_hoehe} m</p>}
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                        <a href={swisstopoUrl(b.landeplatz_lat, b.landeplatz_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
-                          🇨🇭 Swisstopo
-                        </a>
-                        <a href={osmUrl(b.landeplatz_lat, b.landeplatz_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>
-                          🗺 OpenStreetMap
-                        </a>
+                        <a href={swisstopoUrl(b.landeplatz_lat, b.landeplatz_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>🇨🇭 Swisstopo</a>
+                        <a href={osmUrl(b.landeplatz_lat, b.landeplatz_lng)} target="_blank" rel="noopener noreferrer" style={{ fontSize: "12px", color: "#6fcf97", textDecoration: "none", padding: "4px 8px", background: "rgba(0,200,100,0.15)", borderRadius: "6px" }}>🗺 OpenStreetMap</a>
                       </div>
                     </div>
                   )}
