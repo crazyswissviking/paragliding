@@ -117,8 +117,6 @@ export default function Home() {
                 const belegt = anmeldungen.filter((a) => a.termin === label).length;
                 const voll = belegt >= t.max_teilnehmer;
                 const istOffen = offen === t.id;
-                const bilder = t.bilder || [];
-                const titelbild = bilder.length > 0 ? bilder[0] : t.bild_url;
 
                 return (
                   <div key={t.id} style={{
@@ -129,9 +127,6 @@ export default function Home() {
                     overflow: "hidden",
                   }}>
                     <div style={{ padding: "16px" }}>
-                      {titelbild && (
-                        <img src={titelbild} alt={t.titel} style={{ width: "100%", borderRadius: "8px", marginBottom: "12px", height: "80px", objectFit: "cover" }} />
-                      )}
                       <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#7799ff" }}>🌕 {t.wochentag}, {t.datum}</p>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
                         <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{t.titel}</p>
