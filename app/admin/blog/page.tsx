@@ -161,9 +161,9 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
         <input type="text" value={data.route_url} onChange={(e) => set({ ...data, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚴 Strava Activity URL</label>
-        <input type="text" value={data.strava_url} onChange={(e) => set({ ...data, strava_url: e.target.value })} placeholder="https://www.strava.com/activities/12345678" style={inputStyle} />
-        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Strava Activity Link einfügen – wird als Widget eingebettet</p>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚴 Strava Embed ID</label>
+        <input type="text" value={data.strava_url} onChange={(e) => set({ ...data, strava_url: e.target.value })} placeholder="z.B. 18902399174" style={inputStyle} />
+        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Nur die Zahl aus data-embed-id="..." einfügen</p>
       </div>
     </div>
   );
