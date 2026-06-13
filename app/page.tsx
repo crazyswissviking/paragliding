@@ -1,7 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import ReactMarkdown from "react-markdown";
+
+function TextMitLinks({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return (
+    <span style={style}>
+      {parts.map((part, i) =>
+        part.match(/^https?:\/\//) ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{ color: "#7799ff", textDecoration: "underline", wordBreak: "break-all" }}>{part}</a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </span>
+  );
+}
 
 type Termin = {
   id: number;
@@ -10,8 +24,10 @@ type Termin = {
   titel: string;
   max_teilnehmer: number;
   bild_url: string;
+  bilder: string[];
   details: string;
   ort: string;
+  hikeandfly_id: number | null;
 };
 
 type Anmeldung = {
@@ -28,7 +44,7 @@ export default function Home() {
   const [highlights, setHighlights] = useState<Termin[]>([]);
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
-  const [blogBeitraege, setBlogBeitraege] = useState<{ id: number; titel: string; text: string; bilder: string[]; erstellt_am: string }[]>([]);
+  const [blogBeitraege, setBlogBeitraege] = useState<{ id: number; titel: string; bilder: string[]; erstellt_am: string }[]>([]);
 
   useEffect(() => {
     async function laden() {
@@ -50,9 +66,10 @@ export default function Home() {
         .from("anmeldungen")
         .select("id, termin");
       setAnmeldungen(anmeldungenData || []);
+
       const { data: blogData } = await supabase
         .from("blog")
-        .select("id, titel, text, bilder, erstellt_am")
+        .select("id, titel, bilder, erstellt_am")
         .eq("aktiv", true)
         .order("erstellt_am", { ascending: false })
         .limit(3);
@@ -85,7 +102,7 @@ export default function Home() {
       {/* Inhalt */}
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "700px" }}>
         <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "#ffffff", marginBottom: "20px", marginTop: "0" }}>
-          🪂 Swissgliders 
+          🪂 Swissgliders
         </h1>
 
         {highlights.length > 0 && (
@@ -94,12 +111,14 @@ export default function Home() {
               <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0" }}>⭐ NÄCHSTE EVENTS</p>
               <a href="/termine" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>(Alle Events ansehen)</a>
             </div>
-           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
                 const belegt = anmeldungen.filter((a) => a.termin === label).length;
                 const voll = belegt >= t.max_teilnehmer;
                 const istOffen = offen === t.id;
+                const bilder = t.bilder || [];
+                const titelbild = bilder.length > 0 ? bilder[0] : t.bild_url;
 
                 return (
                   <div key={t.id} style={{
@@ -109,13 +128,19 @@ export default function Home() {
                     textAlign: "left",
                     overflow: "hidden",
                   }}>
-                    {/* Karten-Inhalt */}
                     <div style={{ padding: "16px" }}>
-                      {t.bild_url && (
-                        <img src={t.bild_url} alt={t.titel} style={{ width: "100%", borderRadius: "8px", marginBottom: "12px", height: "80px", objectFit: "cover" }} />
+                      {titelbild && (
+                        <img src={titelbild} alt={t.titel} style={{ width: "100%", borderRadius: "8px", marginBottom: "12px", height: "80px", objectFit: "cover" }} />
                       )}
                       <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#7799ff" }}>🌕 {t.wochentag}, {t.datum}</p>
-                      <p style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{t.titel}</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{t.titel}</p>
+                        {t.hikeandfly_id && (
+                          <a href={`/hikeandfly#abenteuer-${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(51,85,204,0.3)", borderRadius: "4px", color: "#7799ff", textDecoration: "none" }}>
+                            🥾 H&F
+                          </a>
+                        )}
+                      </div>
                       <p style={{ margin: "0 0 8px", fontSize: "12px", color: "#888" }}>📍 {t.ort}</p>
                       <div style={{
                         display: "inline-block",
@@ -130,56 +155,34 @@ export default function Home() {
                         {voll ? "🔴 Voll" : `${t.max_teilnehmer - belegt} Plätze frei`}
                       </div>
 
-                      {/* Buttons */}
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                         {!voll && (
                           <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} style={{
-                            display: "inline-block",
-                            padding: "6px 12px",
-                            background: "#3355cc",
-                            color: "white",
-                            borderRadius: "6px",
-                            textDecoration: "none",
-                            fontSize: "12px",
-                            fontWeight: "bold",
+                            display: "inline-block", padding: "6px 12px", background: "#3355cc",
+                            color: "white", borderRadius: "6px", textDecoration: "none", fontSize: "12px", fontWeight: "bold",
                           }}>
                             ✍️ Anmelden
                           </a>
                         )}
                         {t.details && (
-                          <button
-                            onClick={() => setOffen(istOffen ? null : t.id)}
-                            style={{
-                              padding: "6px 12px",
-                              background: "rgba(255,255,255,0.1)",
-                              color: "white",
-                              border: "1px solid rgba(255,255,255,0.2)",
-                              borderRadius: "6px",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                            }}
-                          >
+                          <button onClick={() => setOffen(istOffen ? null : t.id)} style={{
+                            padding: "6px 12px", background: "rgba(255,255,255,0.1)", color: "white",
+                            border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px", fontSize: "12px",
+                            fontWeight: "bold", cursor: "pointer",
+                          }}>
                             {istOffen ? "▲ Schliessen" : "▼ Details"}
                           </button>
                         )}
                       </div>
                     </div>
 
-                    {/* Details aufklappbar */}
                     {istOffen && t.details && (
                       <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", fontSize: "13px", color: "#ccc", textAlign: "left" }}>
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children }) => <p style={{ margin: "6px 0", color: "#ccc" }}>{children}</p>,
-                            strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
-                            ul: ({ children }) => <ul style={{ margin: "6px 0", paddingLeft: "16px", color: "#ccc" }}>{children}</ul>,
-                            li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
-                            br: () => <br />,
-                          }}
-                        >
-                          {t.details}
-                        </ReactMarkdown>
+                        {t.details.split("\n").map((zeile, i) => (
+                          <p key={i} style={{ margin: "4px 0" }}>
+                            <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
+                          </p>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -188,14 +191,15 @@ export default function Home() {
             </div>
           </div>
         )}
+
         {/* Blog */}
         {blogBeitraege.length > 0 && (
-          <div style={{ marginTop: "32px", width: "100%" }}>
-<div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
+          <div style={{ width: "100%" }}>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {blogBeitraege.map((b) => (
                 <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
-                  <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", display: "flex", gap: "0", background: "rgba(255,255,255,0.05)" }}>
+                  <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", display: "flex", background: "rgba(255,255,255,0.05)" }}>
                     {b.bilder && b.bilder.length > 0 && (
                       <img src={b.bilder[0]} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "cover", flexShrink: 0 }} />
                     )}
@@ -214,24 +218,12 @@ export default function Home() {
         )}
       </div>
 
-{/* Links unten links */}
-      <div style={{
-        position: "absolute",
-        bottom: "16px",
-        left: "16px",
-        zIndex: 10,
-        display: "flex",
-        gap: "16px",
-      }}>
-        <a href="/admin/termine" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
-          Admin
-        </a>
-        <a href="/admin/hikeandfly" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
-          H&F Admin
-        </a>
-        <a href="/admin/blog" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>
-          Blog Admin
-        </a>
+      {/* Links unten links */}
+      <div style={{ position: "absolute", bottom: "16px", left: "16px", zIndex: 10, display: "flex", gap: "16px" }}>
+        <a href="/admin/termine" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Admin</a>
+        <a href="/admin/hikeandfly" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>H&F Admin</a>
+        <a href="/admin/blog" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Blog Admin</a>
+        <a href="/upload" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Upload</a>
       </div>
     </main>
   );

@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../supabase";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
+
 function TextMitLinks({ text, style }: { text: string; style?: React.CSSProperties }) {
   const parts = text.split(/(https?:\/\/[^\s]+)/g);
   return (
@@ -28,6 +27,8 @@ type Termin = {
   details: string;
   bild_url: string;
   video_url: string;
+  bilder: string[];
+  hikeandfly_id: number | null;
 };
 
 type Anmeldung = {
@@ -45,6 +46,7 @@ export default function Termine() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [offen, setOffen] = useState<string | null>(null);
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
+  const [bildIndex, setBildIndex] = useState<Record<number, number>>({});
 
   useEffect(() => {
     async function laden() {
@@ -84,6 +86,8 @@ export default function Termine() {
           const belegt = teilnehmer.length;
           const voll = belegt >= t.max_teilnehmer;
           const istOffen = offen === label;
+          const aktuellesBild = bildIndex[t.id] || 0;
+          const bilder = t.bilder || [];
 
           return (
             <div key={t.id} style={{
@@ -105,8 +109,19 @@ export default function Termine() {
               >
                 <div>
                   <p style={{ color: "#aaa", margin: "0 0 4px", fontSize: "14px" }}>🌕 {t.wochentag}, {t.datum}</p>
-                  <h3 style={{ margin: "0 0 4px", fontSize: "18px", color: "#fff" }}>{t.titel}</h3>
-                  <p style={{ margin: "0", color: "#888", fontSize: "14px" }}>📍 {t.ort}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <h3 style={{ margin: "0", fontSize: "18px", color: "#fff" }}>{t.titel}</h3>
+                    {t.hikeandfly_id && (
+                      
+                        href={`/hikeandfly#abenteuer-${t.hikeandfly_id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ fontSize: "12px", padding: "2px 8px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}
+                      >
+                        🥾 Hike & Fly
+                      </a>
+                    )}
+                  </div>
+                  <p style={{ margin: "4px 0 0", color: "#888", fontSize: "14px" }}>📍 {t.ort}</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{
@@ -123,7 +138,7 @@ export default function Termine() {
                       {voll ? "Voll" : "Frei"}
                     </p>
                   </div>
-                  <span style={{ fontSize: "14px", color: "#aaa", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "14px", color: "#aaa" }}>
                     {istOffen ? "Details schliessen ▲" : "Details ▼"}
                   </span>
                 </div>
@@ -131,25 +146,40 @@ export default function Termine() {
 
               {istOffen && (
                 <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
-                  {t.bild_url && (
-                    <img
-                      src={t.bild_url}
-                      alt={t.titel}
-                      style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px", objectFit: "cover" }}
-                    />
+
+                  {/* Bildergalerie */}
+                  {bilder.length > 0 && (
+                    <div style={{ position: "relative", marginBottom: "16px" }}>
+                      <img src={bilder[aktuellesBild]} alt={t.titel} style={{ width: "100%", borderRadius: "8px", maxHeight: "300px", objectFit: "cover" }} />
+                      {bilder.length > 1 && (
+                        <>
+                          <button onClick={() => setBildIndex((prev) => ({ ...prev, [t.id]: Math.max(0, aktuellesBild - 1) }))} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellesBild === 0 ? "none" : "block" }}>&#8249;</button>
+                          <button onClick={() => setBildIndex((prev) => ({ ...prev, [t.id]: Math.min(bilder.length - 1, aktuellesBild + 1) }))} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellesBild === bilder.length - 1 ? "none" : "block" }}>&#8250;</button>
+                          <div style={{ position: "absolute", bottom: "10px", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "6px" }}>
+                            {bilder.map((_, i) => (
+                              <div key={i} onClick={() => setBildIndex((prev) => ({ ...prev, [t.id]: i }))} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === aktuellesBild ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer" }} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
+
+                  {/* Hauptbild falls keine Galerie */}
+                  {bilder.length === 0 && t.bild_url && (
+                    <img src={t.bild_url} alt={t.titel} style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px", objectFit: "cover" }} />
+                  )}
+
                   {t.video_url && (
-                    <video
-                      controls
-                      style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px" }}
-                    >
+                    <video controls style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px" }}>
                       <source src={t.video_url} type="video/mp4" />
                     </video>
                   )}
+
                   {t.details && (
                     <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
                       📝 <strong>Details:</strong>
-                      <div style={{ marginTop: "8px", whiteSpace: "pre-wrap", lineHeight: "1.7" }}>
+                      <div style={{ marginTop: "8px", lineHeight: "1.7" }}>
                         {t.details.split("\n").map((zeile, i) => (
                           <p key={i} style={{ margin: "4px 0" }}>
                             <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
@@ -158,6 +188,7 @@ export default function Termine() {
                       </div>
                     </div>
                   )}
+
                   <div style={{ marginBottom: "16px" }}>
                     {voll ? (
                       <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
@@ -169,6 +200,7 @@ export default function Termine() {
                       </a>
                     )}
                   </div>
+
                   <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>
                     Angemeldete Teilnehmer ({belegt}/{t.max_teilnehmer}):
                   </p>
@@ -177,9 +209,7 @@ export default function Termine() {
                   ) : (
                     <ul style={{ margin: "0", padding: "0 0 0 20px" }}>
                       {teilnehmer.map((a) => (
-                        <li key={a.id} style={{ fontSize: "15px", marginBottom: "4px", color: "#ddd" }}>
-                          {a.name}
-                        </li>
+                        <li key={a.id} style={{ fontSize: "15px", marginBottom: "4px", color: "#ddd" }}>{a.name}</li>
                       ))}
                     </ul>
                   )}

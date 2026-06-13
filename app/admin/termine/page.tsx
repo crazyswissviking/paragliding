@@ -28,6 +28,7 @@ type Termin = {
   bild_url: string;
   video_url: string;
   bilder: string[];
+  hikeandfly_id: number | null;
 };
 
 type NeuerTermin = {
@@ -41,6 +42,12 @@ type NeuerTermin = {
   bild_url: string;
   video_url: string;
   bilder: string[];
+  hikeandfly_id: number | null;
+};
+
+type HikeAndFlyOption = {
+  id: number;
+  titel: string;
 };
 
 const parseDate = (d: string) => {
@@ -52,12 +59,12 @@ const leerTermin = (): NeuerTermin => ({
   datum: "", wochentag: "", titel: "Vollmond-/Nachtflug",
   ort: "Wird noch bekanntgegeben", max_teilnehmer: 6,
   aktiv: true, details: "", bild_url: "", video_url: "", bilder: [],
+  hikeandfly_id: null,
 });
 
 const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
-// ── MediaUpload ausserhalb ─────────────────────────────────────────────────
 function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilder }: {
   bildUrl: string;
   videoUrl: string;
@@ -97,7 +104,7 @@ function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilde
           </div>
         )}
       </div>
-     <div style={{ gridColumn: "1 / -1" }}>
+      <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🎥 Video</label>
         <label style={{ display: "inline-block", padding: "8px 14px", background: uploading ? "#aaa" : "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
           📁 Video hochladen
@@ -110,9 +117,7 @@ function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilde
             setUploading(false);
           }} />
         </label>
-        {videoUrl && (
-          <video src={videoUrl} controls style={{ marginTop: "8px", width: "100%", maxHeight: "150px", borderRadius: "6px" }} />
-        )}
+        {videoUrl && <video src={videoUrl} controls style={{ marginTop: "8px", width: "100%", maxHeight: "150px", borderRadius: "6px" }} />}
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Hauptbild</label>
@@ -140,6 +145,7 @@ export default function AdminTermine() {
   const [gespeichert, setGespeichert] = useState(false);
   const [bearbeiten, setBearbeiten] = useState<Termin | null>(null);
   const [bearbeitenGespeichert, setBearbeitenGespeichert] = useState(false);
+  const [hikeAndFlyOptionen, setHikeAndFlyOptionen] = useState<HikeAndFlyOption[]>([]);
 
   async function laden() {
     const { data } = await supabase.from("termine").select("*");
@@ -148,7 +154,12 @@ export default function AdminTermine() {
     setLoading(false);
   }
 
-  useEffect(() => { laden(); }, []);
+  useEffect(() => {
+    laden();
+    supabase.from("hikeandfly").select("id, titel").eq("aktiv", true).order("titel").then(({ data }) => {
+      setHikeAndFlyOptionen(data || []);
+    });
+  }, []);
 
   function terminAendern(index: number, feld: keyof NeuerTermin, wert: any) {
     const updated = [...neueTermine];
@@ -186,7 +197,7 @@ export default function AdminTermine() {
       titel: bearbeiten.titel, ort: bearbeiten.ort,
       max_teilnehmer: bearbeiten.max_teilnehmer, details: bearbeiten.details,
       bild_url: bearbeiten.bild_url, video_url: bearbeiten.video_url,
-      bilder: bearbeiten.bilder,
+      bilder: bearbeiten.bilder, hikeandfly_id: bearbeiten.hikeandfly_id,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
@@ -199,7 +210,6 @@ export default function AdminTermine() {
       <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
       <h2 style={{ fontWeight: "normal", color: "#555", marginBottom: "30px" }}>Admin – Termine verwalten</h2>
 
-      {/* Bearbeiten Modal */}
       {bearbeiten && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "white", borderRadius: "16px", padding: "32px", maxWidth: "600px", width: "90%", maxHeight: "90vh", overflowY: "auto" }}>
@@ -229,6 +239,13 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Max. Teilnehmer</label>
                 <input type="number" value={bearbeiten.max_teilnehmer} onChange={(e) => setBearbeiten({ ...bearbeiten, max_teilnehmer: parseInt(e.target.value) })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🥾 Hike & Fly Abenteuer</label>
+                <select value={bearbeiten.hikeandfly_id || ""} onChange={(e) => setBearbeiten({ ...bearbeiten, hikeandfly_id: e.target.value ? parseInt(e.target.value) : null })} style={inputStyle}>
+                  <option value="">-- Kein Hike & Fly --</option>
+                  {hikeAndFlyOptionen.map((h) => <option key={h.id} value={h.id}>{h.titel}</option>)}
+                </select>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details</label>
@@ -301,6 +318,13 @@ export default function AdminTermine() {
                 <input type="number" value={neu.max_teilnehmer} onChange={(e) => terminAendern(index, "max_teilnehmer", parseInt(e.target.value))} style={inputStyle} />
               </div>
               <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🥾 Hike & Fly Abenteuer</label>
+                <select value={neu.hikeandfly_id || ""} onChange={(e) => terminAendern(index, "hikeandfly_id", e.target.value ? parseInt(e.target.value) : null)} style={inputStyle}>
+                  <option value="">-- Kein Hike & Fly --</option>
+                  {hikeAndFlyOptionen.map((h) => <option key={h.id} value={h.id}>{h.titel}</option>)}
+                </select>
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (optional)</label>
                 <textarea value={neu.details} onChange={(e) => terminAendern(index, "details", e.target.value)} placeholder="**Fett**, - Aufzählung" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
               </div>
@@ -331,7 +355,8 @@ export default function AdminTermine() {
             <div>
               <p style={{ margin: "0 0 4px", fontWeight: "bold" }}>{t.wochentag}, {t.datum}</p>
               <p style={{ margin: "0 0 2px", fontSize: "14px", color: "#555" }}>{t.titel}</p>
-              <p style={{ margin: "0", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} · {t.bilder?.length > 0 ? `${t.bilder.length} Bilder` : ""} {t.video_url ? "· Video ✓" : ""}</p>
+              <p style={{ margin: "0 0 2px", fontSize: "13px", color: "#aaa" }}>📍 {t.ort} · Max. {t.max_teilnehmer} · {t.bilder?.length > 0 ? `${t.bilder.length} Bilder` : ""} {t.video_url ? "· Video ✓" : ""}</p>
+              {t.hikeandfly_id && <p style={{ margin: "0", fontSize: "13px", color: "#7799ff" }}>🥾 Hike & Fly verknüpft</p>}
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               <button onClick={() => setBearbeiten(t)} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>✏️ Bearbeiten</button>
