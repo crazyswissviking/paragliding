@@ -131,7 +131,7 @@ export default function Home() {
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
                         <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{t.titel}</p>
                         {t.hikeandfly_id && (
-                          <a href={`/hikeandfly#abenteuer-${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(51,85,204,0.3)", borderRadius: "4px", color: "#7799ff", textDecoration: "none" }}>
+                          <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(51,85,204,0.3)", borderRadius: "4px", color: "#7799ff", textDecoration: "none" }}>
                             🥾 H&F
                           </a>
                         )}

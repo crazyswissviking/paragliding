@@ -112,14 +112,14 @@ export default function Termine() {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <h3 style={{ margin: "0", fontSize: "18px", color: "#fff" }}>{t.titel}</h3>
                     {t.hikeandfly_id && (
-                      
-                       <a href={`/hikeandfly#abenteuer-${t.hikeandfly_id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ fontSize: "12px", padding: "2px 8px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}
-                      >
-                        🥾 Hike & Fly
-                      </a>
-                    )}
+                        
+                         <a href={`/hikeandfly?open=${t.hikeandfly_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ fontSize: "12px", padding: "2px 8px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}
+                        >
+                          🥾 Hike & Fly
+                        </a>
+                      )}
                   </div>
                   <p style={{ margin: "4px 0 0", color: "#888", fontSize: "14px" }}>📍 {t.ort}</p>
                 </div>

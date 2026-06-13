@@ -39,7 +39,20 @@ type HikeAndFly = {
 
 export default function HikeAndFlyPage() {
   const [abenteuer, setAbenteuer] = useState<HikeAndFly[]>([]);
-  const [offen, setOffen] = useState<number | null>(null);
+ const [offen, setOffen] = useState<number | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get("open");
+    if (openId) {
+      const id = parseInt(openId);
+      setOffen(id);
+      setAusgewaehlt(id);
+      setTimeout(() => {
+        document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, [abenteuer]);
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null);
   const [sortierung, setSortierung] = useState<"az" | "laenge" | "hoehe" | "schwierigkeit">("az");
 
