@@ -79,11 +79,11 @@ export default function BlogPage() {
             {alleMedian.length > 0 && (
               <div style={{ position: "relative" }}>
                 {isVideo(alleMedian[aktuellerIndex]) ? (
-                  <video controls style={{ width: "100%", height: "300px", objectFit: "cover" }}>
+                  <video controls style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#000" }}>
                     <source src={alleMedian[aktuellerIndex]} type="video/mp4" />
                   </video>
                 ) : (
-                  <img src={alleMedian[aktuellerIndex]} alt={b.titel} style={{ width: "100%", height: "300px", objectFit: "cover" }} />
+                  <img src={alleMedian[aktuellerIndex]} alt={b.titel} style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#111" }} />
                 )}
                 {alleMedian.length > 1 && (
                   <>
