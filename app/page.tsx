@@ -28,6 +28,7 @@ type Termin = {
   details: string;
   ort: string;
   hikeandfly_id: number | null;
+  thumbnail_url: string;
 };
 
 type Anmeldung = {
@@ -50,7 +51,7 @@ export default function Home() {
     async function laden() {
       const { data: termineData } = await supabase
         .from("termine")
-        .select("*")
+        .select("id, titel, bilder, thumbnail_url, erstellt_am")
         .eq("aktiv", true);
 
       const heute = new Date();
@@ -195,8 +196,8 @@ export default function Home() {
               {blogBeitraege.map((b) => (
                 <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
                   <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", display: "flex", background: "rgba(255,255,255,0.05)" }}>
-                    {b.bilder && b.bilder.length > 0 && (
-                      <img src={b.bilder[0]} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "contain", background: "#111", flexShrink: 0 }} />
+                    {(b.thumbnail_url || (b.bilder && b.bilder.length > 0)) && (
+                      <img src={b.thumbnail_url || b.bilder[0]} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "cover", borderRadius: "0", flexShrink: 0 }} />
                     )}
                     <div style={{ padding: "12px" }}>
                       <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>

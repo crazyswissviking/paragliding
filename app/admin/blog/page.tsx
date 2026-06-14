@@ -41,6 +41,7 @@ type Blog = {
   landeplatz_hoehe: number;
   route_url: string;
   strava_url: string;
+  thumbnail_url: string;
   aktiv: boolean;
 };
 
@@ -50,7 +51,7 @@ const leer = (): BlogOhneId => ({
   titel: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
   startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
   landeplatz_lv95: "", landeplatz_lat: 0, landeplatz_lng: 0, landeplatz_hoehe: 0,
-  route_url: "", strava_url: "", aktiv: true,
+  route_url: "", strava_url: "", thumbnail_url: "", aktiv: true,
 });
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
@@ -165,7 +166,27 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
         <input type="text" value={data.strava_url} onChange={(e) => set({ ...data, strava_url: e.target.value })} placeholder="https://www.strava.com/activities/12345678" style={inputStyle} />
         <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Ganze Strava URL einfügen</p>
       </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🖼 Thumbnail (Vorschaubild Hauptseite)</label>
+        <label style={{ display: "inline-block", padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "1px solid #3355cc", borderRadius: "6px", cursor: "pointer", fontSize: "13px", marginBottom: "8px" }}>
+          📁 Thumbnail hochladen
+          <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const url = await cloudinaryUpload(file);
+            set({ ...data, thumbnail_url: url });
+          }} />
+        </label>
+        {data.thumbnail_url && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+            <img src={data.thumbnail_url} style={{ width: "100px", height: "70px", objectFit: "cover", borderRadius: "6px" }} />
+            <button onClick={() => set({ ...data, thumbnail_url: "" })} style={{ padding: "4px 10px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>✕ Entfernen</button>
+          </div>
+        )}
+        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Kleines Vorschaubild für die Hauptseite</p>
+      </div>
     </div>
+
   );
 }
 
@@ -206,6 +227,7 @@ export default function AdminBlog() {
       landeplatz_lng: bearbeiten.landeplatz_lng, landeplatz_hoehe: bearbeiten.landeplatz_hoehe,
       route_url: bearbeiten.route_url,
       strava_url: bearbeiten.strava_url,
+      thumbnail_url: bearbeiten.thumbnail_url,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
