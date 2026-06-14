@@ -28,12 +28,20 @@ type Termin = {
   details: string;
   ort: string;
   hikeandfly_id: number | null;
-  thumbnail_url: string;
 };
 
 type Anmeldung = {
   id: number;
   termin: string;
+};
+
+type BlogBeitrag = {
+  id: number;
+  titel: string;
+  bilder: string[];
+  medien: string[];
+  thumbnail_url: string;
+  erstellt_am: string;
 };
 
 const parseDate = (d: string) => {
@@ -45,13 +53,13 @@ export default function Home() {
   const [highlights, setHighlights] = useState<Termin[]>([]);
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
-  const [blogBeitraege, setBlogBeitraege] = useState<{ id: number; titel: string; bilder: string[]; erstellt_am: string }[]>([]);
+  const [blogBeitraege, setBlogBeitraege] = useState<BlogBeitrag[]>([]);
 
   useEffect(() => {
     async function laden() {
       const { data: termineData } = await supabase
         .from("termine")
-        .select("id, titel, bilder, thumbnail_url, erstellt_am")
+        .select("*")
         .eq("aktiv", true);
 
       const heute = new Date();
@@ -70,7 +78,7 @@ export default function Home() {
 
       const { data: blogData } = await supabase
         .from("blog")
-        .select("id, titel, bilder, erstellt_am")
+        .select("id, titel, bilder, medien, thumbnail_url, erstellt_am")
         .eq("aktiv", true)
         .order("erstellt_am", { ascending: false })
         .limit(3);
@@ -193,19 +201,22 @@ export default function Home() {
           <div style={{ width: "100%" }}>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {blogBeitraege.map((b) => (
-                <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
-                  <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", display: "flex", background: "rgba(255,255,255,0.05)" }}>
-                    {(b.thumbnail_url || (b.bilder && b.bilder.length > 0)) && (
-                      <img src={b.thumbnail_url || b.bilder[0]} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "cover", borderRadius: "0", flexShrink: 0 }} />
-                    )}
-                    <div style={{ padding: "12px" }}>
-                      <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
-                      <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{b.titel}</p>
+              {blogBeitraege.map((b) => {
+                const vorschaubild = b.thumbnail_url || (b.medien && b.medien.length > 0 ? b.medien[0] : null) || (b.bilder && b.bilder.length > 0 ? b.bilder[0] : null);
+                return (
+                  <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
+                    <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", display: "flex", background: "rgba(255,255,255,0.05)" }}>
+                      {vorschaubild && (
+                        <img src={vorschaubild} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "cover", flexShrink: 0 }} />
+                      )}
+                      <div style={{ padding: "12px" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
+                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{b.titel}</p>
+                      </div>
                     </div>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                );
+              })}
             </div>
             <a href="/blog" style={{ display: "block", marginTop: "12px", padding: "12px 24px", background: "rgba(255,255,255,0.05)", color: "#aaa", borderRadius: "12px", textDecoration: "none", fontSize: "14px", textAlign: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
               📖 Alle Beiträge lesen
