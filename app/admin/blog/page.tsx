@@ -42,6 +42,7 @@ type Blog = {
   route_url: string;
   strava_url: string;
   thumbnail_url: string;
+  hauptbild_index: number;
   aktiv: boolean;
 };
 
@@ -51,7 +52,7 @@ const leer = (): BlogOhneId => ({
   titel: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
   startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
   landeplatz_lv95: "", landeplatz_lat: 0, landeplatz_lng: 0, landeplatz_hoehe: 0,
-  route_url: "", strava_url: "", thumbnail_url: "", aktiv: true,
+  route_url: "", strava_url: "", thumbnail_url: "", hauptbild_index: 0, aktiv: true,
 });
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
@@ -117,17 +118,21 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
           <input type="file" accept="image/*,video/*" multiple style={{ display: "none" }} disabled={uploadLoading} onChange={(e) => onMedienHochladen(e.target.files)} />
         </label>
         {(data.medien || []).length > 0 && (
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
-            {(data.medien || []).map((url: string, i: number) => (
-              <div key={i} style={{ position: "relative" }}>
-                {url.includes("/video/") ? (
-                  <video src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
-                ) : (
-                  <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px" }} />
-                )}
-                <button onClick={() => set({ ...data, medien: (data.medien || []).filter((_: string, j: number) => j !== i) })} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
-              </div>
-            ))}
+          <div style={{ marginTop: "8px" }}>
+            <p style={{ margin: "0 0 6px", fontSize: "12px", color: "#888" }}>⭐ Auf Stern klicken = Hauptbild setzen</p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {(data.medien || []).map((url: string, i: number) => (
+                <div key={i} style={{ position: "relative" }}>
+                  {url.includes("/video/") ? (
+                    <video src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px", border: data.hauptbild_index === i ? "2px solid #ffaa00" : "2px solid transparent" }} />
+                  ) : (
+                    <img src={url} style={{ width: "80px", height: "60px", objectFit: "cover", borderRadius: "6px", border: data.hauptbild_index === i ? "2px solid #ffaa00" : "2px solid transparent" }} />
+                  )}
+                  <button onClick={() => set({ ...data, hauptbild_index: i })} style={{ position: "absolute", top: "-6px", left: "-6px", background: data.hauptbild_index === i ? "#ffaa00" : "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>⭐</button>
+                  <button onClick={() => set({ ...data, medien: (data.medien || []).filter((_: string, j: number) => j !== i) })} style={{ position: "absolute", top: "-6px", right: "-6px", background: "#e74c3c", color: "white", border: "none", borderRadius: "50%", width: "18px", height: "18px", cursor: "pointer", fontSize: "11px", lineHeight: "18px", textAlign: "center", padding: "0" }}>✕</button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -228,6 +233,7 @@ export default function AdminBlog() {
       route_url: bearbeiten.route_url,
       strava_url: bearbeiten.strava_url,
       thumbnail_url: bearbeiten.thumbnail_url,
+      hauptbild_index: bearbeiten.hauptbild_index,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);

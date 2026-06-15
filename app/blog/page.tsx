@@ -22,6 +22,7 @@ type Blog = {
   route_url: string;
   strava_url: string;
   erstellt_am: string;
+  hauptbild_index: number;
 };
 
 export default function BlogPage() {
@@ -71,7 +72,7 @@ export default function BlogPage() {
         ];
 
         const isVideo = (url: string) => url.includes("/video/") || url.endsWith(".mp4") || url.endsWith(".mov");
-        const aktuellerIndex = medienIndex[b.id] !== undefined ? medienIndex[b.id] : alleMedian.length - 1;
+        const aktuellerIndex = medienIndex[b.id] !== undefined ? medienIndex[b.id] : (b.hauptbild_index || 0);
         return (
           <div key={b.id} style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "16px", marginBottom: "32px", overflow: "hidden" }}>
 
