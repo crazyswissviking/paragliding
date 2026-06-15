@@ -61,7 +61,6 @@ export default function BlogPage() {
 
       {beitraege.map((b) => {
         const tippIstOffen = tippOffen === b.id;
-        const aktuellerIndex = medienIndex[b.id] || 0;
         const tipps = b.tipps ? b.tipps.split("\n").filter((t) => t.trim()) : [];
 
         // Alle Medien kombinieren: neue medien[] + alte bilder[]
@@ -72,7 +71,7 @@ export default function BlogPage() {
         ];
 
         const isVideo = (url: string) => url.includes("/video/") || url.endsWith(".mp4") || url.endsWith(".mov");
-
+        const aktuellerIndex = medienIndex[b.id] !== undefined ? medienIndex[b.id] : alleMedian.length - 1;
         return (
           <div key={b.id} style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "16px", marginBottom: "32px", overflow: "hidden" }}>
 
