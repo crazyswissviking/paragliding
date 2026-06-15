@@ -28,6 +28,7 @@ export default function BlogPage() {
   const [beitraege, setBeitraege] = useState<Blog[]>([]);
   const [tippOffen, setTippOffen] = useState<number | null>(null);
   const [medienIndex, setMedienIndex] = useState<Record<number, number>>({});
+  const [thumbnailsOffen, setThumbnailsOffen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     async function laden() {
@@ -100,16 +101,26 @@ export default function BlogPage() {
 
                 {/* Thumbnail Raster */}
                 {alleMedian.length > 1 && (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "4px", marginTop: "4px" }}>
-                    {alleMedian.map((url, i) => (
-                      <div key={i} onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ position: "relative", cursor: "pointer", aspectRatio: "1", overflow: "hidden", border: i === aktuellerIndex ? "2px solid #7799ff" : "2px solid transparent", borderRadius: "4px" }}>
-                        {isVideo(url) ? (
-                          <div style={{ width: "100%", height: "100%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>🎥</div>
-                        ) : (
-                          <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: i === aktuellerIndex ? 1 : 0.6 }} />
-                        )}
+                  <div style={{ marginTop: "4px" }}>
+                    <button
+                      onClick={() => setThumbnailsOffen((prev) => ({ ...prev, [b.id]: !prev[b.id] }))}
+                      style={{ width: "100%", padding: "6px", background: "rgba(255,255,255,0.05)", border: "none", color: "#aaa", cursor: "pointer", fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+                    >
+                      {thumbnailsOffen[b.id] ? "▲ Weniger anzeigen" : `▼ Alle ${alleMedian.length} Medien anzeigen`}
+                    </button>
+                    {thumbnailsOffen[b.id] && (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "4px", marginTop: "4px" }}>
+                        {alleMedian.map((url, i) => (
+                          <div key={i} onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ position: "relative", cursor: "pointer", aspectRatio: "1", overflow: "hidden", border: i === aktuellerIndex ? "2px solid #7799ff" : "2px solid transparent", borderRadius: "4px" }}>
+                            {isVideo(url) ? (
+                              <div style={{ width: "100%", height: "100%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>🎥</div>
+                            ) : (
+                              <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: i === aktuellerIndex ? 1 : 0.6 }} />
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
