@@ -77,35 +77,40 @@ export default function BlogPage() {
 
             {/* Medien Galerie */}
             {alleMedian.length > 0 && (
-              <div style={{ position: "relative" }}>
-                {isVideo(alleMedian[aktuellerIndex]) ? (
-                  <video controls style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#000" }}>
-                    <source src={alleMedian[aktuellerIndex]} type="video/mp4" />
-                  </video>
-                ) : (
-                  <img src={alleMedian[aktuellerIndex]} alt={b.titel} style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#111" }} />
-                )}
+              <div>
+                {/* Grosses Hauptbild */}
+                <div style={{ position: "relative" }}>
+                  {isVideo(alleMedian[aktuellerIndex]) ? (
+                    <video controls style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#000" }}>
+                      <source src={alleMedian[aktuellerIndex]} type="video/mp4" />
+                    </video>
+                  ) : (
+                    <img src={alleMedian[aktuellerIndex]} alt={b.titel} style={{ width: "100%", maxHeight: "500px", objectFit: "contain", background: "#111" }} />
+                  )}
+                  {alleMedian.length > 1 && (
+                    <>
+                      <button onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: Math.max(0, aktuellerIndex - 1) }))} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellerIndex === 0 ? "none" : "block" }}>&#8249;</button>
+                      <button onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: Math.min(alleMedian.length - 1, aktuellerIndex + 1) }))} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellerIndex === alleMedian.length - 1 ? "none" : "block" }}>&#8250;</button>
+                      <div style={{ position: "absolute", bottom: "10px", right: "10px", background: "rgba(0,0,0,0.5)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "12px" }}>
+                        {aktuellerIndex + 1} / {alleMedian.length} {isVideo(alleMedian[aktuellerIndex]) ? "🎥" : "📸"}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Thumbnail Raster */}
                 {alleMedian.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: Math.max(0, aktuellerIndex - 1) }))}
-                      style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellerIndex === 0 ? "none" : "block" }}
-                    >&#8249;</button>
-                    <button
-                      onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: Math.min(alleMedian.length - 1, aktuellerIndex + 1) }))}
-                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "18px", display: aktuellerIndex === alleMedian.length - 1 ? "none" : "block" }}
-                    >&#8250;</button>
-                    <div style={{ position: "absolute", bottom: "10px", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "6px" }}>
-                      {alleMedian.map((url, i) => (
-                        <div key={i} onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === aktuellerIndex ? "white" : "rgba(255,255,255,0.5)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "6px" }}>
-                          {isVideo(url) ? "▶" : ""}
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ position: "absolute", bottom: "10px", right: "10px", background: "rgba(0,0,0,0.5)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "12px" }}>
-                      {aktuellerIndex + 1} / {alleMedian.length} {isVideo(alleMedian[aktuellerIndex]) ? "🎥" : "📸"}
-                    </div>
-                  </>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "4px", marginTop: "4px" }}>
+                    {alleMedian.map((url, i) => (
+                      <div key={i} onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ position: "relative", cursor: "pointer", aspectRatio: "1", overflow: "hidden", border: i === aktuellerIndex ? "2px solid #7799ff" : "2px solid transparent", borderRadius: "4px" }}>
+                        {isVideo(url) ? (
+                          <div style={{ width: "100%", height: "100%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>🎥</div>
+                        ) : (
+                          <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: i === aktuellerIndex ? 1 : 0.6 }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
