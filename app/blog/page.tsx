@@ -113,8 +113,11 @@ export default function BlogPage() {
                         {alleMedian.map((url, i) => (
                           <div key={i} onClick={() => setMedienIndex((prev) => ({ ...prev, [b.id]: i }))} style={{ position: "relative", cursor: "pointer", aspectRatio: "1", overflow: "hidden", border: i === aktuellerIndex ? "2px solid #7799ff" : "2px solid transparent", borderRadius: "4px" }}>
                             {isVideo(url) ? (
-                              <div style={{ width: "100%", height: "100%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>🎥</div>
-                            ) : (
+                          <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                            <video src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: "20px", background: "rgba(0,0,0,0.5)", borderRadius: "50%", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>▶</div>
+                          </div>
+                        ) : (
                               <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: i === aktuellerIndex ? 1 : 0.6 }} />
                             )}
                           </div>
