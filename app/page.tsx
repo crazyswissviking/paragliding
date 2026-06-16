@@ -206,19 +206,17 @@ export default function Home() {
                 const vorschaubild = b.thumbnail_url || (b.medien && b.medien.length > 0 ? b.medien[0] : null) || (b.bilder && b.bilder.length > 0 ? b.bilder[0] : null);
                 return (
                   <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
-                    <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,255,255,0.05)" }}>
-                    <div style={{ display: "flex" }}>
-                      {vorschaubild && (
-                        <img src={vorschaubild} alt={b.titel} style={{ width: "100px", height: "80px", objectFit: "cover", flexShrink: 0 }} />
-                      )}
-                      <div style={{ padding: "12px" }}>
-                        <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", textAlign: "left" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
-                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff", textAlign: "left" }}>{b.titel}</p>
-                      </div>
-                    </div>
-                    {b.teaser && (
-                      <p style={{ margin: "0", padding: "8px 12px 12px 12px", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>
+                    <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,255,255,0.05)", display: "flex" }}>
+                    {vorschaubild && (
+                      <img src={vorschaubild} alt={b.titel} style={{ width: "100px", objectFit: "cover", flexShrink: 0, alignSelf: "stretch" }} />
                     )}
+                    <div style={{ padding: "12px" }}>
+                      <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", textAlign: "left" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
+                      <p style={{ margin: "0 0 6px", fontSize: "14px", fontWeight: "bold", color: "#fff", textAlign: "left" }}>{b.titel}</p>
+                      {b.teaser && (
+                        <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>
+                      )}
+                    </div>
                   </div>
                   </a>
                 );
