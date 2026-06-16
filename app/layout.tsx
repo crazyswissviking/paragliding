@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Swissgliders Members",
+  title: "VikingFly",
   description: "Events",
 };
 
