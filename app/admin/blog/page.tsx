@@ -23,6 +23,15 @@ function lv95zuWgs84(e: number, n: number): { lat: number; lng: number } {
   return { lat: (lat * 100) / 36, lng: (lng * 100) / 36 };
 }
 
+async function hoeheAuslesen(lat: number, lng: number): Promise<number> {
+  try {
+    const res = await fetch(`https://api3.geo.admin.ch/rest/services/height?easting=${lng}&northing=${lat}&sr=4326`);
+    const data = await res.json();
+    return Math.round(parseFloat(data.height)) || 0;
+  } catch {
+    return 0;
+  }
+}
 type Blog = {
   id: number;
   titel: string;
@@ -32,6 +41,7 @@ type Blog = {
   bilder: string[];
   medien: string[];
   video_url: string;
+  startpunkt_name: string;
   startpunkt_lv95: string;
   startpunkt_lat: number;
   startpunkt_lng: number;
@@ -51,7 +61,7 @@ type BlogOhneId = Omit<Blog, "id">;
 
 const leer = (): BlogOhneId => ({
   titel: "", teaser: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
-  startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
+  startpunkt_name: "", startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
   landeplatz_lv95: "", landeplatz_lat: 0, landeplatz_lng: 0, landeplatz_hoehe: 0,
   route_url: "", strava_url: "", thumbnail_url: "", hauptbild_index: 0, aktiv: true,
 });
@@ -61,11 +71,12 @@ const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border:
 function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
   lv95Label: string;
   lat: number; lng: number; hoehe: number;
-  onKoord: (lat: number, lng: number, lv95: string) => void;
+  onKoord: (lat: number, lng: number, lv95: string, hoehe: number) => void;
 }) {
   const [eingabe, setEingabe] = useState("");
+  const [ladeHoehe, setLadeHoehe] = useState(false);
 
-  const umrechnen = (wert: string) => {
+  const umrechnen = async (wert: string) => {
     const clean = wert.replace(/'/g, "").replace(/\s/g, "");
     const parts = clean.split(",");
     if (parts.length === 2) {
@@ -73,7 +84,12 @@ function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
       const n = parseFloat(parts[1]);
       if (e && n) {
         const { lat: newLat, lng: newLng } = lv95zuWgs84(e, n);
-        onKoord(Math.round(newLat * 100000) / 100000, Math.round(newLng * 100000) / 100000, wert);
+        const roundedLat = Math.round(newLat * 100000) / 100000;
+        const roundedLng = Math.round(newLng * 100000) / 100000;
+        setLadeHoehe(true);
+        const h = await hoeheAuslesen(roundedLat, roundedLng);
+        setLadeHoehe(false);
+        onKoord(roundedLat, roundedLng, wert, h);
       }
     }
   };
@@ -86,7 +102,8 @@ function KoordBlock({ lv95Label, lat, lng, hoehe, onKoord }: {
         <button type="button" onClick={() => umrechnen(eingabe)} style={{ padding: "8px 14px", background: "#3355cc", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", whiteSpace: "nowrap" }}>🔄 Umrechnen</button>
       </div>
       {lat !== 0 && lng !== 0 && <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>✅ WGS84: {lat}, {lng}</p>}
-      {hoehe > 0 && <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>⛰ Höhe: {hoehe} m</p>}
+      {ladeHoehe && <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>⏳ Höhe wird ausgelesen...</p>}
+      {hoehe > 0 && <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#2d6a4f" }}>⛰ Höhe: {hoehe} m ✅</p>}
       <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>💡 Koordinaten von map.geo.admin.ch kopieren</p>
     </div>
   );
@@ -141,17 +158,17 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
           </div>
         )}
       </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚩 Startplatz Name</label>
+        <input type="text" value={data.startpunkt_name || ""} onChange={(e) => set({ ...data, startpunkt_name: e.target.value })} placeholder="z.B. Möntschelen" style={inputStyle} />
+      </div>
       <KoordBlock
         lv95Label="Startplatz Koordinaten"
         lat={data.startpunkt_lat}
         lng={data.startpunkt_lng}
         hoehe={data.startpunkt_hoehe}
-        onKoord={(lat, lng, lv95) => set({ ...data, startpunkt_lat: lat, startpunkt_lng: lng, startpunkt_lv95: lv95 })}
+        onKoord={(lat, lng, lv95, hoehe) => set({ ...data, startpunkt_lat: lat, startpunkt_lng: lng, startpunkt_lv95: lv95, startpunkt_hoehe: hoehe })}
       />
-      <div>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🏔 Startplatz Höhe (m)</label>
-        <input type="number" value={data.startpunkt_hoehe} onChange={(e) => set({ ...data, startpunkt_hoehe: parseInt(e.target.value) })} style={inputStyle} />
-      </div>
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Name</label>
         <input type="text" value={data.landeplatz_lv95} onChange={(e) => set({ ...data, landeplatz_lv95: e.target.value })} placeholder="z.B. Engelberg Dorf" style={inputStyle} />
@@ -161,16 +178,8 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
         lat={data.landeplatz_lat}
         lng={data.landeplatz_lng}
         hoehe={data.landeplatz_hoehe}
-        onKoord={(lat, lng, lv95) => set({ ...data, landeplatz_lat: lat, landeplatz_lng: lng, landeplatz_lv95: lv95 })}
+        onKoord={(lat, lng, lv95, hoehe) => set({ ...data, landeplatz_lat: lat, landeplatz_lng: lng, landeplatz_lv95: lv95, landeplatz_hoehe: hoehe })}
       />
-      <div>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🟢 Landeplatz Höhe (m)</label>
-        <input type="number" value={data.landeplatz_hoehe} onChange={(e) => set({ ...data, landeplatz_hoehe: parseInt(e.target.value) })} style={inputStyle} />
-      </div>
-      <div style={{ gridColumn: "1 / -1" }}>
-        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🗺 Route URL</label>
-        <input type="text" value={data.route_url} onChange={(e) => set({ ...data, route_url: e.target.value })} placeholder="https://..." style={inputStyle} />
-      </div>
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>🚴 Strava Activity URL</label>
         <input type="text" value={data.strava_url} onChange={(e) => set({ ...data, strava_url: e.target.value })} placeholder="https://www.strava.com/activities/12345678" style={inputStyle} />
@@ -231,6 +240,7 @@ export default function AdminBlog() {
     await supabase.from("blog").update({
       titel: bearbeiten.titel, teaser: bearbeiten.teaser, text: bearbeiten.text, tipps: bearbeiten.tipps,
       bilder: bearbeiten.bilder, medien: bearbeiten.medien, video_url: bearbeiten.video_url,
+      startpunkt_name: bearbeiten.startpunkt_name,
       startpunkt_lv95: bearbeiten.startpunkt_lv95, startpunkt_lat: bearbeiten.startpunkt_lat,
       startpunkt_lng: bearbeiten.startpunkt_lng, startpunkt_hoehe: bearbeiten.startpunkt_hoehe,
       landeplatz_lv95: bearbeiten.landeplatz_lv95, landeplatz_lat: bearbeiten.landeplatz_lat,
