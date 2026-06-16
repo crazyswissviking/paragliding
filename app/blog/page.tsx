@@ -32,28 +32,6 @@ export default function BlogPage() {
   const [thumbnailsOffen, setThumbnailsOffen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    if (beitraege.length === 0) return;
-    const interval = setInterval(() => {
-      setMedienIndex((prev) => {
-        const neu = { ...prev };
-        beitraege.forEach((b) => {
-          const alleMedian = [
-            ...(b.medien || []),
-            ...(b.bilder || []),
-            ...(b.video_url ? [b.video_url] : []),
-          ];
-          if (alleMedian.length > 1) {
-            const aktuell = prev[b.id] !== undefined ? prev[b.id] : (b.hauptbild_index || 0);
-            neu[b.id] = (aktuell + 1) % alleMedian.length;
-          }
-        });
-        return neu;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [beitraege]);
-
-  useEffect(() => {
     async function laden() {
       const { data } = await supabase
         .from("blog")
