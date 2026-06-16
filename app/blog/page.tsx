@@ -31,6 +31,7 @@ export default function BlogPage() {
   const [tippOffen, setTippOffen] = useState<number | null>(null);
   const [medienIndex, setMedienIndex] = useState<Record<number, number>>({});
   const [thumbnailsOffen, setThumbnailsOffen] = useState<Record<number, boolean>>({});
+  const [textOffen, setTextOffen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     async function laden() {
@@ -140,16 +141,27 @@ export default function BlogPage() {
                 <p style={{ marginBottom: "16px", fontSize: "16px", color: "#ddd", lineHeight: "1.6", fontStyle: "italic", borderLeft: "3px solid #3355cc", paddingLeft: "12px" }}>{b.teaser}</p>
               )}
               {b.text && (
-                <div style={{ marginBottom: "20px", fontSize: "15px", color: "#ccc", lineHeight: "1.7" }}>
-                  <ReactMarkdown components={{
-                    p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
-                    ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
-                    li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
-                    br: () => <br />,
-                  }}>
-                    {b.text}
-                  </ReactMarkdown>
+                <div style={{ marginBottom: "20px" }}>
+                  <button
+                    onClick={() => setTextOffen((prev) => ({ ...prev, [b.id]: !prev[b.id] }))}
+                    style={{ width: "100%", padding: "10px 16px", background: "rgba(51,85,204,0.2)", border: "1px solid rgba(51,85,204,0.3)", borderRadius: "10px", color: "#7799ff", cursor: "pointer", fontSize: "14px", fontWeight: "bold", textAlign: "left", display: "flex", justifyContent: "space-between" }}
+                  >
+                    <span>📖 Bericht lesen</span>
+                    <span>{textOffen[b.id] ? "▲" : "▼"}</span>
+                  </button>
+                  {textOffen[b.id] && (
+                    <div style={{ marginTop: "12px", fontSize: "15px", color: "#ccc", lineHeight: "1.7" }}>
+                      <ReactMarkdown components={{
+                        p: ({ children }) => <p style={{ margin: "8px 0", color: "#ccc" }}>{children}</p>,
+                        strong: ({ children }) => <strong style={{ color: "#fff" }}>{children}</strong>,
+                        ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px", color: "#ccc" }}>{children}</ul>,
+                        li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>,
+                        br: () => <br />,
+                      }}>
+                        {b.text}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               )}
 
