@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 type Blog = {
   id: number;
   titel: string;
+  teaser: string;
   text: string;
   tipps: string;
   bilder: string[];
@@ -135,6 +136,9 @@ export default function BlogPage() {
               </p>
               <h2 style={{ margin: "0 0 16px", fontSize: "24px", color: "#fff" }}>{b.titel}</h2>
 
+              {b.teaser && (
+                <p style={{ marginBottom: "16px", fontSize: "16px", color: "#ddd", lineHeight: "1.6", fontStyle: "italic", borderLeft: "3px solid #3355cc", paddingLeft: "12px" }}>{b.teaser}</p>
+              )}
               {b.text && (
                 <div style={{ marginBottom: "20px", fontSize: "15px", color: "#ccc", lineHeight: "1.7" }}>
                   <ReactMarkdown components={{

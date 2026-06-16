@@ -26,6 +26,7 @@ function lv95zuWgs84(e: number, n: number): { lat: number; lng: number } {
 type Blog = {
   id: number;
   titel: string;
+  teaser: string;
   text: string;
   tipps: string;
   bilder: string[];
@@ -49,7 +50,7 @@ type Blog = {
 type BlogOhneId = Omit<Blog, "id">;
 
 const leer = (): BlogOhneId => ({
-  titel: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
+  titel: "", teaser: "", text: "", tipps: "", bilder: [], medien: [], video_url: "",
   startpunkt_lv95: "", startpunkt_lat: 0, startpunkt_lng: 0, startpunkt_hoehe: 0,
   landeplatz_lv95: "", landeplatz_lat: 0, landeplatz_lng: 0, landeplatz_hoehe: 0,
   route_url: "", strava_url: "", thumbnail_url: "", hauptbild_index: 0, aktiv: true,
@@ -102,6 +103,10 @@ function Formular({ data, set, uploadLoading, onMedienHochladen }: {
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
         <input type="text" value={data.titel} onChange={(e) => set({ ...data, titel: e.target.value })} placeholder="Blog Titel" style={inputStyle} />
+      </div>
+      <div style={{ gridColumn: "1 / -1" }}>
+        <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Teaser (kurze Zusammenfassung)</label>
+        <textarea value={data.teaser} onChange={(e) => set({ ...data, teaser: e.target.value })} rows={2} placeholder="Kurze Beschreibung für die Übersicht..." style={{ ...inputStyle, resize: "vertical" }} />
       </div>
       <div style={{ gridColumn: "1 / -1" }}>
         <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Blog Text (Markdown)</label>
@@ -224,7 +229,7 @@ export default function AdminBlog() {
   async function speichern() {
     if (!bearbeiten) return;
     await supabase.from("blog").update({
-      titel: bearbeiten.titel, text: bearbeiten.text, tipps: bearbeiten.tipps,
+      titel: bearbeiten.titel, teaser: bearbeiten.teaser, text: bearbeiten.text, tipps: bearbeiten.tipps,
       bilder: bearbeiten.bilder, medien: bearbeiten.medien, video_url: bearbeiten.video_url,
       startpunkt_lv95: bearbeiten.startpunkt_lv95, startpunkt_lat: bearbeiten.startpunkt_lat,
       startpunkt_lng: bearbeiten.startpunkt_lng, startpunkt_hoehe: bearbeiten.startpunkt_hoehe,
