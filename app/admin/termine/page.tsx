@@ -21,6 +21,7 @@ type Termin = {
   datum: string;
   wochentag: string;
   titel: string;
+  kategorie: string;
   ort: string;
   max_teilnehmer: number;
   aktiv: boolean;
@@ -35,6 +36,7 @@ type NeuerTermin = {
   datum: string;
   wochentag: string;
   titel: string;
+  kategorie: string;
   ort: string;
   max_teilnehmer: number;
   aktiv: boolean;
@@ -56,13 +58,14 @@ const parseDate = (d: string) => {
 };
 
 const leerTermin = (): NeuerTermin => ({
-  datum: "", wochentag: "", titel: "Vollmond-/Nachtflug",
+  datum: "", wochentag: "", titel: "Vollmond-/Nachtflug", kategorie: "Vollmond-/Nachtflug",
   ort: "Wird noch bekanntgegeben", max_teilnehmer: 6,
   aktiv: true, details: "", bild_url: "", video_url: "", bilder: [],
   hikeandfly_id: null,
 });
 
 const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+const kategorien = ["Sunrise to work", "Morgen", "Mittag", "Feierabend", "Abendflug", "Vollmond-/Nachtflug"];
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
 function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilder }: {
@@ -194,7 +197,7 @@ export default function AdminTermine() {
     if (!bearbeiten) return;
     await supabase.from("termine").update({
       datum: bearbeiten.datum, wochentag: bearbeiten.wochentag,
-      titel: bearbeiten.titel, ort: bearbeiten.ort,
+      titel: bearbeiten.titel, ort: bearbeiten.ort, kategorie: bearbeiten.kategorie,
       max_teilnehmer: bearbeiten.max_teilnehmer, details: bearbeiten.details,
       bild_url: bearbeiten.bild_url, video_url: bearbeiten.video_url,
       bilder: bearbeiten.bilder, hikeandfly_id: bearbeiten.hikeandfly_id,
@@ -231,6 +234,12 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
                 <input type="text" value={bearbeiten.titel} onChange={(e) => setBearbeiten({ ...bearbeiten, titel: e.target.value })} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Kategorie</label>
+                <select value={bearbeiten.kategorie} onChange={(e) => setBearbeiten({ ...bearbeiten, kategorie: e.target.value })} style={inputStyle}>
+                  {kategorien.map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>
@@ -308,6 +317,12 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
                 <input type="text" value={neu.titel} onChange={(e) => terminAendern(index, "titel", e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Kategorie</label>
+                <select value={neu.kategorie} onChange={(e) => terminAendern(index, "kategorie", e.target.value)} style={inputStyle}>
+                  {kategorien.map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Ort</label>

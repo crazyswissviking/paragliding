@@ -22,6 +22,7 @@ type Termin = {
   datum: string;
   wochentag: string;
   titel: string;
+  kategorie: string;
   ort: string;
   max_teilnehmer: number;
   details: string;
@@ -36,6 +37,18 @@ type Anmeldung = {
   name: string;
   termin: string;
 };
+
+function kategorieEmoji(kategorie: string): string {
+  const map: Record<string, string> = {
+    "Sunrise to work": "🌅",
+    "Morgen": "☀️",
+    "Mittag": "🌤",
+    "Feierabend": "🌇",
+    "Abendflug": "🌆",
+    "Vollmond-/Nachtflug": "🌕",
+  };
+  return map[kategorie] || "🪂";
+}
 
 const parseDate = (d: string) => {
   const [day, month, year] = d.split(".").map(Number);
@@ -108,7 +121,7 @@ export default function Termine() {
                 }}
               >
                 <div>
-                  <p style={{ color: "#aaa", margin: "0 0 4px", fontSize: "14px" }}>🌕 {t.wochentag}, {t.datum}</p>
+                  <p style={{ color: "#aaa", margin: "0 0 4px", fontSize: "14px" }}>{kategorieEmoji(t.kategorie)} {t.kategorie} · {t.wochentag}, {t.datum}</p>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <h3 style={{ margin: "0", fontSize: "18px", color: "#fff" }}>{t.titel}</h3>
                     {t.hikeandfly_id && (
