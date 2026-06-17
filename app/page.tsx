@@ -134,7 +134,7 @@ export default function Home() {
               <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0" }}>⭐ NÄCHSTE EVENTS</p>
               <a href="/termine" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>(Alle Events ansehen)</a>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
                 const belegt = anmeldungen.filter((a) => a.termin === label).length;
