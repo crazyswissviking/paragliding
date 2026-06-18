@@ -92,7 +92,7 @@ function AnmeldenInhalt() {
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "500px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", marginBottom: "8px", color: "#ffffff" }}>🪂 Vikingfly</h1>
-      <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Anmelden {termin && `– ${termin}`}</h2>
+      <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Anmelden {termin && `– ${termine.find((t) => `${t.wochentag}, ${t.datum}` === termin)?.titel || ""}`}</h2>
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: "20px" }}>
           <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", color: "#ccc" }}>Name</label>
