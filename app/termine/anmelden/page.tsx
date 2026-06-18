@@ -67,10 +67,11 @@ function AnmeldenInhalt() {
       setAnmeldungId(data?.[0]?.id || null);
       setStatus("erfolg");
 
+      const titel = termine.find((t) => `${t.wochentag}, ${t.datum}` === termin)?.titel || "";
       await fetch("/api/bestaetigung", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, termin }),
+        body: JSON.stringify({ name, email, termin, titel }),
       });
       setName("");
       setEmail("");
