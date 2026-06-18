@@ -117,25 +117,31 @@ function AnmeldenInhalt() {
           />
         </div>
         <div style={{ marginBottom: "30px" }}>
-          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", color: "#ccc" }}>Event wählen</label>
-          <select
-            value={termin}
-            onChange={(e) => setTermin(e.target.value)}
-            required
-            style={{ ...inputStyle, cursor: "pointer" }}
-          >
-            <option value="" style={{ background: "#1a1a2e" }}>-- Event auswählen --</option>
-            {termine.map((t) => {
-              const label = `${t.wochentag}, ${t.datum}`;
-              const belegt = plaetze[label] || 0;
-              const voll = belegt >= t.max_teilnehmer;
-              return (
-                <option key={t.id} value={label} disabled={voll} style={{ background: "#1a1a2e" }}>
-                  {voll ? "🔴" : "🟢"} {label} ({belegt}/{t.max_teilnehmer} Plätze)
-                </option>
-              );
-            })}
-          </select>
+          <label style={{ display: "block", marginBottom: "6px", fontWeight: "bold", color: "#ccc" }}>Event</label>
+          {searchParams.get("termin") ? (
+            <div style={{ padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", color: "#7799ff", fontWeight: "bold" }}>
+              🟢 {termin}
+            </div>
+          ) : (
+            <select
+              value={termin}
+              onChange={(e) => setTermin(e.target.value)}
+              required
+              style={{ ...inputStyle, cursor: "pointer" }}
+            >
+              <option value="" style={{ background: "#1a1a2e" }}>-- Event auswählen --</option>
+              {termine.map((t) => {
+                const label = `${t.wochentag}, ${t.datum}`;
+                const belegt = plaetze[label] || 0;
+                const voll = belegt >= t.max_teilnehmer;
+                return (
+                  <option key={t.id} value={label} disabled={voll} style={{ background: "#1a1a2e" }}>
+                    {voll ? "🔴" : "🟢"} {label} ({belegt}/{t.max_teilnehmer} Plätze)
+                  </option>
+                );
+              })}
+            </select>
+          )}
         </div>
         <button
           type="submit"
