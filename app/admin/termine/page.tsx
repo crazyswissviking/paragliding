@@ -57,6 +57,14 @@ const parseDate = (d: string) => {
   return new Date(year, month - 1, day).getTime();
 };
 
+const wochentagAusDatum = (datum: string): string => {
+  const [day, month, year] = datum.split(".").map(Number);
+  if (!day || !month || !year) return "";
+  const date = new Date(year, month - 1, day);
+  const tage = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+  return tage[date.getDay()];
+};
+
 const leerTermin = (): NeuerTermin => ({
   datum: "", wochentag: "", titel: "Vollmond-/Nachtflug", kategorie: "Vollmond-/Nachtflug",
   ort: "Wird noch bekanntgegeben", max_teilnehmer: 6,
@@ -64,8 +72,6 @@ const leerTermin = (): NeuerTermin => ({
   hikeandfly_id: null,
 });
 
-const wochentage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
-const kategorien = ["Sunrise to work", "Morgen", "Mittag", "Feierabend", "Abendflug", "Vollmond-/Nachtflug"];
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
 
 function MediaUpload({ bildUrl, videoUrl, bilder, onBildUrl, onVideoUrl, onBilder }: {
@@ -149,6 +155,7 @@ export default function AdminTermine() {
   const [bearbeiten, setBearbeiten] = useState<Termin | null>(null);
   const [bearbeitenGespeichert, setBearbeitenGespeichert] = useState(false);
   const [hikeAndFlyOptionen, setHikeAndFlyOptionen] = useState<HikeAndFlyOption[]>([]);
+  const [kategorienListe, setKategorienListe] = useState<string[]>([]);
 
   async function laden() {
     const { data } = await supabase.from("termine").select("*");
@@ -162,11 +169,17 @@ export default function AdminTermine() {
     supabase.from("hikeandfly").select("id, titel").eq("aktiv", true).order("titel").then(({ data }) => {
       setHikeAndFlyOptionen(data || []);
     });
+    supabase.from("kategorien").select("name").order("reihenfolge").then(({ data }) => {
+      setKategorienListe((data || []).map((k) => k.name));
+    });
   }, []);
 
-  function terminAendern(index: number, feld: keyof NeuerTermin, wert: any) {
+ function terminAendern(index: number, feld: keyof NeuerTermin, wert: any) {
     const updated = [...neueTermine];
     updated[index] = { ...updated[index], [feld]: wert };
+    if (feld === "datum") {
+      updated[index].wochentag = wochentagAusDatum(wert);
+    }
     setNeueTermine(updated);
   }
 
@@ -174,7 +187,7 @@ export default function AdminTermine() {
   function terminEntfernen(index: number) { setNeueTermine(neueTermine.filter((_, i) => i !== index)); }
 
   async function alleSpeichern() {
-    const gueltig = neueTermine.filter((t) => t.datum && t.wochentag && t.titel);
+    const gueltig = neueTermine.filter((t) => t.datum && t.titel);
     if (gueltig.length === 0) return;
     await supabase.from("termine").insert(gueltig);
     setNeueTermine([leerTermin()]);
@@ -223,13 +236,8 @@ export default function AdminTermine() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Datum (dd.mm.yyyy)</label>
-                <input type="text" value={bearbeiten.datum} onChange={(e) => setBearbeiten({ ...bearbeiten, datum: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Wochentag</label>
-                <select value={bearbeiten.wochentag} onChange={(e) => setBearbeiten({ ...bearbeiten, wochentag: e.target.value })} style={inputStyle}>
-                  {wochentage.map((w) => <option key={w} value={w}>{w}</option>)}
-                </select>
+                <input type="text" value={bearbeiten.datum} onChange={(e) => setBearbeiten({ ...bearbeiten, datum: e.target.value, wochentag: wochentagAusDatum(e.target.value) })} style={inputStyle} />
+                {bearbeiten.wochentag && <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>📅 {bearbeiten.wochentag}</p>}
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
@@ -238,7 +246,7 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Kategorie</label>
                 <select value={bearbeiten.kategorie} onChange={(e) => setBearbeiten({ ...bearbeiten, kategorie: e.target.value })} style={inputStyle}>
-                  {kategorien.map((k) => <option key={k} value={k}>{k}</option>)}
+                  {kategorienListe.map((k) => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
               <div>
@@ -306,13 +314,7 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Datum (dd.mm.yyyy)</label>
                 <input type="text" placeholder="z.B. 30.05.2026" value={neu.datum} onChange={(e) => terminAendern(index, "datum", e.target.value)} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Wochentag</label>
-                <select value={neu.wochentag} onChange={(e) => terminAendern(index, "wochentag", e.target.value)} style={inputStyle}>
-                  <option value="">-- Wochentag --</option>
-                  {wochentage.map((w) => <option key={w} value={w}>{w}</option>)}
-                </select>
+                {neu.wochentag && <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#888" }}>📅 {neu.wochentag}</p>}
               </div>
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Titel</label>
@@ -321,7 +323,7 @@ export default function AdminTermine() {
               <div>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Kategorie</label>
                 <select value={neu.kategorie} onChange={(e) => terminAendern(index, "kategorie", e.target.value)} style={inputStyle}>
-                  {kategorien.map((k) => <option key={k} value={k}>{k}</option>)}
+                  {kategorienListe.map((k) => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
               <div>
