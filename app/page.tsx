@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 
 function TextMitLinks({ text, style }: { text: string; style?: React.CSSProperties }) {
@@ -68,6 +69,7 @@ export default function Home() {
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
   const [blogBeitraege, setBlogBeitraege] = useState<BlogBeitrag[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     async function laden() {
@@ -82,7 +84,7 @@ export default function Home() {
       const sortiert = (termineData || [])
         .filter((t) => parseDate(t.datum) >= heute.getTime())
         .sort((a, b) => parseDate(a.datum) - parseDate(b.datum))
-        .slice(0, 2);
+        .slice(0, 4);
       setHighlights(sortiert);
 
       const { data: anmeldungenData } = await supabase
@@ -94,8 +96,7 @@ export default function Home() {
         .from("blog")
         .select("id, titel, teaser, bilder, medien, thumbnail_url, erstellt_am")
         .eq("aktiv", true)
-        .order("erstellt_am", { ascending: false })
-        .limit(3);
+        .order("erstellt_am", { ascending: false });
       setBlogBeitraege(blogData || []);
     }
     laden();
@@ -214,30 +215,40 @@ export default function Home() {
         {blogBeitraege.length > 0 && (
           <div style={{ width: "100%" }}>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
+
+            <div style={{ marginBottom: "16px" }}>
+              <select
+                onChange={(e) => { if (e.target.value) router.push(`/blog/${e.target.value}`); }}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "14px", cursor: "pointer" }}
+              >
+                <option value="" style={{ background: "#1a1a2e" }}>📖 -- Beitrag auswählen --</option>
+                {blogBeitraege.map((b) => (
+                  <option key={b.id} value={b.id} style={{ background: "#1a1a2e" }}>{b.titel}</option>
+                ))}
+              </select>
+            </div>
+
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {blogBeitraege.map((b) => {
                 const vorschaubild = b.thumbnail_url || (b.medien && b.medien.length > 0 ? b.medien[0] : null) || (b.bilder && b.bilder.length > 0 ? b.bilder[0] : null);
                 return (
-                  <a key={b.id} href="/blog" style={{ textDecoration: "none" }}>
+                  <a key={b.id} href={`/blog/${b.id}`} style={{ textDecoration: "none" }}>
                     <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,255,255,0.05)", display: "flex" }}>
-                    {vorschaubild && (
-                      <img src={vorschaubild} alt={b.titel} style={{ width: "100px", objectFit: "cover", flexShrink: 0, alignSelf: "stretch" }} />
-                    )}
-                    <div style={{ padding: "12px" }}>
-                      <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", textAlign: "left" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
-                      <p style={{ margin: "0 0 6px", fontSize: "14px", fontWeight: "bold", color: "#fff", textAlign: "left" }}>{b.titel}</p>
-                      {b.teaser && (
-                        <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>
+                      {vorschaubild && (
+                        <img src={vorschaubild} alt={b.titel} style={{ width: "100px", objectFit: "cover", flexShrink: 0, alignSelf: "stretch" }} />
                       )}
+                      <div style={{ padding: "12px" }}>
+                        <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", textAlign: "left" }}>{new Date(b.erstellt_am).toLocaleDateString("de-CH")}</p>
+                        <p style={{ margin: "0 0 6px", fontSize: "14px", fontWeight: "bold", color: "#fff", textAlign: "left" }}>{b.titel}</p>
+                        {b.teaser && (
+                          <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   </a>
                 );
               })}
             </div>
-            <a href="/blog" style={{ display: "block", marginTop: "12px", padding: "12px 24px", background: "rgba(255,255,255,0.05)", color: "#aaa", borderRadius: "12px", textDecoration: "none", fontSize: "14px", textAlign: "center", border: "1px solid rgba(255,255,255,0.1)" }}>
-              📖 Alle Beiträge lesen
-            </a>
           </div>
         )}
       </div>
