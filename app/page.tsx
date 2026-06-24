@@ -125,9 +125,12 @@ export default function Home() {
 
       {/* Inhalt */}
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: "700px" }}>
-        <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "#ffffff", marginBottom: "20px", marginTop: "0" }}>
+        <h1 style={{ fontSize: "32px", fontWeight: "bold", color: "#ffffff", marginBottom: "8px", marginTop: "0" }}>
           🪂 VikingFly
         </h1>
+        <p style={{ fontSize: "14px", color: "#aaa", marginBottom: "20px", fontStyle: "italic" }}>
+          Wo Berge zu Flügeln werden 
+        </p>
 
         {highlights.length > 0 && (
           <div style={{ marginBottom: "32px" }}>
