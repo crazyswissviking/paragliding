@@ -30,6 +30,7 @@ type Termin = {
   video_url: string;
   bilder: string[];
   hikeandfly_id: number | null;
+  abgesagt: boolean;
 };
 
 type Anmeldung = {
@@ -123,7 +124,10 @@ export default function Termine() {
                 <div>
                   <p style={{ color: "#aaa", margin: "0 0 4px", fontSize: "14px" }}>{kategorieEmoji(t.kategorie)} {t.kategorie} · {t.wochentag}, {t.datum}</p>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                    <h3 style={{ margin: "0", fontSize: "18px", color: "#fff" }}>{t.titel}</h3>
+                    <h3 style={{ margin: "0", fontSize: "18px", color: t.abgesagt ? "#888" : "#fff", textDecoration: t.abgesagt ? "line-through" : "none" }}>{t.titel}</h3>
+                    {t.abgesagt && (
+                      <span style={{ fontSize: "12px", padding: "2px 8px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>
+                    )}
                     {t.hikeandfly_id && (
                         
                          <a href={`/hikeandfly?open=${t.hikeandfly_id}`}

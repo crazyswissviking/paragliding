@@ -30,6 +30,7 @@ type Termin = {
   details: string;
   ort: string;
   hikeandfly_id: number | null;
+  abgesagt: boolean;
 };
 
 type Anmeldung = {
@@ -156,7 +157,10 @@ export default function Home() {
                     <div style={{ padding: "16px" }}>
                       <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#7799ff" }}>{kategorieEmoji(t.kategorie)} {t.kategorie} · {t.wochentag}, {t.datum}</p>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: "#fff" }}>{t.titel}</p>
+                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: t.abgesagt ? "#888" : "#fff", textDecoration: t.abgesagt ? "line-through" : "none" }}>{t.titel}</p>
+                        {t.abgesagt && (
+                          <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "4px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>
+                        )}
                         {t.hikeandfly_id && (
                           <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(51,85,204,0.3)", borderRadius: "4px", color: "#7799ff", textDecoration: "none" }}>
                             🥾 H&F

@@ -30,6 +30,7 @@ type Termin = {
   video_url: string;
   bilder: string[];
   hikeandfly_id: number | null;
+  abgesagt: boolean;
 };
 
 type NeuerTermin = {
@@ -45,6 +46,7 @@ type NeuerTermin = {
   video_url: string;
   bilder: string[];
   hikeandfly_id: number | null;
+  abgesagt: boolean;
 };
 
 type HikeAndFlyOption = {
@@ -69,7 +71,7 @@ const leerTermin = (): NeuerTermin => ({
   datum: "", wochentag: "", titel: "Vollmond-/Nachtflug", kategorie: "Vollmond-/Nachtflug",
   ort: "Wird noch bekanntgegeben", max_teilnehmer: 6,
   aktiv: true, details: "", bild_url: "", video_url: "", bilder: [],
-  hikeandfly_id: null,
+  hikeandfly_id: null, abgesagt: false,
 });
 
 const inputStyle = { width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #ddd", fontSize: "14px" };
@@ -201,6 +203,11 @@ export default function AdminTermine() {
     laden();
   }
 
+  async function toggleAbgesagt(t: Termin) {
+    await supabase.from("termine").update({ abgesagt: !t.abgesagt }).eq("id", t.id);
+    laden();
+  }
+
   async function loeschen(id: number) {
     await supabase.from("termine").delete().eq("id", id);
     laden();
@@ -213,7 +220,7 @@ export default function AdminTermine() {
       titel: bearbeiten.titel, ort: bearbeiten.ort, kategorie: bearbeiten.kategorie,
       max_teilnehmer: bearbeiten.max_teilnehmer, details: bearbeiten.details,
       bild_url: bearbeiten.bild_url, video_url: bearbeiten.video_url,
-      bilder: bearbeiten.bilder, hikeandfly_id: bearbeiten.hikeandfly_id,
+      bilder: bearbeiten.bilder, hikeandfly_id: bearbeiten.hikeandfly_id, abgesagt: bearbeiten.abgesagt,
     }).eq("id", bearbeiten.id);
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
@@ -263,6 +270,12 @@ export default function AdminTermine() {
                   <option value="">-- Kein Hike & Fly --</option>
                   {hikeAndFlyOptionen.map((h) => <option key={h.id} value={h.id}>{h.titel}</option>)}
                 </select>
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "bold", fontSize: "13px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={bearbeiten.abgesagt} onChange={(e) => setBearbeiten({ ...bearbeiten, abgesagt: e.target.checked })} />
+                  🚫 Event abgesagt
+                </label>
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details</label>
@@ -378,6 +391,7 @@ export default function AdminTermine() {
             <div style={{ display: "flex", gap: "10px" }}>
               <button onClick={() => setBearbeiten(t)} style={{ padding: "8px 14px", background: "#f0f4ff", color: "#3355cc", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>✏️ Bearbeiten</button>
               <button onClick={() => toggleAktiv(t)} style={{ padding: "8px 14px", background: t.aktiv ? "#e6f4ea" : "#f5f5f5", color: t.aktiv ? "#2d6a4f" : "#888", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>{t.aktiv ? "✅ Aktiv" : "⏸ Inaktiv"}</button>
+              <button onClick={() => toggleAbgesagt(t)} style={{ padding: "8px 14px", background: t.abgesagt ? "#fdecea" : "#f5f5f5", color: t.abgesagt ? "#c0392b" : "#888", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>{t.abgesagt ? "🚫 Abgesagt" : "Absagen"}</button>
               <button onClick={() => loeschen(t.id)} style={{ padding: "8px 14px", background: "#fdecea", color: "#c0392b", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>🗑 Löschen</button>
             </div>
           </div>
