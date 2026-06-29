@@ -39,22 +39,10 @@ type HikeAndFly = {
 
 export default function HikeAndFlyPage() {
   const [abenteuer, setAbenteuer] = useState<HikeAndFly[]>([]);
- const [offen, setOffen] = useState<number | null>(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const openId = params.get("open");
-    if (openId) {
-      const id = parseInt(openId);
-      setOffen(id);
-      setAusgewaehlt(id);
-      setTimeout(() => {
-        document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
-      }, 500);
-    }
-  }, [abenteuer]);
+  const [offen, setOffen] = useState<number | null>(null);
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null);
   const [sortierung, setSortierung] = useState<"az" | "laenge" | "hoehe" | "schwierigkeit">("az");
+  const [karteOffen, setKarteOffen] = useState(false);
 
   useEffect(() => {
     async function laden() {
@@ -67,6 +55,20 @@ export default function HikeAndFlyPage() {
     }
     laden();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get("open");
+    if (openId) {
+      const id = parseInt(openId);
+      setOffen(id);
+      setAusgewaehlt(id);
+      setKarteOffen(true);
+      setTimeout(() => {
+        document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, [abenteuer]);
 
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "900px", margin: "0 auto" }}>
@@ -92,20 +94,39 @@ export default function HikeAndFlyPage() {
         </select>
       </div>
 
-      {/* Karte */}
+      {/* Karte aufklappbar */}
       {abenteuer.filter((a) => a.lat && a.lng).length > 0 && (
-        <div style={{ marginBottom: "32px", borderRadius: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
-          <Karte
-            abenteuer={abenteuer.filter((a) => a.lat && a.lng)}
-            ausgewaehlt={ausgewaehlt}
-            onAuswaehlen={(id) => {
-              setAusgewaehlt(id);
-              setOffen(id);
-              setTimeout(() => {
-                document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
-              }, 100);
-            }}
-          />
+        <div style={{ marginBottom: "32px" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button
+              onClick={() => setKarteOffen(!karteOffen)}
+              style={{ flex: 1, padding: "12px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "#fff", cursor: "pointer", fontSize: "14px", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            >
+              <span>🗺 Übersichtskarte</span>
+              <span>{karteOffen ? "▲ Schliessen" : "▼ Anzeigen"}</span>
+            </button>
+            
+              href="/hikeandfly/vollbildkarte"
+              style={{ padding: "12px 16px", background: "rgba(51,85,204,0.3)", border: "1px solid rgba(51,85,204,0.5)", borderRadius: "10px", color: "#7799ff", textDecoration: "none", fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap" }}
+            >
+              ⛶ Vollbild
+            </a>
+          </div>
+          {karteOffen && (
+            <div style={{ marginTop: "12px", borderRadius: "12px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
+              <Karte
+                abenteuer={abenteuer.filter((a) => a.lat && a.lng)}
+                ausgewaehlt={ausgewaehlt}
+                onAuswaehlen={(id) => {
+                  setAusgewaehlt(id);
+                  setOffen(id);
+                  setTimeout(() => {
+                    document.getElementById(`abenteuer-${id}`)?.scrollIntoView({ behavior: "smooth" });
+                  }, 100);
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
