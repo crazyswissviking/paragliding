@@ -106,7 +106,7 @@ export default function HikeAndFlyPage() {
               <span>{karteOffen ? "▲ Schliessen" : "▼ Anzeigen"}</span>
             </button>
             
-              href="/hikeandfly/vollbildkarte"
+              <a href="/hikeandfly/vollbildkarte"
               style={{ padding: "12px 16px", background: "rgba(51,85,204,0.3)", border: "1px solid rgba(51,85,204,0.5)", borderRadius: "10px", color: "#7799ff", textDecoration: "none", fontSize: "14px", fontWeight: "bold", whiteSpace: "nowrap" }}
             >
               ⛶ Vollbild
