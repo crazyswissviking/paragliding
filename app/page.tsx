@@ -78,6 +78,7 @@ export default function Home() {
         .from("termine")
         .select("*")
         .eq("aktiv", true);
+        
 
       const heute = new Date();
       heute.setHours(0, 0, 0, 0);
