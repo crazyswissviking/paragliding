@@ -85,7 +85,6 @@ export default function Home() {
       const sortiert = (termineData || [])
         .filter((t) => parseDate(t.datum) >= heute.getTime())
         .sort((a, b) => parseDate(a.datum) - parseDate(b.datum))
-        .slice(0, 4);
       setHighlights(sortiert);
 
       const { data: anmeldungenData } = await supabase
