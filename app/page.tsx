@@ -31,6 +31,7 @@ type Termin = {
   ort: string;
   hikeandfly_id: number | null;
   abgesagt: boolean;
+  abgesagt_begruendung: string;
 };
 
 type Anmeldung = {
@@ -302,9 +303,14 @@ export default function Home() {
                         {/* Anmelden Button */}
                         <div>
                           {t.abgesagt ? (
-                            <span style={{ display: "inline-block", padding: "10px 20px", background: "rgba(192,57,43,0.3)", color: "#e74c3c", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
-                              🚫 Abgesagt
-                            </span>
+                            <div>
+                              <span style={{ display: "inline-block", padding: "10px 20px", background: "rgba(192,57,43,0.3)", color: "#e74c3c", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
+                                🚫 Abgesagt
+                              </span>
+                              {t.abgesagt_begruendung && (
+                                <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#e74c3c" }}>{t.abgesagt_begruendung}</p>
+                              )}
+                            </div>
                           ) : voll ? (
                             <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
                               🔴 Ausgebucht
