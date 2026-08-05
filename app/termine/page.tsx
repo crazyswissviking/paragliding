@@ -113,7 +113,7 @@ export default function Termine() {
               <div
                 onClick={() => toggleOffen(label)}
                 style={{
-                  padding: "20px 24px",
+                  padding: "16px 20px",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
@@ -121,48 +121,89 @@ export default function Termine() {
                   background: istOffen ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
                 }}
               >
-                <div>
-                  <p style={{ color: "#aaa", margin: "0 0 4px", fontSize: "14px" }}>{kategorieEmoji(t.kategorie)} {t.kategorie} · {t.wochentag}, {t.datum}</p>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                    <h3 style={{ margin: "0", fontSize: "18px", color: t.abgesagt ? "#888" : "#fff", textDecoration: t.abgesagt ? "line-through" : "none" }}>{t.titel}</h3>
-                    {t.abgesagt && (
-                      <span style={{ fontSize: "12px", padding: "2px 8px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>
-                    )}
-                    {t.hikeandfly_id && (
-                        
-                         <a href={`/hikeandfly?open=${t.hikeandfly_id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ fontSize: "12px", padding: "2px 8px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}
-                        >
-                          🥾 Hike & Fly
-                        </a>
-                      )}
-                  </div>
-                  <p style={{ margin: "4px 0 0", color: "#888", fontSize: "14px" }}>📍 {t.ort}</p>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{
-                    background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
-                    borderRadius: "8px",
-                    padding: "10px 16px",
-                    textAlign: "center",
-                    minWidth: "80px",
+                <div style={{ minWidth: 0 }}>
+                  <p style={{
+                    margin: "0 0 2px",
+                    fontSize: "20px",
+                    fontWeight: "bold",
+                    color: voll ? "#e74c3c" : "#7799ff",
                   }}>
-                    <p style={{ margin: "0", fontSize: "22px", fontWeight: "bold", color: voll ? "#e74c3c" : "#7799ff" }}>
-                      {t.max_teilnehmer - belegt}
-                    </p>
-                    <p style={{ margin: "0", fontSize: "12px", color: "#aaa" }}>
-                      {voll ? "Voll" : "Frei"}
-                    </p>
+                    {t.wochentag}, {t.datum}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <h3 style={{
+                      margin: "0",
+                      fontSize: "16px",
+                      fontWeight: "normal",
+                      color: t.abgesagt ? "#888" : "#ddd",
+                      textDecoration: t.abgesagt ? "line-through" : "none",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {kategorieEmoji(t.kategorie)} {t.titel}
+                    </h3>
+                    {t.abgesagt && (
+                      <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>🚫</span>
+                    )}
+                    {voll && !t.abgesagt && (
+                      <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>Voll</span>
+                    )}
                   </div>
-                  <span style={{ fontSize: "14px", color: "#aaa" }}>
-                    {istOffen ? "Details schliessen ▲" : "Details ▼"}
-                  </span>
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleOffen(label); }}
+                  aria-label={istOffen ? "Details schliessen" : "Details öffnen"}
+                  style={{
+                    flexShrink: 0,
+                    marginLeft: "12px",
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    border: "none",
+                    background: "rgba(51,85,204,0.3)",
+                    color: "#7799ff",
+                    fontSize: "24px",
+                    lineHeight: "1",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transform: istOffen ? "rotate(45deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s ease",
+                  }}
+                >
+                  +
+                </button>
               </div>
 
               {istOffen && (
                 <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+                    <p style={{ margin: "0", color: "#888", fontSize: "14px" }}>📍 {t.ort} · {t.kategorie}</p>
+                    <div style={{
+                      background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
+                      borderRadius: "8px",
+                      padding: "6px 12px",
+                      textAlign: "center",
+                    }}>
+                      <span style={{ fontSize: "14px", fontWeight: "bold", color: voll ? "#e74c3c" : "#7799ff" }}>
+                        {t.max_teilnehmer - belegt} {voll ? "· Voll" : "frei"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {t.hikeandfly_id && (
+                    <div style={{ marginBottom: "16px" }}>
+                      <a href={`/hikeandfly?open=${t.hikeandfly_id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ fontSize: "12px", padding: "4px 10px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}
+                      >
+                        🥾 Hike & Fly
+                      </a>
+                    </div>
+                  )}
 
                   {/* Bildergalerie */}
                   {bilder.length > 0 && (
