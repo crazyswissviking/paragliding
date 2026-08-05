@@ -139,7 +139,7 @@ export default function Home() {
               <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0" }}>⭐ NÄCHSTE EVENTS</p>
               <a href="/termine" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>(Alle Events ansehen)</a>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
                 const belegt = anmeldungen.filter((a) => a.termin === label).length;
@@ -148,67 +148,127 @@ export default function Home() {
 
                 return (
                   <div key={t.id} style={{
-                    border: "1px solid rgba(51,85,204,0.5)",
+                    border: "1px solid rgba(255,255,255,0.15)",
                     borderRadius: "12px",
-                    background: "rgba(51,85,204,0.15)",
-                    textAlign: "left",
+                    marginBottom: "12px",
                     overflow: "hidden",
+                    textAlign: "left",
                   }}>
-                    <div style={{ padding: "16px" }}>
-                      <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#7799ff" }}>{kategorieEmoji(t.kategorie)} {t.kategorie} · {t.wochentag}, {t.datum}</p>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
-                        <p style={{ margin: "0", fontSize: "14px", fontWeight: "bold", color: t.abgesagt ? "#888" : "#fff", textDecoration: t.abgesagt ? "line-through" : "none" }}>{t.titel}</p>
-                        {t.abgesagt && (
-                          <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "4px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>
-                        )}
-                        {t.hikeandfly_id && (
-                          <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(51,85,204,0.3)", borderRadius: "4px", color: "#7799ff", textDecoration: "none" }}>
-                            🥾 H&F
-                          </a>
-                        )}
-                      </div>
-                      <p style={{ margin: "0 0 8px", fontSize: "12px", color: "#888" }}>📍 {t.ort}</p>
-                      <div style={{
-                        display: "inline-block",
-                        padding: "3px 8px",
-                        background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        color: voll ? "#e74c3c" : "#7799ff",
-                        fontWeight: "bold",
-                        marginBottom: "12px",
-                      }}>
-                        {voll ? "🔴 Voll" : `${t.max_teilnehmer - belegt} Plätze frei`}
-                      </div>
-
-                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                        {!voll && (
-                          <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} style={{
-                            display: "inline-block", padding: "6px 12px", background: "#3355cc",
-                            color: "white", borderRadius: "6px", textDecoration: "none", fontSize: "12px", fontWeight: "bold",
+                    <div
+                      onClick={() => setOffen(istOffen ? null : t.id)}
+                      style={{
+                        padding: "16px 20px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        cursor: "pointer",
+                        background: istOffen ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{
+                          margin: "0 0 2px",
+                          fontSize: "20px",
+                          fontWeight: "bold",
+                          color: voll ? "#e74c3c" : "#7799ff",
+                        }}>
+                          {t.wochentag}, {t.datum}
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <h3 style={{
+                            margin: "0",
+                            fontSize: "16px",
+                            fontWeight: "normal",
+                            color: t.abgesagt ? "#888" : "#ddd",
+                            textDecoration: t.abgesagt ? "line-through" : "none",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                           }}>
-                            ✍️ Anmelden
-                          </a>
-                        )}
-                        {t.details && (
-                          <button onClick={() => setOffen(istOffen ? null : t.id)} style={{
-                            padding: "6px 12px", background: "rgba(255,255,255,0.1)", color: "white",
-                            border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px", fontSize: "12px",
-                            fontWeight: "bold", cursor: "pointer",
-                          }}>
-                            {istOffen ? "▲ Schliessen" : "▼ Details"}
-                          </button>
-                        )}
+                            {kategorieEmoji(t.kategorie)} {t.titel}
+                          </h3>
+                          {t.abgesagt && (
+                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>🚫</span>
+                          )}
+                          {voll && !t.abgesagt && (
+                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>Voll</span>
+                          )}
+                        </div>
                       </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOffen(istOffen ? null : t.id); }}
+                        aria-label={istOffen ? "Details schliessen" : "Details öffnen"}
+                        style={{
+                          flexShrink: 0,
+                          marginLeft: "12px",
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          border: "none",
+                          background: "rgba(51,85,204,0.3)",
+                          color: "#7799ff",
+                          fontSize: "24px",
+                          lineHeight: "1",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transform: istOffen ? "rotate(45deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                        }}
+                      >
+                        +
+                      </button>
                     </div>
 
-                    {istOffen && t.details && (
-                      <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", fontSize: "13px", color: "#ccc", textAlign: "left" }}>
-                        {t.details.split("\n").map((zeile, i) => (
-                          <p key={i} style={{ margin: "4px 0" }}>
-                            <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
-                          </p>
-                        ))}
+                    {istOffen && (
+                      <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+                          <p style={{ margin: "0", color: "#888", fontSize: "14px" }}>📍 {t.ort} · {t.kategorie}</p>
+                          <div style={{
+                            background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
+                            borderRadius: "8px",
+                            padding: "6px 12px",
+                            textAlign: "center",
+                          }}>
+                            <span style={{ fontSize: "14px", fontWeight: "bold", color: voll ? "#e74c3c" : "#7799ff" }}>
+                              {t.max_teilnehmer - belegt} {voll ? "· Voll" : "frei"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {t.hikeandfly_id && (
+                          <div style={{ marginBottom: "16px" }}>
+                            <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "12px", padding: "4px 10px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}>
+                              🥾 Hike & Fly
+                            </a>
+                          </div>
+                        )}
+
+                        {t.details && (
+                          <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
+                            📝 <strong>Details:</strong>
+                            <div style={{ marginTop: "8px", lineHeight: "1.7" }}>
+                              {t.details.split("\n").map((zeile, i) => (
+                                <p key={i} style={{ margin: "4px 0" }}>
+                                  <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          {voll ? (
+                            <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
+                              🔴 Ausgebucht
+                            </span>
+                          ) : (
+                            <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
+                              ✍️ Jetzt anmelden
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
