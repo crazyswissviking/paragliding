@@ -35,6 +35,7 @@ type Termin = {
 
 type Anmeldung = {
   id: number;
+  name: string;
   termin: string;
 };
 
@@ -46,6 +47,12 @@ type BlogBeitrag = {
   thumbnail_url: string;
   erstellt_am: string;
   teaser: string;
+};
+
+type HafDaten = {
+  strecke_km: number;
+  hoehenmeter: number;
+  tempo_wanderweg: string;
 };
 
 const parseDate = (d: string) => {
@@ -69,6 +76,8 @@ export default function Home() {
   const [highlights, setHighlights] = useState<Termin[]>([]);
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
+  const [teilnehmerOffen, setTeilnehmerOffen] = useState<number | null>(null);
+  const [hafDaten, setHafDaten] = useState<Record<number, HafDaten>>({});
   const [blogBeitraege, setBlogBeitraege] = useState<BlogBeitrag[]>([]);
   const router = useRouter();
 
@@ -78,19 +87,18 @@ export default function Home() {
         .from("termine")
         .select("*")
         .eq("aktiv", true);
-        
 
       const heute = new Date();
       heute.setHours(0, 0, 0, 0);
 
       const sortiert = (termineData || [])
         .filter((t) => parseDate(t.datum) >= heute.getTime())
-        .sort((a, b) => parseDate(a.datum) - parseDate(b.datum))
+        .sort((a, b) => parseDate(a.datum) - parseDate(b.datum));
       setHighlights(sortiert);
 
       const { data: anmeldungenData } = await supabase
         .from("anmeldungen")
-        .select("id, termin");
+        .select("id, name, termin");
       setAnmeldungen(anmeldungenData || []);
 
       const { data: blogData } = await supabase
@@ -102,6 +110,20 @@ export default function Home() {
     }
     laden();
   }, []);
+
+  useEffect(() => {
+    if (!offen) return;
+    const termin = highlights.find((t) => t.id === offen);
+    if (!termin?.hikeandfly_id || hafDaten[termin.hikeandfly_id]) return;
+    supabase
+      .from("hikeandfly")
+      .select("id, strecke_km, hoehenmeter, tempo_wanderweg")
+      .eq("id", termin.hikeandfly_id)
+      .single()
+      .then(({ data }) => {
+        if (data) setHafDaten((prev) => ({ ...prev, [data.id]: data }));
+      });
+  }, [offen]);
 
   return (
     <main style={{
@@ -130,7 +152,7 @@ export default function Home() {
           🪂 VikingFly
         </h1>
         <p style={{ fontSize: "14px", color: "#aaa", marginBottom: "20px", fontStyle: "italic" }}>
-          Wo Berge zu Flügeln werden 
+          Wo Berge zu Flügeln werden – Walhalla kann warten
         </p>
 
         {highlights.length > 0 && (
@@ -141,7 +163,8 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
-                const belegt = anmeldungen.filter((a) => a.termin === label).length;
+                const teilnehmerListe = anmeldungen.filter((a) => a.termin === label);
+                const belegt = teilnehmerListe.length;
                 const voll = belegt >= t.max_teilnehmer;
                 const istOffen = offen === t.id;
 
@@ -149,10 +172,10 @@ export default function Home() {
                   <div key={t.id} style={{
                     border: "1px solid rgba(255,255,255,0.15)",
                     borderRadius: "12px",
-                    marginBottom: "12px",
                     overflow: "hidden",
                     textAlign: "left",
                   }}>
+                    {/* Header */}
                     <div
                       onClick={() => setOffen(istOffen ? null : t.id)}
                       style={{
@@ -175,25 +198,19 @@ export default function Home() {
                           {kategorieEmoji(t.kategorie)} {t.titel}
                         </h3>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                          <p style={{
-                            margin: "0",
-                            fontSize: "12px",
-                            fontWeight: "normal",
-                            color: "#aaa",
-                          }}>
-                            {t.wochentag}, {t.datum} · ({belegt}/{t.max_teilnehmer}) {!voll && !t.abgesagt ? "· bitte anmelden" : ""}
+                          <p style={{ margin: "0", fontSize: "12px", color: "#aaa" }}>
+                            {t.wochentag}, {t.datum} · ({belegt}/{t.max_teilnehmer}){!voll && !t.abgesagt ? " · bitte anmelden" : ""}
                           </p>
                           {t.abgesagt && (
-                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>🚫</span>
+                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>
                           )}
                           {voll && !t.abgesagt && (
-                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>Voll</span>
+                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>Voll</span>
                           )}
                         </div>
                       </div>
                       <button
                         onClick={(e) => { e.stopPropagation(); setOffen(istOffen ? null : t.id); }}
-                        aria-label={istOffen ? "Details schliessen" : "Details öffnen"}
                         style={{
                           flexShrink: 0,
                           marginLeft: "12px",
@@ -204,7 +221,6 @@ export default function Home() {
                           background: "rgba(51,85,204,0.3)",
                           color: "#7799ff",
                           fontSize: "24px",
-                          lineHeight: "1",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
@@ -217,34 +233,42 @@ export default function Home() {
                       </button>
                     </div>
 
+                    {/* Details aufgeklappt */}
                     {istOffen && (
-                      <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
-                          <p style={{ margin: "0", color: "#888", fontSize: "14px" }}>📍 {t.ort} · {t.kategorie}</p>
-                          <div style={{
-                            background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
-                            borderRadius: "8px",
-                            padding: "6px 12px",
-                            textAlign: "center",
-                          }}>
-                            <span style={{ fontSize: "14px", fontWeight: "bold", color: voll ? "#e74c3c" : "#7799ff" }}>
-                              {t.max_teilnehmer - belegt} {voll ? "· Voll" : "frei"}
-                            </span>
-                          </div>
+                      <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", gap: "12px" }}>
+
+                        {/* Treffpunkt */}
+                        <div>
+                          <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>📍 TREFFPUNKT</p>
+                          <p style={{ margin: "0", fontSize: "14px", color: "#fff" }}>{t.ort}</p>
                         </div>
 
-                        {t.hikeandfly_id && (
-                          <div style={{ marginBottom: "16px" }}>
-                            <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "12px", padding: "4px 10px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}>
-                              🥾 Hike & Fly
+                        {/* H&F Infos */}
+                        {t.hikeandfly_id && hafDaten[t.hikeandfly_id] && (
+                          <div style={{ padding: "10px 12px", background: "rgba(51,85,204,0.15)", borderRadius: "8px" }}>
+                            <p style={{ margin: "0 0 8px", fontSize: "11px", color: "#7799ff", fontWeight: "bold", letterSpacing: "0.5px" }}>🥾 HIKE & FLY</p>
+                            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "8px" }}>
+                              {hafDaten[t.hikeandfly_id].strecke_km > 0 && (
+                                <span style={{ fontSize: "13px", color: "#ccc" }}>🗺 {hafDaten[t.hikeandfly_id].strecke_km} km</span>
+                              )}
+                              {hafDaten[t.hikeandfly_id].hoehenmeter > 0 && (
+                                <span style={{ fontSize: "13px", color: "#ccc" }}>⛰ {hafDaten[t.hikeandfly_id].hoehenmeter} hm</span>
+                              )}
+                              {hafDaten[t.hikeandfly_id].tempo_wanderweg && (
+                                <span style={{ fontSize: "13px", color: "#ccc" }}>⏱ ca. {hafDaten[t.hikeandfly_id].tempo_wanderweg}</span>
+                              )}
+                            </div>
+                            <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>
+                              Details ansehen →
                             </a>
                           </div>
                         )}
 
+                        {/* Infos */}
                         {t.details && (
-                          <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
-                            📝 <strong>Details:</strong>
-                            <div style={{ marginTop: "8px", lineHeight: "1.7" }}>
+                          <div>
+                            <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>ℹ️ INFOS</p>
+                            <div style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }}>
                               {t.details.split("\n").map((zeile, i) => (
                                 <p key={i} style={{ margin: "4px 0" }}>
                                   <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
@@ -254,8 +278,37 @@ export default function Home() {
                           </div>
                         )}
 
+                        {/* Teilnehmer aufklappbar */}
                         <div>
-                          {voll ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setTeilnehmerOffen(teilnehmerOffen === t.id ? null : t.id); }}
+                            style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#aaa", cursor: "pointer", fontSize: "13px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                          >
+                            <span>👥 Teilnehmer ({belegt}/{t.max_teilnehmer})</span>
+                            <span>{teilnehmerOffen === t.id ? "▲" : "▼"}</span>
+                          </button>
+                          {teilnehmerOffen === t.id && (
+                            <div style={{ padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderTop: "none", borderRadius: "0 0 8px 8px" }}>
+                              {belegt === 0 ? (
+                                <p style={{ margin: "0", fontSize: "13px", color: "#666" }}>Noch keine Anmeldungen.</p>
+                              ) : (
+                                <ul style={{ margin: "0", padding: "0 0 0 16px" }}>
+                                  {teilnehmerListe.map((a) => (
+                                    <li key={a.id} style={{ fontSize: "13px", color: "#ccc", marginBottom: "4px" }}>{a.name}</li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Anmelden Button */}
+                        <div>
+                          {t.abgesagt ? (
+                            <span style={{ display: "inline-block", padding: "10px 20px", background: "rgba(192,57,43,0.3)", color: "#e74c3c", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
+                              🚫 Abgesagt
+                            </span>
+                          ) : voll ? (
                             <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
                               🔴 Ausgebucht
                             </span>
@@ -278,7 +331,6 @@ export default function Home() {
         {blogBeitraege.length > 0 && (
           <div style={{ width: "100%" }}>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
-
             <div style={{ marginBottom: "16px" }}>
               <select
                 onChange={(e) => { if (e.target.value) router.push(`/blog/${e.target.value}`); }}
@@ -290,7 +342,6 @@ export default function Home() {
                 ))}
               </select>
             </div>
-
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {blogBeitraege.map((b) => {
                 const vorschaubild = b.thumbnail_url || (b.medien && b.medien.length > 0 ? b.medien[0] : null) || (b.bilder && b.bilder.length > 0 ? b.bilder[0] : null);
