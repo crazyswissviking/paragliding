@@ -126,7 +126,7 @@ export default function Termine() {
                     margin: "0 0 2px",
                     fontSize: "20px",
                     fontWeight: "bold",
-                    color: voll ? "#e74c3c" : "#7799ff",
+                    color: "#fff",
                   }}>
                     {t.wochentag}, {t.datum}
                   </p>
