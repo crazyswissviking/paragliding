@@ -10,6 +10,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
+    "@tiptap/extension-strike": "^3.29.2",
+    "@tiptap/extension-underline": "^3.29.2",
+    "@tiptap/pm": "^3.29.2",
+    "@tiptap/react": "^3.29.2",
+    "@tiptap/starter-kit": "^3.29.2",
     "@uiw/react-md-editor": "^4.1.1",
     "leaflet": "^1.9.4",
     "next": "16.2.6",

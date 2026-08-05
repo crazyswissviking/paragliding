@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import PasswortSchutz from "../passwort";
-import ReactMarkdown from "react-markdown";
+import RichTextEditor from "../../components/RichTextEditor";
 
 const CLOUD_NAME = "dnfnng4mm";
 const UPLOAD_PRESET = "li5gwyqb";
@@ -279,20 +279,7 @@ export default function AdminTermine() {
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details</label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <div>
-                    <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>✏️ Bearbeiten</p>
-                    <textarea value={bearbeiten.details} onChange={(e) => setBearbeiten({ ...bearbeiten, details: e.target.value })} placeholder={"**Fett**\n- Aufzählung"} style={{ ...inputStyle, resize: "none", fontFamily: "monospace", height: "200px" }} />
-                  </div>
-                  <div>
-                    <p style={{ margin: "0 0 4px", fontSize: "12px", color: "#888" }}>👁 Vorschau</p>
-                    <div style={{ padding: "8px", border: "1px solid #ddd", borderRadius: "6px", height: "200px", overflowY: "auto", fontSize: "14px", color: "#333" }}>
-                      <ReactMarkdown components={{ p: ({ children }) => <p style={{ margin: "8px 0" }}>{children}</p>, strong: ({ children }) => <strong style={{ color: "#000" }}>{children}</strong>, ul: ({ children }) => <ul style={{ margin: "8px 0", paddingLeft: "20px" }}>{children}</ul>, li: ({ children }) => <li style={{ marginBottom: "4px" }}>{children}</li>, br: () => <br /> }}>
-                        {bearbeiten.details || "*Noch kein Text...*"}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
+                <RichTextEditor value={bearbeiten.details} onChange={(val) => setBearbeiten({ ...bearbeiten, details: val })} />
               </div>
               <MediaUpload
                 bildUrl={bearbeiten.bild_url}
@@ -356,7 +343,7 @@ export default function AdminTermine() {
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={{ display: "block", marginBottom: "4px", fontWeight: "bold", fontSize: "13px" }}>Details (optional)</label>
-                <textarea value={neu.details} onChange={(e) => terminAendern(index, "details", e.target.value)} placeholder="**Fett**, - Aufzählung" rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+                <RichTextEditor value={neu.details} onChange={(val) => terminAendern(index, "details", val)} />
               </div>
               <MediaUpload
                 bildUrl={neu.bild_url}

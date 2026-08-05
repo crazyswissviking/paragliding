@@ -268,13 +268,10 @@ export default function Home() {
                         {t.details && (
                           <div>
                             <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>ℹ️ INFOS</p>
-                            <div style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }}>
-                              {t.details.split("\n").map((zeile, i) => (
-                                <p key={i} style={{ margin: "4px 0" }}>
-                                  <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
-                                </p>
-                              ))}
-                            </div>
+                            <div
+                              style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }}
+                              dangerouslySetInnerHTML={{ __html: t.details }}
+                            />
                           </div>
                         )}
 
