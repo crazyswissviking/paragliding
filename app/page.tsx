@@ -301,7 +301,6 @@ export default function Home() {
                         <img src={vorschaubild} alt={b.titel} style={{ width: "100px", objectFit: "cover", flexShrink: 0, alignSelf: "stretch" }} />
                       )}
                       <div style={{ padding: "12px" }}>
-                        
                         <p style={{ margin: "0 0 6px", fontSize: "14px", fontWeight: "bold", color: "#fff", textAlign: "left" }}>{b.titel}</p>
                         {b.teaser && (
                           <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>
