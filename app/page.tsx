@@ -139,7 +139,7 @@ export default function Home() {
               <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0" }}>⭐ NÄCHSTE EVENTS</p>
               <a href="/termine" style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>(Alle Events ansehen)</a>
             </div>
-            <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
                 const belegt = anmeldungen.filter((a) => a.termin === label).length;
@@ -166,27 +166,24 @@ export default function Home() {
                       }}
                     >
                       <div style={{ minWidth: 0 }}>
-                        <p style={{
+                        <h3 style={{
                           margin: "0 0 2px",
-                          fontSize: "20px",
+                          fontSize: "16px",
                           fontWeight: "bold",
-                          color: "#fff",
+                          color: t.abgesagt ? "#888" : "#fff",
+                          textDecoration: t.abgesagt ? "line-through" : "none",
                         }}>
-                          {t.wochentag}, {t.datum}
-                        </p>
+                          {kategorieEmoji(t.kategorie)} {t.titel}
+                        </h3>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                          <h3 style={{
+                          <p style={{
                             margin: "0",
-                            fontSize: "16px",
+                            fontSize: "12px",
                             fontWeight: "normal",
-                            color: t.abgesagt ? "#888" : "#ddd",
-                            textDecoration: t.abgesagt ? "line-through" : "none",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            color: "#aaa",
                           }}>
-                            {kategorieEmoji(t.kategorie)} {t.titel}
-                          </h3>
+                            {t.wochentag}, {t.datum} · ({belegt}/{t.max_teilnehmer}) {!voll && !t.abgesagt ? "· bitte anmelden" : ""}
+                          </p>
                           {t.abgesagt && (
                             <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold", flexShrink: 0 }}>🚫</span>
                           )}
