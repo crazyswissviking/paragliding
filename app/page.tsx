@@ -50,6 +50,16 @@ type BlogBeitrag = {
   teaser: string;
 };
 
+type NewsBeitrag = {
+  id: number;
+  titel: string;
+  teaser: string;
+  text: string;
+  medien: string[];
+  thumbnail_url: string;
+  erstellt_am: string;
+};
+
 type HafDaten = {
   strecke_km: number;
   hoehenmeter: number;
@@ -80,6 +90,9 @@ export default function Home() {
   const [teilnehmerOffen, setTeilnehmerOffen] = useState<number | null>(null);
   const [hafDaten, setHafDaten] = useState<Record<number, HafDaten>>({});
   const [blogBeitraege, setBlogBeitraege] = useState<BlogBeitrag[]>([]);
+  const [newsBeitraege, setNewsBeitraege] = useState<NewsBeitrag[]>([]);
+  const [newsOffen, setNewsOffen] = useState<number | null>(null);
+  const [newsMedienIndex, setNewsMedienIndex] = useState<Record<number, number>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -108,6 +121,13 @@ export default function Home() {
         .eq("aktiv", true)
         .order("erstellt_am", { ascending: false });
       setBlogBeitraege(blogData || []);
+
+      const { data: newsData } = await supabase
+        .from("news")
+        .select("*")
+        .eq("aktiv", true)
+        .order("erstellt_am", { ascending: false });
+      setNewsBeitraege(newsData || []);
     }
     laden();
   }, []);
@@ -125,6 +145,8 @@ export default function Home() {
         if (data) setHafDaten((prev) => ({ ...prev, [data.id]: data }));
       });
   }, [offen]);
+
+  const isVideo = (url: string) => url.includes("/video/") || url.endsWith(".mp4") || url.endsWith(".mov");
 
   return (
     <main style={{
@@ -156,11 +178,75 @@ export default function Home() {
           Wo Berge zu Flügeln werden – Walhalla kann warten
         </p>
 
+        {/* News & Gedanken */}
+        {newsBeitraege.length > 0 && (
+          <div style={{ marginBottom: "32px", width: "100%" }}>
+            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#ffaa44", letterSpacing: "1px", margin: "0 0 16px", textAlign: "left" }}>📰 NEWS & GEDANKEN</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {newsBeitraege.map((n) => {
+                const istOffen = newsOffen === n.id;
+                const aktuellerIndex = newsMedienIndex[n.id] || 0;
+                const vorschaubild = n.thumbnail_url || (n.medien && n.medien.length > 0 && !isVideo(n.medien[0]) ? n.medien[0] : null);
+
+                return (
+                  <div key={n.id} style={{ border: "1px solid rgba(255,165,0,0.3)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,165,0,0.05)", textAlign: "left" }}>
+                    <div onClick={() => setNewsOffen(istOffen ? null : n.id)} style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                      {vorschaubild && (
+                        <img src={vorschaubild} alt={n.titel} style={{ width: "80px", height: "80px", objectFit: "cover", flexShrink: 0 }} />
+                      )}
+                      <div style={{ padding: "12px 16px", flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: "0 0 4px", fontSize: "16px", fontWeight: "bold", color: "#fff" }}>{n.titel}</p>
+                        {n.teaser && !istOffen && (
+                          <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5" }}>{n.teaser}</p>
+                        )}
+                      </div>
+                      <div style={{ padding: "0 16px", flexShrink: 0 }}>
+                        <span style={{ fontSize: "22px", color: "#ffaa44", display: "inline-block", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>+</span>
+                      </div>
+                    </div>
+
+                    {istOffen && (
+                      <div style={{ borderTop: "1px solid rgba(255,165,0,0.2)", background: "rgba(0,0,0,0.2)" }}>
+                        {n.medien && n.medien.length > 0 && (
+                          <div style={{ position: "relative" }}>
+                            {isVideo(n.medien[aktuellerIndex]) ? (
+                              <video controls style={{ width: "100%", maxHeight: "300px", objectFit: "contain", background: "#000" }}>
+                                <source src={n.medien[aktuellerIndex]} type="video/mp4" />
+                              </video>
+                            ) : (
+                              <img src={n.medien[aktuellerIndex]} alt={n.titel} style={{ width: "100%", maxHeight: "300px", objectFit: "contain", background: "#111" }} />
+                            )}
+                            {n.medien.length > 1 && (
+                              <>
+                                <button onClick={() => setNewsMedienIndex((prev) => ({ ...prev, [n.id]: Math.max(0, aktuellerIndex - 1) }))} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", fontSize: "16px", display: aktuellerIndex === 0 ? "none" : "flex", alignItems: "center", justifyContent: "center" }}>&#8249;</button>
+                                <button onClick={() => setNewsMedienIndex((prev) => ({ ...prev, [n.id]: Math.min(n.medien.length - 1, aktuellerIndex + 1) }))} style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.5)", color: "white", border: "none", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", fontSize: "16px", display: aktuellerIndex === n.medien.length - 1 ? "none" : "flex", alignItems: "center", justifyContent: "center" }}>&#8250;</button>
+                                <div style={{ position: "absolute", bottom: "8px", right: "8px", background: "rgba(0,0,0,0.5)", color: "white", padding: "2px 8px", borderRadius: "10px", fontSize: "11px" }}>{aktuellerIndex + 1} / {n.medien.length}</div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        <div style={{ padding: "16px" }}>
+                          {n.teaser && (
+                            <p style={{ margin: "0 0 12px", fontSize: "14px", color: "#ddd", fontStyle: "italic", borderLeft: "3px solid #ffaa44", paddingLeft: "10px" }}>{n.teaser}</p>
+                          )}
+                          {n.text && (
+                            <div style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }} dangerouslySetInnerHTML={{ __html: n.text }} />
+                          )}
+                          <p style={{ margin: "12px 0 0", fontSize: "11px", color: "#666" }}>{new Date(n.erstellt_am).toLocaleDateString("de-CH")}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Events */}
         {highlights.length > 0 && (
           <div style={{ marginBottom: "32px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0" }}>⭐ NÄCHSTE EVENTS</p>
-            </div>
+            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#7799ff", letterSpacing: "1px", margin: "0 0 16px", textAlign: "left" }}>⭐ NÄCHSTE EVENTS</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {highlights.map((t) => {
                 const label = `${t.wochentag}, ${t.datum}`;
@@ -170,118 +256,51 @@ export default function Home() {
                 const istOffen = offen === t.id;
 
                 return (
-                  <div key={t.id} style={{
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                    textAlign: "left",
-                  }}>
-                    {/* Header */}
-                    <div
-                      onClick={() => setOffen(istOffen ? null : t.id)}
-                      style={{
-                        padding: "16px 20px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        cursor: "pointer",
-                        background: istOffen ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
-                      }}
-                    >
+                  <div key={t.id} style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", textAlign: "left" }}>
+                    <div onClick={() => setOffen(istOffen ? null : t.id)} style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: istOffen ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)" }}>
                       <div style={{ minWidth: 0 }}>
-                        <h3 style={{
-                          margin: "0 0 2px",
-                          fontSize: "18px",
-                          fontWeight: "bold",
-                          color: t.abgesagt ? "#888" : "#fff",
-                          textDecoration: t.abgesagt ? "line-through" : "none",
-                        }}>
+                        <h3 style={{ margin: "0 0 2px", fontSize: "18px", fontWeight: "bold", color: t.abgesagt ? "#888" : "#fff", textDecoration: t.abgesagt ? "line-through" : "none" }}>
                           {kategorieEmoji(t.kategorie)} {t.titel}
                         </h3>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                           <p style={{ margin: "0", fontSize: "12px", color: "#aaa" }}>
                             {t.wochentag}, {t.datum} · ({belegt}/{t.max_teilnehmer}){!voll && !t.abgesagt ? " · bitte anmelden" : ""}
                           </p>
-                          {t.abgesagt && (
-                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>
-                          )}
-                          {voll && !t.abgesagt && (
-                            <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>Voll</span>
-                          )}
+                          {t.abgesagt && <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>🚫 Abgesagt</span>}
+                          {voll && !t.abgesagt && <span style={{ fontSize: "11px", padding: "2px 6px", background: "rgba(192,57,43,0.3)", borderRadius: "6px", color: "#e74c3c", fontWeight: "bold" }}>Voll</span>}
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setOffen(istOffen ? null : t.id); }}
-                        style={{
-                          flexShrink: 0,
-                          marginLeft: "12px",
-                          width: "40px",
-                          height: "40px",
-                          borderRadius: "50%",
-                          border: "none",
-                          background: "rgba(51,85,204,0.3)",
-                          color: "#7799ff",
-                          fontSize: "24px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          transform: istOffen ? "rotate(45deg)" : "rotate(0deg)",
-                          transition: "transform 0.2s ease",
-                        }}
-                      >
-                        +
-                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); setOffen(istOffen ? null : t.id); }} style={{ flexShrink: 0, marginLeft: "12px", width: "40px", height: "40px", borderRadius: "50%", border: "none", background: "rgba(51,85,204,0.3)", color: "#7799ff", fontSize: "24px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>+</button>
                     </div>
 
-                    {/* Details aufgeklappt */}
                     {istOffen && (
                       <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", gap: "12px" }}>
-
-                        {/* Treffpunkt */}
                         <div>
                           <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>📍 TREFFPUNKT</p>
                           <p style={{ margin: "0", fontSize: "14px", color: "#fff" }}>{t.ort}</p>
                         </div>
 
-                        {/* H&F Infos */}
                         {t.hikeandfly_id && hafDaten[t.hikeandfly_id] && (
                           <div style={{ padding: "10px 12px", background: "rgba(51,85,204,0.15)", borderRadius: "8px" }}>
                             <p style={{ margin: "0 0 8px", fontSize: "11px", color: "#7799ff", fontWeight: "bold", letterSpacing: "0.5px" }}>🥾 HIKE & FLY</p>
                             <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "8px" }}>
-                              {hafDaten[t.hikeandfly_id].strecke_km > 0 && (
-                                <span style={{ fontSize: "13px", color: "#ccc" }}>🗺 {hafDaten[t.hikeandfly_id].strecke_km} km</span>
-                              )}
-                              {hafDaten[t.hikeandfly_id].hoehenmeter > 0 && (
-                                <span style={{ fontSize: "13px", color: "#ccc" }}>⛰ {hafDaten[t.hikeandfly_id].hoehenmeter} hm</span>
-                              )}
-                              {hafDaten[t.hikeandfly_id].tempo_wanderweg && (
-                                <span style={{ fontSize: "13px", color: "#ccc" }}>⏱ ca. {hafDaten[t.hikeandfly_id].tempo_wanderweg}</span>
-                              )}
+                              {hafDaten[t.hikeandfly_id].strecke_km > 0 && <span style={{ fontSize: "13px", color: "#ccc" }}>🗺 {hafDaten[t.hikeandfly_id].strecke_km} km</span>}
+                              {hafDaten[t.hikeandfly_id].hoehenmeter > 0 && <span style={{ fontSize: "13px", color: "#ccc" }}>⛰ {hafDaten[t.hikeandfly_id].hoehenmeter} hm</span>}
+                              {hafDaten[t.hikeandfly_id].tempo_wanderweg && <span style={{ fontSize: "13px", color: "#ccc" }}>⏱ ca. {hafDaten[t.hikeandfly_id].tempo_wanderweg}</span>}
                             </div>
-                            <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>
-                              Details ansehen →
-                            </a>
+                            <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "12px", color: "#7799ff", textDecoration: "none" }}>Details ansehen →</a>
                           </div>
                         )}
 
-                        {/* Infos */}
                         {t.details && (
                           <div>
                             <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>ℹ️ INFOS</p>
-                            <div
-                              style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }}
-                              dangerouslySetInnerHTML={{ __html: t.details }}
-                            />
+                            <div style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }} dangerouslySetInnerHTML={{ __html: t.details }} />
                           </div>
                         )}
 
-                        {/* Teilnehmer aufklappbar */}
                         <div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setTeilnehmerOffen(teilnehmerOffen === t.id ? null : t.id); }}
-                            style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#aaa", cursor: "pointer", fontSize: "13px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                          >
+                          <button onClick={(e) => { e.stopPropagation(); setTeilnehmerOffen(teilnehmerOffen === t.id ? null : t.id); }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#aaa", cursor: "pointer", fontSize: "13px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span>👥 Teilnehmer ({belegt}/{t.max_teilnehmer})</span>
                             <span>{teilnehmerOffen === t.id ? "▲" : "▼"}</span>
                           </button>
@@ -300,25 +319,16 @@ export default function Home() {
                           )}
                         </div>
 
-                        {/* Anmelden Button */}
                         <div>
                           {t.abgesagt ? (
                             <div>
-                              <span style={{ display: "inline-block", padding: "10px 20px", background: "rgba(192,57,43,0.3)", color: "#e74c3c", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
-                                🚫 Abgesagt
-                              </span>
-                              {t.abgesagt_begruendung && (
-                                <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#e74c3c" }}>{t.abgesagt_begruendung}</p>
-                              )}
+                              <span style={{ display: "inline-block", padding: "10px 20px", background: "rgba(192,57,43,0.3)", color: "#e74c3c", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>🚫 Abgesagt</span>
+                              {t.abgesagt_begruendung && <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#e74c3c" }}>{t.abgesagt_begruendung}</p>}
                             </div>
                           ) : voll ? (
-                            <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
-                              🔴 Ausgebucht
-                            </span>
+                            <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>🔴 Ausgebucht</span>
                           ) : (
-                            <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
-                              ✍️ Jetzt anmelden
-                            </a>
+                            <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>✍️ Jetzt anmelden</a>
                           )}
                         </div>
                       </div>
@@ -335,14 +345,9 @@ export default function Home() {
           <div style={{ width: "100%" }}>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
             <div style={{ marginBottom: "16px" }}>
-              <select
-                onChange={(e) => { if (e.target.value) router.push(`/blog/${e.target.value}`); }}
-                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "14px", cursor: "pointer" }}
-              >
+              <select onChange={(e) => { if (e.target.value) router.push(`/blog/${e.target.value}`); }} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "14px", cursor: "pointer" }}>
                 <option value="" style={{ background: "#1a1a2e" }}>📖 -- Beitrag auswählen --</option>
-                {blogBeitraege.map((b) => (
-                  <option key={b.id} value={b.id} style={{ background: "#1a1a2e" }}>{b.titel}</option>
-                ))}
+                {blogBeitraege.map((b) => <option key={b.id} value={b.id} style={{ background: "#1a1a2e" }}>{b.titel}</option>)}
               </select>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -351,14 +356,10 @@ export default function Home() {
                 return (
                   <a key={b.id} href={`/blog/${b.id}`} style={{ textDecoration: "none" }}>
                     <div style={{ border: "1px solid rgba(255,255,255,0.15)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,255,255,0.05)", display: "flex" }}>
-                      {vorschaubild && (
-                        <img src={vorschaubild} alt={b.titel} style={{ width: "100px", objectFit: "cover", flexShrink: 0, alignSelf: "stretch" }} />
-                      )}
+                      {vorschaubild && <img src={vorschaubild} alt={b.titel} style={{ width: "100px", objectFit: "cover", flexShrink: 0, alignSelf: "stretch" }} />}
                       <div style={{ padding: "12px" }}>
                         <p style={{ margin: "0 0 6px", fontSize: "14px", fontWeight: "bold", color: "#fff", textAlign: "left" }}>{b.titel}</p>
-                        {b.teaser && (
-                          <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>
-                        )}
+                        {b.teaser && <p style={{ margin: "0", fontSize: "12px", color: "#aaa", lineHeight: "1.5", textAlign: "left" }}>{b.teaser}</p>}
                       </div>
                     </div>
                   </a>
@@ -380,5 +381,3 @@ export default function Home() {
     </main>
   );
 }
-
-
