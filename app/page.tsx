@@ -345,9 +345,10 @@ export default function Home() {
         {blogBeitraege.length > 0 && (
           <div style={{ width: "100%" }}>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: "16px" }} />
+            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#6fcf97", letterSpacing: "1px", margin: "0 0 16px", textAlign: "left" }}>📖 BLOG</p>
             <div style={{ marginBottom: "16px" }}>
               <select onChange={(e) => { if (e.target.value) router.push(`/blog/${e.target.value}`); }} style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.05)", color: "#fff", fontSize: "14px", cursor: "pointer" }}>
-                <option value="" style={{ background: "#1a1a2e" }}>📖 -- Beitrag auswählen --</option>
+                <option value="" style={{ background: "#1a1a2e" }}>📖 -- Blog auswählen --</option>
                 {blogBeitraege.map((b) => <option key={b.id} value={b.id} style={{ background: "#1a1a2e" }}>{b.titel}</option>)}
               </select>
             </div>
