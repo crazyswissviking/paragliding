@@ -276,7 +276,7 @@ export default function Home() {
                     {istOffen && (
                       <div style={{ padding: "16px 20px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", gap: "12px" }}>
                         <div>
-                          <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>📍 TREFFPUNKT</p>
+                          <p style={{ margin: "0 0 4px", fontSize: "14px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>📍 TREFFPUNKT</p>
                           <p style={{ margin: "0", fontSize: "14px", color: "#fff" }}>{t.ort}</p>
                         </div>
 
@@ -294,7 +294,7 @@ export default function Home() {
 
                         {t.details && (
                           <div>
-                            <p style={{ margin: "0 0 4px", fontSize: "11px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>ℹ️ INFOS</p>
+                            <p style={{ margin: "0 0 4px", fontSize: "14px", color: "#aaa", fontWeight: "bold", letterSpacing: "0.5px" }}>ℹ️ INFOS</p>
                             <div style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }} dangerouslySetInnerHTML={{ __html: t.details }} />
                           </div>
                         )}
