@@ -374,6 +374,7 @@ export default function Home() {
         <a href="/admin/termine" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Admin</a>
         <a href="/admin/hikeandfly" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>H&F Admin</a>
         <a href="/admin/blog" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Blog Admin</a>
+        <a href="/admin/news" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>News Admin</a>
         <a href="/upload" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Upload</a>
       </div>
     </main>
