@@ -192,19 +192,21 @@ export default function Home() {
                   <div key={n.id} style={{ border: "1px solid rgba(255,165,0,0.3)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,165,0,0.05)", textAlign: "left" }}>
                     <div onClick={() => setNewsOffen(istOffen ? null : n.id)} style={{ cursor: "pointer" }}>
                       <div style={{ display: "flex", alignItems: "flex-start" }}>
-                        {vorschaubild && (
-                          <img src={vorschaubild} alt={n.titel} style={{ width: "64px", height: "64px", objectFit: "cover", flexShrink: 0 }} />
-                        )}
-                        <div style={{ padding: "8px 12px", flex: 1, minWidth: 0 }}>
-                          <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold", color: "#fff" }}>{n.titel}</p>
-                        </div>
-                        <div style={{ padding: "8px 12px", flexShrink: 0 }}>
-                          <span style={{ fontSize: "22px", color: "#ffaa44", display: "inline-block", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>+</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                            <p style={{ margin: "8px 12px 8px 12px", fontSize: "16px", fontWeight: "bold", color: "#fff", flex: 1 }}>{n.titel}</p>
+                            <div style={{ display: "flex", alignItems: "flex-start", flexShrink: 0 }}>
+                              {vorschaubild && (
+                                <img src={vorschaubild} alt={n.titel} style={{ width: "64px", height: "64px", objectFit: "cover" }} />
+                              )}
+                              <span style={{ fontSize: "22px", color: "#ffaa44", display: "inline-block", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "8px 12px" }}>+</span>
+                            </div>
+                          </div>
+                          {n.teaser && !istOffen && (
+                            <p style={{ margin: "0", padding: "0 12px 10px 12px", fontSize: "12px", color: "#aaa", lineHeight: "1.5" }}>{n.teaser}</p>
+                          )}
                         </div>
                       </div>
-                      {n.teaser && !istOffen && (
-                        <p style={{ margin: "0", padding: "0 12px 10px 12px", fontSize: "12px", color: "#aaa", lineHeight: "1.5" }}>{n.teaser}</p>
-                      )}
                     </div>
 
                     {istOffen && (
