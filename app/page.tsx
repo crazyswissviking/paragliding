@@ -196,9 +196,6 @@ export default function Home() {
                           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                             <p style={{ margin: "8px 12px 8px 12px", fontSize: "16px", fontWeight: "bold", color: "#fff", flex: 1 }}>{n.titel}</p>
                             <div style={{ display: "flex", alignItems: "flex-start", flexShrink: 0 }}>
-                              {vorschaubild && (
-                                <img src={vorschaubild} alt={n.titel} style={{ width: "64px", height: "64px", objectFit: "cover" }} />
-                              )}
                               <span style={{ fontSize: "22px", color: "#ffaa44", display: "inline-block", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "8px 12px" }}>+</span>
                             </div>
                           </div>
