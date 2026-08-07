@@ -88,13 +88,22 @@ export default function Home() {
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
   const [teilnehmerOffen, setTeilnehmerOffen] = useState<number | null>(null);
-  const [kopiert, setKopiert] = useState<number | null>(null);
   const [hafDaten, setHafDaten] = useState<Record<number, HafDaten>>({});
   const [blogBeitraege, setBlogBeitraege] = useState<BlogBeitrag[]>([]);
   const [newsBeitraege, setNewsBeitraege] = useState<NewsBeitrag[]>([]);
   const [newsOffen, setNewsOffen] = useState<number | null>(null);
+  const [newsKopiert, setNewsKopiert] = useState<number | null>(null);
   const [newsMedienIndex, setNewsMedienIndex] = useState<Record<number, number>>({});
+  const [kopiert, setKopiert] = useState<number | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const newsId = params.get("news");
+    if (newsId) {
+      setNewsOffen(parseInt(newsId));
+    }
+  }, []);
 
   useEffect(() => {
     async function laden() {
@@ -187,24 +196,17 @@ export default function Home() {
               {newsBeitraege.map((n) => {
                 const istOffen = newsOffen === n.id;
                 const aktuellerIndex = newsMedienIndex[n.id] || 0;
-                const vorschaubild = n.thumbnail_url || (n.medien && n.medien.length > 0 && !isVideo(n.medien[0]) ? n.medien[0] : null);
 
                 return (
                   <div key={n.id} style={{ border: "1px solid rgba(255,165,0,0.3)", borderRadius: "12px", overflow: "hidden", background: "rgba(255,165,0,0.05)", textAlign: "left" }}>
                     <div onClick={() => setNewsOffen(istOffen ? null : n.id)} style={{ cursor: "pointer" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start" }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                            <p style={{ margin: "8px 12px 8px 12px", fontSize: "16px", fontWeight: "bold", color: "#fff", flex: 1 }}>{n.titel}</p>
-                            <div style={{ display: "flex", alignItems: "flex-start", flexShrink: 0 }}>
-                              <span style={{ fontSize: "22px", color: "#ffaa44", display: "inline-block", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "8px 12px" }}>+</span>
-                            </div>
-                          </div>
-                          {n.teaser && !istOffen && (
-                            <p style={{ margin: "0", padding: "0 12px 10px 12px", fontSize: "12px", color: "#aaa", lineHeight: "1.5" }}>{n.teaser}</p>
-                          )}
-                        </div>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <p style={{ margin: "8px 12px 8px 12px", fontSize: "16px", fontWeight: "bold", color: "#fff", flex: 1 }}>{n.titel}</p>
+                        <span style={{ fontSize: "22px", color: "#ffaa44", display: "inline-block", transform: istOffen ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s", padding: "8px 12px", flexShrink: 0 }}>+</span>
                       </div>
+                      {n.teaser && !istOffen && (
+                        <p style={{ margin: "0", padding: "0 12px 10px 12px", fontSize: "12px", color: "#aaa", lineHeight: "1.5" }}>{n.teaser}</p>
+                      )}
                     </div>
 
                     {istOffen && (
@@ -234,7 +236,21 @@ export default function Home() {
                           {n.text && (
                             <div style={{ fontSize: "14px", color: "#ccc", lineHeight: "1.7" }} dangerouslySetInnerHTML={{ __html: n.text }} />
                           )}
-                          <p style={{ margin: "12px 0 0", fontSize: "11px", color: "#666" }}>{new Date(n.erstellt_am).toLocaleDateString("de-CH")}</p>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
+                            <p style={{ margin: "0", fontSize: "11px", color: "#666" }}>{new Date(n.erstellt_am).toLocaleDateString("de-CH")}</p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = `${window.location.origin}/?news=${n.id}`;
+                                navigator.clipboard.writeText(url);
+                                setNewsKopiert(n.id);
+                                setTimeout(() => setNewsKopiert(null), 2000);
+                              }}
+                              style={{ padding: "6px 12px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "12px", cursor: "pointer" }}
+                            >
+                              {newsKopiert === n.id ? "✅ Link kopiert!" : "🔗 Link"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
