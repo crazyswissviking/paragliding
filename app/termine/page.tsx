@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../supabase";
 
 function TextMitLinks({ text, style }: { text: string; style?: React.CSSProperties }) {
@@ -56,11 +57,28 @@ const parseDate = (d: string) => {
   return new Date(year, month - 1, day).getTime();
 };
 
-export default function Termine() {
+function TermineInhalt() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [offen, setOffen] = useState<string | null>(null);
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [bildIndex, setBildIndex] = useState<Record<number, number>>({});
+  const [kopiert, setKopiert] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (termine.length === 0) return;
+    const id = searchParams.get("id");
+    if (id) {
+      const t = termine.find((t) => t.id === parseInt(id));
+      if (t) {
+        const label = `${t.wochentag}, ${t.datum}`;
+        setOffen(label);
+        setTimeout(() => {
+          document.getElementById(`termin-${t.id}`)?.scrollIntoView({ behavior: "smooth" });
+        }, 300);
+      }
+    }
+  }, [termine]);
 
   useEffect(() => {
     async function laden() {
@@ -104,7 +122,7 @@ export default function Termine() {
           const bilder = t.bilder || [];
 
           return (
-            <div key={t.id} style={{
+            <div key={t.id} id={`termin-${t.id}`} style={{
               border: "1px solid rgba(255,255,255,0.15)",
               borderRadius: "12px",
               marginBottom: "16px",
@@ -256,6 +274,18 @@ export default function Termine() {
                       <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
                         ✍️ Jetzt anmelden
                       </a>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const url = `${window.location.origin}/termine?id=${t.id}`;
+                          navigator.clipboard.writeText(url);
+                          setKopiert(t.id);
+                          setTimeout(() => setKopiert(null), 2000);
+                        }}
+                        style={{ display: "inline-block", padding: "10px 20px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", cursor: "pointer", marginLeft: "8px" }}
+                      >
+                        {kopiert === t.id ? "✅ Link kopiert!" : "🔗 Link kopieren"}
+                      </button>
                     )}
                   </div>
 
@@ -278,5 +308,12 @@ export default function Termine() {
         })}
       </div>
     </main>
+  );
+}
+export default function Termine() {
+  return (
+    <Suspense fallback={<p style={{ padding: "40px", color: "#fff" }}>Wird geladen...</p>}>
+      <TermineInhalt />
+    </Suspense>
   );
 }
