@@ -109,7 +109,7 @@ function TermineInhalt() {
 
   return (
     <main style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "700px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 Swissgliders Members</h1>
+      <h1 style={{ fontSize: "28px", marginBottom: "8px" }}>🪂 VikingFly</h1>
       <h2 style={{ fontWeight: "normal", color: "#aaa", marginBottom: "30px" }}>Events</h2>
       <div>
         {termine.map((t) => {
@@ -140,24 +140,15 @@ function TermineInhalt() {
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <p style={{
-                    margin: "0 0 2px",
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    color: "#fff",
-                  }}>
+                  <p style={{ margin: "0 0 2px", fontSize: "20px", fontWeight: "bold", color: "#fff" }}>
                     {t.wochentag}, {t.datum}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <h3 style={{
-                      margin: "0",
-                      fontSize: "16px",
-                      fontWeight: "normal",
+                      margin: "0", fontSize: "16px", fontWeight: "normal",
                       color: t.abgesagt ? "#888" : "#ddd",
                       textDecoration: t.abgesagt ? "line-through" : "none",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
                       {kategorieEmoji(t.kategorie)} {t.titel}
                     </h3>
@@ -171,28 +162,15 @@ function TermineInhalt() {
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleOffen(label); }}
-                  aria-label={istOffen ? "Details schliessen" : "Details öffnen"}
                   style={{
-                    flexShrink: 0,
-                    marginLeft: "12px",
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "50%",
-                    border: "none",
-                    background: "rgba(51,85,204,0.3)",
-                    color: "#7799ff",
-                    fontSize: "24px",
-                    lineHeight: "1",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    flexShrink: 0, marginLeft: "12px", width: "40px", height: "40px",
+                    borderRadius: "50%", border: "none", background: "rgba(51,85,204,0.3)",
+                    color: "#7799ff", fontSize: "24px", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     transform: istOffen ? "rotate(45deg)" : "rotate(0deg)",
                     transition: "transform 0.2s ease",
                   }}
-                >
-                  +
-                </button>
+                >+</button>
               </div>
 
               {istOffen && (
@@ -200,12 +178,7 @@ function TermineInhalt() {
 
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                     <p style={{ margin: "0", color: "#888", fontSize: "14px" }}>📍 {t.ort} · {t.kategorie}</p>
-                    <div style={{
-                      background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)",
-                      borderRadius: "8px",
-                      padding: "6px 12px",
-                      textAlign: "center",
-                    }}>
+                    <div style={{ background: voll ? "rgba(192,57,43,0.3)" : "rgba(51,85,204,0.3)", borderRadius: "8px", padding: "6px 12px" }}>
                       <span style={{ fontSize: "14px", fontWeight: "bold", color: voll ? "#e74c3c" : "#7799ff" }}>
                         {t.max_teilnehmer - belegt} {voll ? "· Voll" : "frei"}
                       </span>
@@ -214,10 +187,7 @@ function TermineInhalt() {
 
                   {t.hikeandfly_id && (
                     <div style={{ marginBottom: "16px" }}>
-                      <a href={`/hikeandfly?open=${t.hikeandfly_id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ fontSize: "12px", padding: "4px 10px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}
-                      >
+                      <a href={`/hikeandfly?open=${t.hikeandfly_id}`} onClick={(e) => e.stopPropagation()} style={{ fontSize: "12px", padding: "4px 10px", background: "rgba(51,85,204,0.3)", borderRadius: "6px", color: "#7799ff", textDecoration: "none" }}>
                         🥾 Hike & Fly
                       </a>
                     </div>
@@ -241,7 +211,6 @@ function TermineInhalt() {
                     </div>
                   )}
 
-                  {/* Hauptbild falls keine Galerie */}
                   {bilder.length === 0 && t.bild_url && (
                     <img src={t.bild_url} alt={t.titel} style={{ width: "100%", borderRadius: "8px", marginBottom: "16px", maxHeight: "300px", objectFit: "cover" }} />
                   )}
@@ -255,17 +224,15 @@ function TermineInhalt() {
                   {t.details && (
                     <div style={{ marginBottom: "16px", padding: "12px", background: "rgba(51,85,204,0.2)", borderRadius: "8px", fontSize: "14px", color: "#ccc" }}>
                       📝 <strong>Details:</strong>
-                      <div style={{ marginTop: "8px", lineHeight: "1.7" }}>
-                        {t.details.split("\n").map((zeile, i) => (
-                          <p key={i} style={{ margin: "4px 0" }}>
-                            <TextMitLinks text={zeile} style={{ color: "#ccc" }} />
-                          </p>
-                        ))}
-                      </div>
+                      <div
+                        style={{ marginTop: "8px", lineHeight: "1.7" }}
+                        dangerouslySetInnerHTML={{ __html: t.details }}
+                      />
                     </div>
                   )}
 
-                  <div style={{ marginBottom: "16px" }}>
+                  {/* Buttons */}
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
                     {voll ? (
                       <span style={{ display: "inline-block", padding: "10px 20px", background: "#555", color: "white", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>
                         🔴 Ausgebucht
@@ -274,19 +241,19 @@ function TermineInhalt() {
                       <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>
                         ✍️ Jetzt anmelden
                       </a>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const url = `${window.location.origin}/termine?id=${t.id}`;
-                          navigator.clipboard.writeText(url);
-                          setKopiert(t.id);
-                          setTimeout(() => setKopiert(null), 2000);
-                        }}
-                        style={{ display: "inline-block", padding: "10px 20px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", cursor: "pointer", marginLeft: "8px" }}
-                      >
-                        {kopiert === t.id ? "✅ Link kopiert!" : "🔗 Link kopieren"}
-                      </button>
                     )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = `${window.location.origin}/termine?id=${t.id}`;
+                        navigator.clipboard.writeText(url);
+                        setKopiert(t.id);
+                        setTimeout(() => setKopiert(null), 2000);
+                      }}
+                      style={{ padding: "10px 20px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", cursor: "pointer" }}
+                    >
+                      {kopiert === t.id ? "✅ Link kopiert!" : "🔗 Link kopieren"}
+                    </button>
                   </div>
 
                   <p style={{ margin: "0 0 10px", fontWeight: "bold", fontSize: "14px", color: "#aaa" }}>
@@ -310,6 +277,7 @@ function TermineInhalt() {
     </main>
   );
 }
+
 export default function Termine() {
   return (
     <Suspense fallback={<p style={{ padding: "40px", color: "#fff" }}>Wird geladen...</p>}>
