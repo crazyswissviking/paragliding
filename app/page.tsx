@@ -88,6 +88,7 @@ export default function Home() {
   const [anmeldungen, setAnmeldungen] = useState<Anmeldung[]>([]);
   const [offen, setOffen] = useState<number | null>(null);
   const [teilnehmerOffen, setTeilnehmerOffen] = useState<number | null>(null);
+  const [kopiert, setKopiert] = useState<number | null>(null);
   const [hafDaten, setHafDaten] = useState<Record<number, HafDaten>>({});
   const [blogBeitraege, setBlogBeitraege] = useState<BlogBeitrag[]>([]);
   const [newsBeitraege, setNewsBeitraege] = useState<NewsBeitrag[]>([]);
@@ -320,7 +321,7 @@ export default function Home() {
                           )}
                         </div>
 
-                        <div>
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                           {t.abgesagt ? (
                             <div>
                               <span style={{ display: "inline-block", padding: "10px 20px", background: "rgba(192,57,43,0.3)", color: "#e74c3c", borderRadius: "8px", fontSize: "14px", fontWeight: "bold" }}>🚫 Abgesagt</span>
@@ -331,6 +332,18 @@ export default function Home() {
                           ) : (
                             <a href={`/termine/anmelden?termin=${encodeURIComponent(label)}`} onClick={(e) => e.stopPropagation()} style={{ display: "inline-block", padding: "10px 20px", background: "#3355cc", color: "white", borderRadius: "8px", textDecoration: "none", fontSize: "14px", fontWeight: "bold" }}>✍️ Jetzt anmelden</a>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const url = `${window.location.origin}/termine?id=${t.id}`;
+                              navigator.clipboard.writeText(url);
+                              setKopiert(t.id);
+                              setTimeout(() => setKopiert(null), 2000);
+                            }}
+                            style={{ padding: "10px 20px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", cursor: "pointer" }}
+                          >
+                            {kopiert === t.id ? "✅ Link kopiert!" : "🔗 Link"}
+                          </button>
                         </div>
                       </div>
                     )}
