@@ -191,9 +191,25 @@ export default function Home() {
         {/* News & Gedanken */}
         {newsBeitraege.length > 0 && (
           <div style={{ marginBottom: "32px", width: "100%" }}>
-            <p style={{ fontSize: "12px", fontWeight: "bold", color: "#ffaa44", letterSpacing: "1px", margin: "0 0 16px", textAlign: "left" }}>📰 NEWS & GEDANKEN</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <p style={{ fontSize: "12px", fontWeight: "bold", color: "#ffaa44", letterSpacing: "1px", margin: "0" }}>📰 NEWS & GEDANKEN</p>
+              {newsBeitraege.length > 1 && (
+                <select
+                  onChange={(e) => setNewsOffen(null) || setNewsBeitraege(prev => {
+                    const selected = prev.find(n => n.id === parseInt(e.target.value));
+                    const rest = prev.filter(n => n.id !== parseInt(e.target.value));
+                    return selected ? [selected, ...rest] : prev;
+                  })}
+                  style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid rgba(255,165,0,0.3)", background: "rgba(255,165,0,0.05)", color: "#ffaa44", fontSize: "12px", cursor: "pointer" }}
+                >
+                  {newsBeitraege.map((n) => (
+                    <option key={n.id} value={n.id} style={{ background: "#1a1a2e" }}>{n.titel}</option>
+                  ))}
+                </select>
+              )}
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {newsBeitraege.map((n) => {
+              {newsBeitraege.slice(0, 1).map((n) => {
                 const istOffen = newsOffen === n.id;
                 const aktuellerIndex = newsMedienIndex[n.id] || 0;
 
