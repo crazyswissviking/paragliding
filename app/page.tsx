@@ -195,11 +195,14 @@ export default function Home() {
               <p style={{ fontSize: "12px", fontWeight: "bold", color: "#ffaa44", letterSpacing: "1px", margin: "0" }}>📰 NEWS & GEDANKEN</p>
               {newsBeitraege.length > 1 && (
                 <select
-                  onChange={(e) => setNewsOffen(null) || setNewsBeitraege(prev => {
-                    const selected = prev.find(n => n.id === parseInt(e.target.value));
-                    const rest = prev.filter(n => n.id !== parseInt(e.target.value));
-                    return selected ? [selected, ...rest] : prev;
-                  })}
+                  onChange={(e) => {
+                    setNewsOffen(null);
+                    setNewsBeitraege(prev => {
+                      const selected = prev.find(n => n.id === parseInt(e.target.value));
+                      const rest = prev.filter(n => n.id !== parseInt(e.target.value));
+                      return selected ? [selected, ...rest] : prev;
+                    });
+                  }}
                   style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid rgba(255,165,0,0.3)", background: "rgba(255,165,0,0.05)", color: "#ffaa44", fontSize: "12px", cursor: "pointer" }}
                 >
                   {newsBeitraege.map((n) => (
