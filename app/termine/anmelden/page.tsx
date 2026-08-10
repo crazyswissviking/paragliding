@@ -71,7 +71,7 @@ function AnmeldenInhalt() {
       await fetch("/api/bestaetigung", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, termin, titel }),
+        body: JSON.stringify({ name, email, termin, titel, anmeldungId: data?.[0]?.id }),
       });
       setName("");
       setEmail("");
