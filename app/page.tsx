@@ -197,14 +197,19 @@ export default function Home() {
                 <select
                   onChange={(e) => {
                     setNewsOffen(null);
-                    setNewsBeitraege(prev => {
-                      const selected = prev.find(n => n.id === parseInt(e.target.value));
-                      const rest = prev.filter(n => n.id !== parseInt(e.target.value));
-                      return selected ? [selected, ...rest] : prev;
-                    });
+                    if (!e.target.value) {
+                      supabase.from("news").select("*").eq("aktiv", true).order("erstellt_am", { ascending: false }).then(({ data }) => setNewsBeitraege(data || []));
+                    } else {
+                      setNewsBeitraege(prev => {
+                        const selected = prev.find(n => n.id === parseInt(e.target.value));
+                        const rest = prev.filter(n => n.id !== parseInt(e.target.value));
+                        return selected ? [selected, ...rest] : prev;
+                      });
+                    }
                   }}
                   style={{ padding: "4px 8px", borderRadius: "6px", border: "1px solid rgba(255,165,0,0.3)", background: "rgba(255,165,0,0.05)", color: "#ffaa44", fontSize: "12px", cursor: "pointer" }}
                 >
+                  <option value="" style={{ background: "#1a1a2e" }}>Alle Artikel</option>
                   {newsBeitraege.map((n) => (
                     <option key={n.id} value={n.id} style={{ background: "#1a1a2e" }}>{n.titel}</option>
                   ))}
