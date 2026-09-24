@@ -95,6 +95,7 @@ export default function Home() {
   const [newsKopiert, setNewsKopiert] = useState<number | null>(null);
   const [newsMedienIndex, setNewsMedienIndex] = useState<Record<number, number>>({});
   const [kopiert, setKopiert] = useState<number | null>(null);
+  const [hintergrundVideo, setHintergrundVideo] = useState("https://res.cloudinary.com/dnfnng4mm/video/upload/v1779590348/video_ve6erm.mp4");
   const router = useRouter();
 
   useEffect(() => {
@@ -138,6 +139,12 @@ export default function Home() {
         .eq("aktiv", true)
         .order("erstellt_am", { ascending: false });
       setNewsBeitraege(newsData || []);
+            const { data: videoData } = await supabase
+        .from("einstellungen")
+        .select("wert")
+        .eq("schluessel", "hintergrund_video_url")
+        .single();
+      if (videoData?.wert) setHintergrundVideo(videoData.wert);
     }
     laden();
   }, []);
@@ -174,7 +181,7 @@ export default function Home() {
       {/* Hintergrundvideo */}
       <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 0, overflow: "hidden" }}>
         <video autoPlay muted loop playsInline style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.4 }}>
-          <source src="https://res.cloudinary.com/dnfnng4mm/video/upload/v1779590348/video_ve6erm.mp4" type="video/mp4" />
+          <source src={hintergrundVideo} type="video/mp4" />
         </video>
         <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.4)" }} />
       </div>
@@ -431,6 +438,7 @@ export default function Home() {
         <a href="/admin/hikeandfly" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>H&F Admin</a>
         <a href="/admin/blog" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Blog Admin</a>
         <a href="/admin/news" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>News Admin</a>
+        <a href="/admin/einstellungen" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Einstellungen</a>
         <a href="/upload" style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", textDecoration: "none" }}>Upload</a>
       </div>
     </main>
