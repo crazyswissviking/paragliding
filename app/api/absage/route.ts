@@ -4,17 +4,16 @@ import { createClient } from "@supabase/supabase-js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: Request) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { terminId, titel, datum, wochentag, begruendung } = await request.json();
 
   const label = `${wochentag}, ${datum}`;
 
-  // Alle Anmeldungen für diesen Termin laden
   const { data: anmeldungen } = await supabase
     .from("anmeldungen")
     .select("name, email")
@@ -24,7 +23,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, gesendet: 0 });
   }
 
-  // Mail an alle senden
   let gesendet = 0;
   for (const a of anmeldungen) {
     const { error } = await resend.emails.send({
