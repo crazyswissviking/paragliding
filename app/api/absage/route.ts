@@ -12,6 +12,14 @@ export async function POST(request: Request) {
 
   const { terminId, titel, datum, wochentag, begruendung } = await request.json();
 
+    const { data: anmeldungen } = await supabase
+    .from("anmeldungen")
+    .select("name, email")
+    .eq("termin", label);
+
+  console.log("Label:", label);
+  console.log("Anmeldungen gefunden:", anmeldungen);
+
   const label = `${wochentag}, ${datum}`;
 
   const { data: anmeldungen } = await supabase
