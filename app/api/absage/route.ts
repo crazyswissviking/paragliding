@@ -5,36 +5,31 @@ import { createClient } from "@supabase/supabase-js";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
+  console.log("Absage API aufgerufen");
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { terminId, titel, datum, wochentag, begruendung } = await request.json();
-
-    const { data: anmeldungenData } = await supabase
-    .from("anmeldungen")
-    .select("name, email")
-    .eq("termin", label);
-
-  console.log("Label:", label);
-  console.log("Anmeldungen gefunden:", anmeldungenData);
-
-  const anmeldungen = anmeldungenData;
-
+  const { titel, datum, wochentag, begruendung } = await request.json();
   const label = `${wochentag}, ${datum}`;
 
-  const { data: anmeldungen } = await supabase
+  console.log("Label:", label);
+
+  const { data: personen } = await supabase
     .from("anmeldungen")
     .select("name, email")
     .eq("termin", label);
 
-  if (!anmeldungen || anmeldungen.length === 0) {
+  console.log("Anmeldungen gefunden:", personen);
+
+  if (!personen || personen.length === 0) {
     return NextResponse.json({ success: true, gesendet: 0 });
   }
 
   let gesendet = 0;
-  for (const a of anmeldungen) {
+  for (const a of personen) {
     const { error } = await resend.emails.send({
       from: "VikingFly <noreply@vikingfly.ch>",
       to: a.email,
