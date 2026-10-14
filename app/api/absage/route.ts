@@ -5,29 +5,19 @@ import { createClient } from "@supabase/supabase-js";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
-  console.log("Absage API aufgerufen");
-  console.log("SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "vorhanden" : "FEHLT");
-  console.log("SERVICE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "vorhanden" : "FEHLT");
-  console.log("RESEND_KEY:", process.env.RESEND_API_KEY ? "vorhanden" : "FEHLT");
-
   try {
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
     const { titel, datum, wochentag, begruendung } = await request.json();
     const label = `${wochentag}, ${datum}`;
 
-    console.log("Label:", label);
-
-    const { data: personen, error: dbError } = await supabase
+    const { data: personen } = await supabase
       .from("anmeldungen")
       .select("name, email")
       .eq("termin", label);
-
-    console.log("Anmeldungen gefunden:", personen);
-    console.log("DB Error:", dbError);
 
     if (!personen || personen.length === 0) {
       return NextResponse.json({ success: true, gesendet: 0 });
@@ -54,12 +44,11 @@ export async function POST(request: Request) {
               <p style="margin: 0; color: #555;">${begruendung}</p>
             </div>
             ` : ""}
-            <p>Wir hoffen auf bessere Bedingungen beim nächsten Mal. Die Wikinger geben nicht auf! 🛡️</p>
+            <p>Wir hoffen auf bessere Bedingungen beim nächsten Mal. Die Wikinger geben nicht auf!</p>
             <p style="color: #aaa; font-size: 12px; margin-top: 30px;">VikingFly – Wo Berge zu Flügeln werden</p>
           </div>
         `,
       });
-      console.log("Mail an:", a.email, "Fehler:", error);
       if (!error) gesendet++;
     }
 
