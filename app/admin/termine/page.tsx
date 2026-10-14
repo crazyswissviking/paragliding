@@ -312,6 +312,11 @@ export default function AdminTermine() {
 
   async function bearbeitenSpeichern() {
     if (!bearbeiten) return;
+
+    // Vorherigen Status laden um zu prüfen ob neu abgesagt
+    const vorher = termine.find((t) => t.id === bearbeiten.id);
+    const neuAbgesagt = bearbeiten.abgesagt && !vorher?.abgesagt;
+
     await supabase.from("termine").update({
       datum: bearbeiten.datum, wochentag: bearbeiten.wochentag,
       titel: bearbeiten.titel, ort: bearbeiten.ort, kategorie: bearbeiten.kategorie,
@@ -320,6 +325,30 @@ export default function AdminTermine() {
       bilder: bearbeiten.bilder, hikeandfly_id: bearbeiten.hikeandfly_id,
       abgesagt: bearbeiten.abgesagt, abgesagt_begruendung: bearbeiten.abgesagt_begruendung,
     }).eq("id", bearbeiten.id);
+
+    // Absage-Mails senden falls neu abgesagt
+    console.log("neuAbgesagt:", neuAbgesagt, "vorher:", vorher?.abgesagt, "neu:", bearbeiten.abgesagt);
+    if (neuAbgesagt) {
+      const res = await fetch("/api/absage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          terminId: bearbeiten.id,
+          titel: bearbeiten.titel,
+          datum: bearbeiten.datum,
+          wochentag: bearbeiten.wochentag,
+          begruendung: bearbeiten.abgesagt_begruendung,
+        }),
+      });
+      const data = await res.json();
+      console.log("API Antwort:", data);
+      if (data.gesendet > 0) {
+        alert(`✅ Absage-Mails an ${data.gesendet} Teilnehmer gesendet!`);
+      } else {
+        console.log("Keine Mails gesendet:", data);
+      }
+    }
+
     setBearbeitenGespeichert(true);
     setTimeout(() => { setBearbeitenGespeichert(false); setBearbeiten(null); }, 1500);
     laden();
