@@ -71,6 +71,33 @@ const parseDate = (d: string) => {
   return new Date(year, month - 1, day).getTime();
 };
 
+function kalenderDatei(t: Termin): void {
+  const [day, month, year] = t.datum.split(".").map(Number);
+  const datum = `${year}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//VikingFly//VikingFly//DE",
+    "BEGIN:VEVENT",
+    `DTSTART;VALUE=DATE:${datum}`,
+    `DTEND;VALUE=DATE:${datum}`,
+    `SUMMARY:🪂 ${t.titel}`,
+    `DESCRIPTION:${t.kategorie}\\nTreffpunkt: ${t.ort}`,
+    `LOCATION:${t.ort}`,
+    `URL:https://vikingfly.ch/termine?id=${t.id}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `vikingfly-${t.titel.replace(/\s+/g, "-")}.ics`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function kategorieEmoji(kategorie: string): string {
   const map: Record<string, string> = {
     "Sunrise to work": "🌅",
@@ -390,6 +417,12 @@ export default function Home() {
                             style={{ padding: "10px 20px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", cursor: "pointer" }}
                           >
                             {kopiert === t.id ? "✅ Link kopiert!" : "🔗 Link"}
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); kalenderDatei(t); }}
+                            style={{ padding: "10px 20px", background: "rgba(255,255,255,0.1)", color: "#aaa", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", fontSize: "14px", fontWeight: "bold", cursor: "pointer" }}
+                          >
+                            📅 Kalender
                           </button>
                         </div>
                       </div>
