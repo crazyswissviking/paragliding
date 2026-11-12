@@ -145,8 +145,8 @@ export function foehnBerechnen(sued: string | null, nord: string | null): FoehnM
 // Offiziell dokumentierter JSON-Ausgang für eigene Webseiten:
 // https://www.windline.ch/support-faq/windline-in-eigene-webseite-einbinden/
 // Stationsliste: https://m.windline.ch/ (Stand der Prüfung; IDs können sich ändern)
-// Hinweis: Die Einheit der Windwerte ist im JSON nicht angegeben – Annahme: km/h
-// (so zeigt es auch die Windline-Seite: "Geschwindigkeit: … km/h (… m/s)").
+// Einheit: Die Windwerte (windspeed1 / windpeak1) kommen in m/s (von Christian an
+// der Windline-Seite bestätigt) und werden hier in km/h umgerechnet (x 3.6).
 export type WindlineStation = { id: string; name: string; rolle?: string };
 
 export const WINDLINE_STATIONEN: WindlineStation[] = [
@@ -173,6 +173,11 @@ export function parseWindline(text: string, st: WindlineStation): Messung {
   const online = status === undefined || status === "online";
   const ts = Number(wert("timestamp"));
   const n = (k: string) => (online ? num(wert(k)) : null);
+  // m/s -> km/h, eine Nachkommastelle
+  const kmh = (k: string) => {
+    const v = n(k);
+    return v === null ? null : Math.round(v * 3.6 * 10) / 10;
+  };
   return {
     id: `W${st.id}`,
     name: st.name,
@@ -181,8 +186,8 @@ export function parseWindline(text: string, st: WindlineStation): Messung {
     status,
     hoehe: num(wert("altitude")),
     zeit: Number.isFinite(ts) && ts > 0 ? new Date(ts).toISOString() : null,
-    wind: n("windspeed1"),
-    boeen: n("windpeak1"),
+    wind: kmh("windspeed1"),
+    boeen: kmh("windpeak1"),
     richtung: n("winddir1"),
     temp: n("temp1"),
     regen: n("rainfall1"),
