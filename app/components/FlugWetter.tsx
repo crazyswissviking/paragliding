@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import type { MesswerteAntwort, Messung } from "../lib/messwerte";
 
 // ── Farben ────────────────────────────────────────────────────────────────
 const TEXT = "#1f3a5a";
@@ -300,6 +301,69 @@ function Chip({ text, farbe }: { text: string; farbe: string }) {
   );
 }
 
+// ── Messwerte (MeteoSchweiz) ──────────────────────────────────────────────
+async function ladeMess(): Promise<MesswerteAntwort | null> {
+  try {
+    const res = await fetch("/api/messwerte");
+    if (!res.ok) return null;
+    return (await res.json()) as MesswerteAntwort;
+  } catch {
+    return null;
+  }
+}
+
+// Zeiten der Messdateien sind UTC – Anzeige in Schweizer Ortszeit
+function zeitLokal(iso: string | null): string {
+  if (!iso) return "–";
+  return new Date(iso).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Zurich" });
+}
+
+function alterMin(iso: string | null): number | null {
+  if (!iso) return null;
+  return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+}
+
+function alterText(min: number | null): string {
+  if (min == null) return "";
+  if (min < 1) return "gerade eben";
+  if (min < 90) return `vor ${min} Min.`;
+  return `vor ${Math.round(min / 60)} Std.`;
+}
+
+function MessKarte({ m }: { m: Messung }) {
+  const st = windStufe(m.wind, m.boeen, null);
+  const alter = alterMin(m.zeit);
+  const veraltet = alter != null && alter > 40;
+  return (
+    <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 8, display: "flex", gap: 10, alignItems: "center" }}>
+      <WindPfeil grad={m.richtung} farbe={st.farbe} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 12, color: TEXT2 }}>
+          {m.name} <span style={{ color: TEXT3 }}>{m.hoehe != null ? `· ${m.hoehe} m` : ""}</span>
+          {m.rolle && (
+            <span style={{ marginLeft: 6, fontSize: 10, color: m.rolle === "Startplatz" ? BLAU : GRUEN, border: `1px solid ${m.rolle === "Startplatz" ? BLAU : GRUEN}`, borderRadius: 999, padding: "0 6px" }}>
+              {m.rolle === "Startplatz" ? "🚩" : "🟢"} {m.rolle}
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.1 }}>
+          {r(m.wind)} <span style={{ fontSize: 11, fontWeight: 400, color: TEXT2 }}>km/h</span>
+        </div>
+        <div style={{ fontSize: 11, color: TEXT2 }}>
+          Böen {r(m.boeen)} · {richtungText(m.richtung)}
+          {m.temp != null ? ` · ${m.temp.toFixed(1)}°` : ""}
+          {m.regen != null && m.regen > 0 ? ` · 🌧 ${m.regen} mm/10′` : ""}
+        </div>
+        <div style={{ fontSize: 10, color: veraltet ? ORANGE : TEXT3, fontWeight: veraltet ? 700 : 400 }}>
+          <span style={{ color: st.farbe, fontWeight: 700 }}>● {st.label}</span> · 🕒 {zeitLokal(m.zeit)} Uhr{alter != null ? ` · ${alterText(alter)}` : ""}
+          {veraltet ? " ⚠" : ""}
+          {m.status && m.status !== "online" ? " · Station offline" : ""}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Hauptkomponente ───────────────────────────────────────────────────────
 export default function FlugWetter() {
   const [daten, setDaten] = useState<ApiOrt[] | null>(null);
@@ -307,6 +371,8 @@ export default function FlugWetter() {
   const [fehler, setFehler] = useState(false);
   const [laden, setLaden] = useState(true);
   const [gewaehlt, setGewaehlt] = useState("interlaken");
+  const [mess, setMess] = useState<MesswerteAntwort | null>(null);
+  const [messGeladen, setMessGeladen] = useState(false);
 
   const aktualisieren = useCallback(async () => {
     setLaden(true);
@@ -318,6 +384,10 @@ export default function FlugWetter() {
       setFehler(true);
     }
     ladeHoehe().then((h) => setHoehe(h));
+    ladeMess().then((m) => {
+      if (m) setMess(m);
+      setMessGeladen(true);
+    });
     setLaden(false);
   }, []);
 
@@ -342,7 +412,7 @@ export default function FlugWetter() {
       <div>
         <div style={{ fontSize: 16, fontWeight: 800, color: TEXT }}>🌤 Flugwetter Berner Oberland</div>
         <div style={{ fontSize: 11, color: TEXT2 }}>
-          {daten ? `Stand ${daten[0].current.time.slice(11, 16)} Uhr · Modelldaten` : "Modelldaten"}
+          {daten ? `Modell-Stand ${daten[0].current.time.slice(11, 16)} Uhr · dazu Messwerte von MeteoSchweiz` : "Modell- und Messdaten"}
         </div>
       </div>
       <button
@@ -432,8 +502,65 @@ export default function FlugWetter() {
         ))}
       </div>
 
+      {/* Windline: Start- und Landeplätze */}
+      {mess && (mess.windline ?? []).length > 0 && (
+        <>
+          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 8 }}>🪂 STARTPLÄTZE & LANDEPLÄTZE · WINDLINE</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8, marginBottom: 8 }}>
+            {(mess.windline ?? []).map((m) => (
+              <MessKarte key={m.id} m={m} />
+            ))}
+          </div>
+          <div style={{ fontSize: 10, color: TEXT3, lineHeight: 1.5, marginBottom: 16 }}>
+            Messwerte der Windline-Stationen (10-Min-Mittel und Spitze), Zeiten in Schweizer Ortszeit. Quelle:{" "}
+            <a href="https://www.windline.ch" target="_blank" rel="noopener noreferrer" style={{ color: TEXT3 }}>windline.ch</a>.
+          </div>
+        </>
+      )}
+
+      {/* Gemessene Werte (MeteoSchweiz) */}
+      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 8 }}>📡 GEMESSEN · METEOSCHWEIZ (10-MIN-WERTE)</div>
+      {mess && mess.stationen.length > 0 ? (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8, marginBottom: 8 }}>
+            {mess.stationen.map((m) => (
+              <MessKarte key={m.id} m={m} />
+            ))}
+          </div>
+          {mess.foehn.diff != null && (() => {
+            const fs = foehnStatus(mess.foehn.diff);
+            const trend = mess.foehn.diffVor3h != null ? mess.foehn.diff - mess.foehn.diffVor3h : null;
+            return (
+              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🏔 FÖHN GEMESSEN · DRUCK LUGANO − ZÜRICH/KLOTEN</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: fs.farbe }}>{mess.foehn.diff > 0 ? "+" : ""}{mess.foehn.diff.toFixed(1)}</span>
+                  <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: fs.farbe }}>● {fs.text}</span>
+                  {trend != null && (
+                    <span style={{ fontSize: 11, color: TEXT2 }}>
+                      {trend >= 1 ? "↗ steigend" : trend <= -1 ? "↘ fallend" : "→ stabil"} (vor 3 h: {mess.foehn.diffVor3h?.toFixed(1)} hPa)
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>
+                  🕒 {zeitLokal(mess.foehn.zeit)} Uhr · {alterText(alterMin(mess.foehn.zeit))} · Meeresdruck {mess.foehn.basis}
+                </div>
+              </div>
+            );
+          })()}
+          <div style={{ fontSize: 10, color: TEXT3, lineHeight: 1.5, marginBottom: 16 }}>
+            Messungen an Talstationen und einzelnen Höhenstationen – der Wind am Startplatz kann deutlich abweichen. Zeiten in Schweizer Ortszeit. Quelle: MeteoSchweiz.
+          </div>
+        </>
+      ) : (
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: TEXT2 }}>
+          {messGeladen ? "Messwerte sind momentan nicht verfügbar." : "Messwerte werden geladen…"}
+        </p>
+      )}
+
       {/* Wind aktuell */}
-      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 8 }}>💨 WIND JETZT (10 m, MODELL)</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 8 }}>💨 WIND IM MODELL (10 m, KEINE MESSUNG)</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 16 }}>
         {orteDaten.map(({ ort, d }) => {
           const st = windStufe(d.current.wind_speed_10m, d.current.wind_gusts_10m, d.current.precipitation);
@@ -556,7 +683,7 @@ export default function FlugWetter() {
         ))}
       </div>
       <div style={{ fontSize: 10, color: TEXT3, lineHeight: 1.5 }}>
-        Wetterdaten: <a href="https://open-meteo.com" target="_blank" rel="noopener noreferrer" style={{ color: TEXT3 }}>Open-Meteo.com</a> – Modellwerte, keine Stationsmessungen. Farben und Schwellen sind grobe Faustregeln und ersetzen weder ein Wetterbriefing noch die eigene Beurteilung vor Ort.
+        Messwerte: MeteoSchweiz (Open Government Data, CC BY) und Windline. Modell/Prognose: <a href="https://open-meteo.com" target="_blank" rel="noopener noreferrer" style={{ color: TEXT3 }}>Open-Meteo.com</a>. Farben und Schwellen sind grobe Faustregeln und ersetzen weder ein Wetterbriefing noch die eigene Beurteilung vor Ort.
       </div>
     </div>
   );
