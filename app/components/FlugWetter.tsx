@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import type { MesswerteAntwort, Messung } from "../lib/messwerte";
+import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
 
 // ── Farben ────────────────────────────────────────────────────────────────
 const TEXT = "#1f3a5a";
@@ -27,6 +27,9 @@ const ORTE: Ort[] = [
 // Referenzpunkte für die Föhn-Druckdifferenz
 const LUGANO = { lat: 46.0037, lng: 8.9511 };
 const ZUERICH = { lat: 47.3769, lng: 8.5417 };
+// Referenzpunkte für die Bise (Modell): Genf/Cointrin und Gottmadingen (D, bei Schaffhausen)
+const GENF = { lat: 46.2381, lng: 6.1089 };
+const GOTTMADINGEN = { lat: 47.7374, lng: 8.7754 };
 // Ort für Höhenwind / Thermik-Kennzahlen
 const HOEHEN_ORT = ORTE[2];
 
@@ -69,7 +72,7 @@ type Hoehe = {
 
 // ── Daten laden ───────────────────────────────────────────────────────────
 async function ladeHaupt(): Promise<ApiOrt[]> {
-  const alle = [...ORTE, LUGANO, ZUERICH];
+  const alle = [...ORTE, LUGANO, ZUERICH, GENF, GOTTMADINGEN];
   const lats = alle.map((o) => o.lat).join(",");
   const lngs = alle.map((o) => o.lng).join(",");
   const url =
@@ -125,12 +128,71 @@ function windStufe(wind: Zahl, boeen: Zahl, regen: Zahl): Stufe {
   return { label: "ruhig", farbe: GRUEN };
 }
 
+// Föhn-Index: Druck Lugano − Zürich. Positiv = Südföhn, negativ = Nordföhn.
+// Schwellen (Erfahrungswerte): ab ca. 4 hPa greift Föhn in die Täler durch, ab ca. 8 hPa bis ins Flachland.
 function foehnStatus(d: Zahl): { text: string; farbe: string; hinweis: string } {
   if (d == null) return { text: "keine Daten", farbe: TEXT3, hinweis: "" };
-  if (d < 2) return { text: "kein Föhn", farbe: GRUEN, hinweis: "Kein nennenswerter Südüberdruck." };
-  if (d < 4) return { text: "Föhn möglich", farbe: GELB, hinweis: "Leichter Südüberdruck – in exponierten Tälern kann es föhnig werden." };
-  if (d < 8) return { text: "Föhnlage", farbe: ORANGE, hinweis: "Südwind kann bis in die Täler durchgreifen (z. B. Lauterbrunnental, Grindelwald). Lee-Rotoren beachten." };
-  return { text: "starker Föhn", farbe: ROT, hinweis: "Deutlicher Südüberdruck – starker Föhn wahrscheinlich." };
+  const a = Math.abs(d);
+  const sued = d >= 0;
+  const art = sued ? "Südföhn" : "Nordföhn";
+  if (a < 2) return { text: "kein Föhn", farbe: GRUEN, hinweis: "Kein nennenswerter Druckunterschied über den Alpen." };
+  if (a < 4) {
+    return {
+      text: `${art} möglich`,
+      farbe: GELB,
+      hinweis: sued
+        ? "Leichter Südüberdruck – in exponierten Tälern kann es föhnig werden."
+        : "Leichter Nordüberdruck – Nordwind über dem Alpenhauptkamm, Föhn höchstens auf der Alpensüdseite.",
+    };
+  }
+  if (a < 8) {
+    return {
+      text: art,
+      farbe: ORANGE,
+      hinweis: sued
+        ? "Südwind kann bis in die Täler der Alpennordseite durchgreifen (z. B. Haslital, Lauterbrunnental). Lee-Rotoren beachten."
+        : "Nordföhn: Der Föhn weht auf der Alpensüdseite (Tessin). Im Berner Oberland liegt man auf der Luvseite – es kann Nord-/Nordwestwind und Stau geben, aber keinen Föhn.",
+    };
+  }
+  return {
+    text: `starker ${art}`,
+    farbe: ROT,
+    hinweis: sued
+      ? "Starker Südüberdruck – Föhn kann bis ins Flachland durchgreifen."
+      : "Starker Nordüberdruck – kräftiger Nordwind über den Alpen, auf der Alpensüdseite föhnig und stürmisch.",
+  };
+}
+
+const PILOTENREGEL =
+  "Pilotenregel: Leeseite ab ca. 3–4 hPa besser meiden (Südföhn: Alpennordseite, Nordföhn: Alpensüdseite). Ab ca. 4 hPa greift der Föhn in die Täler, ab ca. 8 hPa bis ins Flachland.";
+
+// Bise-Index: Druck Güttingen/TG minus Genf. Positiv = Bise (Erfahrungswerte, z. B. SRF Meteo).
+function biseStatus(d: Zahl): { text: string; farbe: string; hinweis: string } {
+  if (d == null) return { text: "keine Daten", farbe: TEXT3, hinweis: "" };
+  if (d < 0) return { text: "Südwestlage", farbe: TEXT2, hinweis: "Umgekehrter Gradient: im Mittelland eher Südwestwind, keine Bise." };
+  if (d < 2) return { text: "keine Bise", farbe: GRUEN, hinweis: "Kaum Druckgefälle Richtung Westen." };
+  if (d < 4) return { text: "Bise wahrscheinlich", farbe: GELB, hinweis: "Nordostwind im Mittelland wahrscheinlich, am stärksten Richtung Genfersee." };
+  return { text: "Bisenlage", farbe: ORANGE, hinweis: "Je grösser der Unterschied, desto stärker die Bise (kräftige Böen am Genfersee möglich)." };
+}
+
+// Trend beim Föhn: Betrag verglichen mit vor 3 Stunden
+function trendFoehn(d: Zahl, vor: Zahl): string {
+  if (d == null || vor == null) return "";
+  if (d * vor < 0) return "↻ Vorzeichenwechsel";
+  const da = Math.abs(d) - Math.abs(vor);
+  return da >= 1 ? "↗ verstärkt sich" : da <= -1 ? "↘ schwächt sich ab" : "→ stabil";
+}
+
+// Trend als Wertänderung in 3 Stunden
+function trendWert(d: Zahl, vor: Zahl): string {
+  if (d == null || vor == null) return "";
+  const dl = d - vor;
+  if (Math.abs(dl) < 0.5) return "→ stabil";
+  return `${dl > 0 ? "↗ +" : "↘ −"}${Math.abs(dl).toFixed(1)} in 3 h`;
+}
+
+function vorzeichen(d: number): string {
+  return `${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
 }
 
 function stundeAusZeit(zeit: string): number {
@@ -256,28 +318,36 @@ function WindDiagramm({ s, jetzt }: { s: Stunden; jetzt: number }) {
   );
 }
 
-function FoehnVerlauf({ diff, jetzt }: { diff: Zahl[]; jetzt: number }) {
-  const W = 300, H = 92, L = 22, Rr = 6, T = 8, B = 16;
+function DruckVerlauf({ diff, jetzt, linien, loMin, hiMin, label }: { diff: Zahl[]; jetzt: number; linien: number[]; loMin: number; hiMin: number; label: string }) {
+  const W = 300, H = 96, L = 28, Rr = 6, T = 8, B = 16;
   const vals = diff.filter((v): v is number => v != null);
-  const lo = Math.min(-2, ...vals);
-  const hi = Math.max(8, ...vals);
+  const lo = Math.min(loMin, ...vals);
+  const hi = Math.max(hiMin, ...vals);
   const n = Math.max(diff.length - 1, 1);
   const x = (i: number) => L + (i / n) * (W - L - Rr);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
   const breite = W - L - Rr;
-  const xJetzt = L + (Math.min(jetzt, 24) / 24) * breite;
+  const xJetzt = L + (Math.min(jetzt, n) / n) * breite;
+  const oben = Math.max(...linien);
+  const unten = Math.min(...linien);
+  const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : "0");
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Verlauf der Druckdifferenz Lugano minus Zürich">
-      <rect x={L} y={y(hi)} width={breite} height={y(4) - y(hi)} fill={ROT} opacity="0.09" />
-      <line x1={L} x2={W - Rr} y1={y(4)} y2={y(4)} stroke={ROT} strokeDasharray="4 3" strokeOpacity="0.6" />
-      <line x1={L} x2={W - Rr} y1={y(0)} y2={y(0)} stroke={TEXT3} strokeOpacity="0.5" />
-      <text x={L - 4} y={y(4) + 3} textAnchor="end" fontSize="9" fill={ROT}>4</text>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label={label}>
+      {oben > 0 && <rect x={L} y={y(hi)} width={breite} height={y(oben) - y(hi)} fill={ROT} opacity="0.08" />}
+      {unten < 0 && <rect x={L} y={y(unten)} width={breite} height={y(lo) - y(unten)} fill={ROT} opacity="0.08" />}
+      <line x1={L} x2={W - Rr} y1={y(0)} y2={y(0)} stroke={TEXT3} strokeOpacity="0.6" />
       <text x={L - 4} y={y(0) + 3} textAnchor="end" fontSize="9" fill={TEXT3}>0</text>
+      {linien.map((v) => (
+        <g key={v}>
+          <line x1={L} x2={W - Rr} y1={y(v)} y2={y(v)} stroke={ORANGE} strokeDasharray="4 3" strokeOpacity="0.8" />
+          <text x={L - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill={ORANGE}>{fmt(v)}</text>
+        </g>
+      ))}
       <path d={pfad(diff, x, y)} fill="none" stroke={BLAU} strokeWidth="2.5" strokeLinejoin="round" />
       <line x1={xJetzt} x2={xJetzt} y1={T} y2={H - B} stroke="#3355cc" strokeDasharray="3 3" />
-      {[0, 6, 12, 18, 24].map((h) => (
-        <text key={h} x={L + (h / 24) * breite} y={H - 3} textAnchor="middle" fontSize="9" fill={TEXT3}>{h}h</text>
+      {[0, 6, 12, 18, 23].map((h) => (
+        <text key={h} x={x(h)} y={H - 3} textAnchor="middle" fontSize="9" fill={TEXT3}>{h}h</text>
       ))}
     </svg>
   );
@@ -445,6 +515,8 @@ export default function FlugWetter() {
   const orteDaten = ORTE.map((o, i) => ({ ort: o, d: daten[i] }));
   const lugano = daten[ORTE.length];
   const zuerich = daten[ORTE.length + 1];
+  const genf = daten[ORTE.length + 2];
+  const gottm = daten[ORTE.length + 3];
 
   const sel = orteDaten.find((o) => o.ort.id === gewaehlt) ?? orteDaten[2];
   const jetzt = stundeAusZeit(sel.d.current.time);
@@ -459,6 +531,17 @@ export default function FlugWetter() {
       ? lugano.current.pressure_msl - zuerich.current.pressure_msl
       : null;
   const foehn = foehnStatus(diffJetzt);
+
+  // Bise (Modell): Gottmadingen − Genf, positiv = Bise
+  const biseModell: Zahl[] = gottm.hourly.pressure_msl.map((v, i) => {
+    const g = genf.hourly.pressure_msl[i];
+    return v != null && g != null ? v - g : null;
+  });
+  const biseModellJetzt: Zahl =
+    gottm.current.pressure_msl != null && genf.current.pressure_msl != null
+      ? gottm.current.pressure_msl - genf.current.pressure_msl
+      : null;
+  const biseModellStatus = biseStatus(biseModellJetzt);
 
   // Tageskennzahlen des gewählten Ortes (6–21 Uhr)
   const h = sel.d.hourly;
@@ -483,7 +566,15 @@ export default function FlugWetter() {
 
   // Hinweis-Chips
   const chips: { text: string; farbe: string }[] = [];
-  if (diffJetzt != null && diffJetzt >= 2) chips.push({ text: `Föhn: ${foehn.text}`, farbe: foehn.farbe });
+  // Hinweise bevorzugt aus Messwerten, sonst aus dem Modell
+  const foehnWert: Zahl = mess?.foehn.diff ?? diffJetzt;
+  if (foehnWert != null && Math.abs(foehnWert) >= 2) {
+    chips.push({ text: `${foehnStatus(foehnWert).text} (${vorzeichen(foehnWert)} hPa)`, farbe: foehnStatus(foehnWert).farbe });
+  }
+  const biseWert: Zahl = mess?.bise?.diff ?? biseModellJetzt;
+  if (biseWert != null && biseWert >= 2) {
+    chips.push({ text: `${biseStatus(biseWert).text} (${vorzeichen(biseWert)} hPa)`, farbe: biseStatus(biseWert).farbe });
+  }
   if (suedwindHoehe) chips.push({ text: "Südwind in der Höhe ≥ 40 km/h", farbe: ORANGE });
   if (capeMax != null && capeMax >= 500) chips.push({ text: "Gewitterneigung (CAPE)", farbe: ROT });
   if (regenSumme >= 1) chips.push({ text: `Regen heute: ${regenSumme.toFixed(1)} mm`, farbe: BLAU });
@@ -529,22 +620,74 @@ export default function FlugWetter() {
           </div>
           {mess.foehn.diff != null && (() => {
             const fs = foehnStatus(mess.foehn.diff);
-            const trend = mess.foehn.diffVor3h != null ? mess.foehn.diff - mess.foehn.diffVor3h : null;
+            const tr = trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h);
             return (
               <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🏔 FÖHN GEMESSEN · DRUCK LUGANO − ZÜRICH/KLOTEN</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🏔 FÖHN GEMESSEN · DRUCK LUGANO − ZÜRICH/KLOTEN (+ SÜD · − NORD)</div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 24, fontWeight: 800, color: fs.farbe }}>{mess.foehn.diff > 0 ? "+" : ""}{mess.foehn.diff.toFixed(1)}</span>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: fs.farbe }}>{vorzeichen(mess.foehn.diff)}</span>
                   <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: fs.farbe }}>● {fs.text}</span>
-                  {trend != null && (
+                  {tr && (
                     <span style={{ fontSize: 11, color: TEXT2 }}>
-                      {trend >= 1 ? "↗ steigend" : trend <= -1 ? "↘ fallend" : "→ stabil"} (vor 3 h: {mess.foehn.diffVor3h?.toFixed(1)} hPa)
+                      {tr}{mess.foehn.diffVor3h != null ? ` (vor 3 h: ${vorzeichen(mess.foehn.diffVor3h)} hPa)` : ""}
                     </span>
                   )}
                 </div>
                 <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>
                   🕒 {zeitLokal(mess.foehn.zeit)} Uhr · {alterText(alterMin(mess.foehn.zeit))} · Meeresdruck {mess.foehn.basis}
+                </div>
+                <div style={{ fontSize: 11, color: TEXT2, marginTop: 6 }}>{fs.hinweis}</div>
+                <div style={{ fontSize: 10, color: TEXT3, marginTop: 4 }}>{PILOTENREGEL}</div>
+              </div>
+            );
+          })()}
+          {mess.bise?.diff != null && (() => {
+            const bs = biseStatus(mess.bise.diff);
+            const tr = trendWert(mess.bise.diff, mess.bise.diffVor3h);
+            return (
+              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🌬 BISE GEMESSEN · DRUCK GÜTTINGEN − GENF (+ = BISE)</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: bs.farbe }}>{vorzeichen(mess.bise.diff)}</span>
+                  <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: bs.farbe }}>● {bs.text}</span>
+                  {tr && <span style={{ fontSize: 11, color: TEXT2 }}>{tr}</span>}
+                </div>
+                <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>
+                  🕒 {zeitLokal(mess.bise.zeit)} Uhr · {alterText(alterMin(mess.bise.zeit))} · Meeresdruck {mess.bise.basis}
+                </div>
+                <div style={{ fontSize: 11, color: TEXT2, marginTop: 6 }}>{bs.hinweis}</div>
+                <div style={{ fontSize: 10, color: TEXT3, marginTop: 4 }}>
+                  Bise = Nordostwind im Mittelland, sobald der Druck in Güttingen (Bodensee) höher ist als in Genf. Schwellen (ab ca. 2 hPa wahrscheinlich) sind Erfahrungswerte.
+                </div>
+              </div>
+            );
+          })()}
+          {mess.lokal && (mess.lokal.meiringenInterlaken.diff != null || mess.lokal.grimselMeiringen.diff != null || mess.lokal.grimselInterlaken.diff != null) && (() => {
+            const zeilen: { label: string; d: DruckDiff }[] = [
+              { label: "Meiringen − Interlaken", d: mess.lokal.meiringenInterlaken },
+              { label: "Grimsel − Meiringen", d: mess.lokal.grimselMeiringen },
+              { label: "Grimsel − Interlaken", d: mess.lokal.grimselInterlaken },
+            ];
+            const zeit = zeilen.map((z) => z.d.zeit).find((z) => z != null) ?? null;
+            return (
+              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 6 }}>⛰ LOKAL HASLITAL · DRUCKUNTERSCHIEDE (HPA)</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "4px 12px", alignItems: "baseline" }}>
+                  {zeilen.map((z) => (
+                    <div key={z.label} style={{ display: "contents" }}>
+                      <span style={{ fontSize: 12, color: TEXT2 }}>{z.label}</span>
+                      <span style={{ fontSize: 16, fontWeight: 800, color: TEXT, textAlign: "right" }}>{z.d.diff == null ? "–" : vorzeichen(z.d.diff)}</span>
+                      <span style={{ fontSize: 11, color: TEXT2 }}>{trendWert(z.d.diff, z.d.diffVor3h)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 10, color: TEXT3, marginTop: 6 }}>
+                  🕒 {zeitLokal(zeit)} Uhr · {alterText(alterMin(zeit))}
+                </div>
+                <div style={{ fontSize: 10, color: TEXT3, marginTop: 4, lineHeight: 1.5 }}>
+                  Positiv = höherer Druck an der erstgenannten Station. Grimsel (1980 m) liefert nur QNH (Reduktion mit Standardatmosphäre) – die absoluten Werte sind dort ungenau, achte vor allem auf die Veränderung. Für diese Paare gibt es keine allgemein anerkannte Föhn-Schwelle. Das Haslital gilt als klassisches Föhntal (Grimsel-Föhn).
                 </div>
               </div>
             );
@@ -626,14 +769,27 @@ export default function FlugWetter() {
       {/* Föhn + Höhenwind */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10, marginBottom: 14 }}>
         <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 6 }}>🏔 FÖHN · DRUCK LUGANO − ZÜRICH</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 26, fontWeight: 800, color: foehn.farbe }}>{diffJetzt == null ? "–" : `${diffJetzt > 0 ? "+" : ""}${diffJetzt.toFixed(1)}`}</span>
+          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 6 }}>🏔 FÖHN · PROGNOSE HEUTE (MODELL: LUGANO − ZÜRICH)</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 26, fontWeight: 800, color: foehn.farbe }}>{diffJetzt == null ? "–" : vorzeichen(diffJetzt)}</span>
             <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: foehn.farbe }}>● {foehn.text}</span>
           </div>
-          <FoehnVerlauf diff={diffStunden} jetzt={jetzt} />
-          <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{foehn.hinweis} Faustwert: ab ca. 4 hPa Föhnlage (Südföhn, Wind aus S/SW).</div>
+          <DruckVerlauf diff={diffStunden} jetzt={jetzt} linien={[-4, 4]} loMin={-8} hiMin={8} label="Verlauf der Druckdifferenz Lugano minus Zürich" />
+          <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{foehn.hinweis} Schwelle ±4 hPa (+ = Südföhn, − = Nordföhn).</div>
+        </div>
+
+        <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 6 }}>🌬 BISE · PROGNOSE HEUTE (MODELL: GOTTMADINGEN − GENF)</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 26, fontWeight: 800, color: biseModellStatus.farbe }}>{biseModellJetzt == null ? "–" : vorzeichen(biseModellJetzt)}</span>
+            <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: biseModellStatus.farbe }}>● {biseModellStatus.text}</span>
+          </div>
+          <DruckVerlauf diff={biseModell} jetzt={jetzt} linien={[2, 4]} loMin={-4} hiMin={6} label="Verlauf der Druckdifferenz Gottmadingen minus Genf" />
+          <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>
+            {biseModellStatus.hinweis} Positiv = Bise. Gottmadingen (D, bei Schaffhausen) hat keine MeteoSchweiz-Station und ist daher nur als Modellwert enthalten; gemessen wird mit Güttingen.
+          </div>
         </div>
 
         {hoehe && (

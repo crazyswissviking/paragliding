@@ -22,6 +22,10 @@ export const KARTEN_STATIONEN: Station[] = [
 export const FOEHN_SUED: Station = { id: "LUG", name: "Lugano", hoehe: 273 };
 export const FOEHN_NORD: Station = { id: "KLO", name: "Zürich / Kloten", hoehe: 426 };
 
+// Referenzstationen für die Bise (gängiger Index: Druck Güttingen/TG minus Genf)
+export const BISE_WEST = { id: "GVE", name: "Genf / Cointrin" };
+export const BISE_OST = { id: "GUT", name: "Güttingen" };
+
 export type Messung = {
   id: string;
   name: string;
@@ -37,17 +41,24 @@ export type Messung = {
   regen: number | null; // mm in den letzten 10 Min. (rre150z0)
 };
 
-export type FoehnMessung = {
-  diff: number | null; // hPa, Lugano minus Zürich/Kloten
+export type DruckDiff = {
+  diff: number | null; // hPa (Station A minus Station B)
   diffVor3h: number | null;
   zeit: string | null; // ISO-Zeit (UTC)
   basis: "QFF" | "QNH" | null;
 };
+export type FoehnMessung = DruckDiff; // Lugano minus Zürich/Kloten (+ Südföhn, − Nordföhn)
 
 export type MesswerteAntwort = {
   stationen: Messung[];
   windline: Messung[];
-  foehn: FoehnMessung;
+  foehn: DruckDiff; // Lugano − Zürich/Kloten (+ Südföhn, − Nordföhn)
+  bise: DruckDiff; // Güttingen − Genf (+ Bise)
+  lokal: {
+    meiringenInterlaken: DruckDiff; // Meiringen − Interlaken
+    grimselMeiringen: DruckDiff; // Grimsel − Meiringen (QNH, Höhenreduktion ungenau)
+    grimselInterlaken: DruckDiff; // Grimsel − Interlaken (QNH, Höhenreduktion ungenau)
+  };
   fehlend: string[];
   abgerufen: string;
 };
@@ -120,14 +131,17 @@ export function reihe(csv: string, param: string): { t: number; v: number }[] {
 
 const runde1 = (x: number) => Math.round(x * 10) / 10;
 
-export function foehnBerechnen(sued: string | null, nord: string | null): FoehnMessung {
-  const leer: FoehnMessung = { diff: null, diffVor3h: null, zeit: null, basis: null };
-  if (!sued || !nord) return leer;
-  // bevorzugt QFF (auf Meereshöhe reduziert), sonst QNH
-  for (const [param, basis] of [["pp0qffs0", "QFF"], ["pp0qnhs0", "QNH"]] as const) {
-    const a = reihe(sued, param);
-    const b = new Map(reihe(nord, param).map((x) => [x.t, x.v]));
-    const paare = a.filter((x) => b.has(x.t)).map((x) => ({ t: x.t, d: x.v - (b.get(x.t) as number) }));
+type DruckParam = ReadonlyArray<readonly [string, "QFF" | "QNH"]>;
+const STANDARD_PARAM: DruckParam = [["pp0qffs0", "QFF"], ["pp0qnhs0", "QNH"]];
+
+// Differenz A − B über gemeinsame Zeitstempel; bevorzugt QFF, sonst QNH.
+export function druckDifferenz(a: string | null, b: string | null, params: DruckParam = STANDARD_PARAM): DruckDiff {
+  const leer: DruckDiff = { diff: null, diffVor3h: null, zeit: null, basis: null };
+  if (!a || !b) return leer;
+  for (const [param, basis] of params) {
+    const ra = reihe(a, param);
+    const rb = new Map(reihe(b, param).map((x) => [x.t, x.v]));
+    const paare = ra.filter((x) => rb.has(x.t)).map((x) => ({ t: x.t, d: x.v - (rb.get(x.t) as number) }));
     if (paare.length === 0) continue;
     const letzte = paare[paare.length - 1];
     const vor = paare.find((p) => p.t === letzte.t - 3 * 3600 * 1000);
@@ -139,6 +153,11 @@ export function foehnBerechnen(sued: string | null, nord: string | null): FoehnM
     };
   }
   return leer;
+}
+
+// Föhn: Lugano − Zürich (positiv = Südföhn, negativ = Nordföhn)
+export function foehnBerechnen(sued: string | null, nord: string | null): FoehnMessung {
+  return druckDifferenz(sued, nord);
 }
 
 // ── Windline (Start-/Landeplätze) ─────────────────────────────────────────
@@ -210,7 +229,7 @@ async function ladeWindlineStation(fetcher: Fetcher, st: WindlineStation): Promi
 }
 
 export async function ladeMesswerte(fetcher: Fetcher): Promise<MesswerteAntwort> {
-  const alle = [...KARTEN_STATIONEN, FOEHN_SUED, FOEHN_NORD];
+  const alle: { id: string }[] = [...KARTEN_STATIONEN, FOEHN_SUED, FOEHN_NORD, BISE_WEST, BISE_OST];
   const [res, resW] = await Promise.all([
     Promise.allSettled(alle.map((s) => ladeCsv(fetcher, s.id))),
     Promise.allSettled(WINDLINE_STATIONEN.map((s) => ladeWindlineStation(fetcher, s))),
@@ -230,6 +249,16 @@ export async function ladeMesswerte(fetcher: Fetcher): Promise<MesswerteAntwort>
   });
 
   const stationen = KARTEN_STATIONEN.filter((s) => csv.has(s.id)).map((s) => letzteMessung(csv.get(s.id) as string, s));
-  const foehn = foehnBerechnen(csv.get(FOEHN_SUED.id) ?? null, csv.get(FOEHN_NORD.id) ?? null);
-  return { stationen, windline, foehn, fehlend, abgerufen: new Date().toISOString() };
+  const c = (id: string) => csv.get(id) ?? null;
+  const foehn = foehnBerechnen(c(FOEHN_SUED.id), c(FOEHN_NORD.id));
+  // Bise: positiv, wenn der Druck in Güttingen höher ist als in Genf
+  const bise = druckDifferenz(c(BISE_OST.id), c(BISE_WEST.id));
+  // Lokal (Haslital/Oberland): Bergstation Grimsel hat keinen QFF → nur QNH verwenden
+  const nurQnh: DruckParam = [["pp0qnhs0", "QNH"]];
+  const lokal = {
+    meiringenInterlaken: druckDifferenz(c("MER"), c("INT")),
+    grimselMeiringen: druckDifferenz(c("GRH"), c("MER"), nurQnh),
+    grimselInterlaken: druckDifferenz(c("GRH"), c("INT"), nurQnh),
+  };
+  return { stationen, windline, foehn, bise, lokal, fehlend, abgerufen: new Date().toISOString() };
 }
