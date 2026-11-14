@@ -637,12 +637,13 @@ export default function FlugWetter() {
               <MessKarte key={m.id} m={m} />
             ))}
           </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 8, marginBottom: 8, alignItems: "start" }}>
           {mess.foehn.diff != null && (() => {
             const fs = foehnStatus(mess.foehn.diff);
             const tr = trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h);
             const verlauf = verlaufHeute(mess.foehn.verlauf);
             return (
-              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
+              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, minWidth: 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🏔 FÖHN GEMESSEN · DRUCK LUGANO − ZÜRICH/KLOTEN (+ SÜD · − NORD)</div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 24, fontWeight: 800, color: fs.farbe }}>{vorzeichen(mess.foehn.diff)}</span>
@@ -675,7 +676,7 @@ export default function FlugWetter() {
             const tr = trendWert(mess.bise.diff, mess.bise.diffVor3h);
             const verlauf = verlaufHeute(mess.bise.verlauf);
             return (
-              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
+              <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, minWidth: 0 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🌬 BISE GEMESSEN · DRUCK GÜTTINGEN − GENF (+ = BISE)</div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 24, fontWeight: 800, color: bs.farbe }}>{vorzeichen(mess.bise.diff)}</span>
@@ -701,6 +702,7 @@ export default function FlugWetter() {
               </div>
             );
           })()}
+          </div>
           {mess.lokal && (mess.lokal.meiringenInterlaken.diff != null || mess.lokal.grimselMeiringen.diff != null || mess.lokal.grimselInterlaken.diff != null) && (() => {
             const zeilen: { label: string; d: DruckDiff }[] = [
               { label: "Meiringen − Interlaken", d: mess.lokal.meiringenInterlaken },
