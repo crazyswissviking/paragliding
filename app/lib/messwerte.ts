@@ -46,6 +46,7 @@ export type DruckDiff = {
   diffVor3h: number | null;
   zeit: string | null; // ISO-Zeit (UTC)
   basis: "QFF" | "QNH" | null;
+  verlauf: { t: number; d: number }[]; // Stundenwerte (t = UTC-Millisekunden), ca. die letzten 36 Stunden
 };
 export type FoehnMessung = DruckDiff; // Lugano minus Zürich/Kloten (+ Südföhn, − Nordföhn)
 
@@ -136,7 +137,7 @@ const STANDARD_PARAM: DruckParam = [["pp0qffs0", "QFF"], ["pp0qnhs0", "QNH"]];
 
 // Differenz A − B über gemeinsame Zeitstempel; bevorzugt QFF, sonst QNH.
 export function druckDifferenz(a: string | null, b: string | null, params: DruckParam = STANDARD_PARAM): DruckDiff {
-  const leer: DruckDiff = { diff: null, diffVor3h: null, zeit: null, basis: null };
+  const leer: DruckDiff = { diff: null, diffVor3h: null, zeit: null, basis: null, verlauf: [] };
   if (!a || !b) return leer;
   for (const [param, basis] of params) {
     const ra = reihe(a, param);
@@ -150,6 +151,7 @@ export function druckDifferenz(a: string | null, b: string | null, params: Druck
       diffVor3h: vor ? runde1(vor.d) : null,
       zeit: new Date(letzte.t).toISOString(),
       basis,
+      verlauf: paare.filter((p) => new Date(p.t).getUTCMinutes() === 0).slice(-36).map((p) => ({ t: p.t, d: runde1(p.d) })),
     };
   }
   return leer;

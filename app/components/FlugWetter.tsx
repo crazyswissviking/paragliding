@@ -318,9 +318,9 @@ function WindDiagramm({ s, jetzt }: { s: Stunden; jetzt: number }) {
   );
 }
 
-function DruckVerlauf({ diff, jetzt, linien, loMin, hiMin, label }: { diff: Zahl[]; jetzt: number; linien: number[]; loMin: number; hiMin: number; label: string }) {
+function DruckVerlauf({ diff, gemessen, jetzt, linien, loMin, hiMin, label }: { diff: Zahl[]; gemessen?: Zahl[]; jetzt: number; linien: number[]; loMin: number; hiMin: number; label: string }) {
   const W = 300, H = 96, L = 28, Rr = 6, T = 8, B = 16;
-  const vals = diff.filter((v): v is number => v != null);
+  const vals = [...diff, ...(gemessen ?? [])].filter((v): v is number => v != null);
   const lo = Math.min(loMin, ...vals);
   const hi = Math.max(hiMin, ...vals);
   const n = Math.max(diff.length - 1, 1);
@@ -344,13 +344,34 @@ function DruckVerlauf({ diff, jetzt, linien, loMin, hiMin, label }: { diff: Zahl
           <text x={L - 4} y={y(v) + 3} textAnchor="end" fontSize="9" fill={ORANGE}>{fmt(v)}</text>
         </g>
       ))}
-      <path d={pfad(diff, x, y)} fill="none" stroke={BLAU} strokeWidth="2.5" strokeLinejoin="round" />
+      {gemessen ? (
+        <>
+          <path d={pfad(diff, x, y)} fill="none" stroke={TEXT3} strokeWidth="1.8" strokeDasharray="5 3" strokeLinejoin="round" />
+          <path d={pfad(gemessen, x, y)} fill="none" stroke={BLAU} strokeWidth="2.5" strokeLinejoin="round" />
+        </>
+      ) : (
+        <path d={pfad(diff, x, y)} fill="none" stroke={BLAU} strokeWidth="2.5" strokeLinejoin="round" />
+      )}
       <line x1={xJetzt} x2={xJetzt} y1={T} y2={H - B} stroke="#3355cc" strokeDasharray="3 3" />
       {[0, 6, 12, 18, 23].map((h) => (
         <text key={h} x={x(h)} y={H - 3} textAnchor="middle" fontSize="9" fill={TEXT3}>{h}h</text>
       ))}
     </svg>
   );
+}
+
+// Gemessene Stundenwerte (UTC-Zeitstempel) auf die heutigen Stunden 0–23 in Schweizer Ortszeit abbilden
+function verlaufHeute(verlauf: { t: number; d: number }[] | undefined): Zahl[] {
+  const out: Zahl[] = Array.from({ length: 24 }, () => null);
+  if (!verlauf) return out;
+  const tag = (ms: number) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "Europe/Zurich" });
+  const heute = tag(Date.now());
+  for (const p of verlauf) {
+    if (tag(p.t) !== heute) continue;
+    const std = Number(new Date(p.t).toLocaleTimeString("en-GB", { hour: "2-digit", hour12: false, timeZone: "Europe/Zurich" }).slice(0, 2));
+    if (Number.isInteger(std) && std >= 0 && std < 24) out[std] = p.d;
+  }
+  return out;
 }
 
 function Kachel({ titel, wert, sub, farbe }: { titel: string; wert: string; sub?: string; farbe?: string }) {
@@ -440,7 +461,7 @@ export default function FlugWetter() {
   const [hoehe, setHoehe] = useState<Hoehe | null>(null);
   const [fehler, setFehler] = useState(false);
   const [laden, setLaden] = useState(true);
-  const [gewaehlt, setGewaehlt] = useState("interlaken");
+  const [gewaehlt] = useState("interlaken");
   const [mess, setMess] = useState<MesswerteAntwort | null>(null);
   const [messGeladen, setMessGeladen] = useState(false);
 
@@ -530,7 +551,6 @@ export default function FlugWetter() {
     lugano.current.pressure_msl != null && zuerich.current.pressure_msl != null
       ? lugano.current.pressure_msl - zuerich.current.pressure_msl
       : null;
-  const foehn = foehnStatus(diffJetzt);
 
   // Bise (Modell): Gottmadingen − Genf, positiv = Bise
   const biseModell: Zahl[] = gottm.hourly.pressure_msl.map((v, i) => {
@@ -541,7 +561,6 @@ export default function FlugWetter() {
     gottm.current.pressure_msl != null && genf.current.pressure_msl != null
       ? gottm.current.pressure_msl - genf.current.pressure_msl
       : null;
-  const biseModellStatus = biseStatus(biseModellJetzt);
 
   // Tageskennzahlen des gewählten Ortes (6–21 Uhr)
   const h = sel.d.hourly;
@@ -621,6 +640,7 @@ export default function FlugWetter() {
           {mess.foehn.diff != null && (() => {
             const fs = foehnStatus(mess.foehn.diff);
             const tr = trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h);
+            const verlauf = verlaufHeute(mess.foehn.verlauf);
             return (
               <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🏔 FÖHN GEMESSEN · DRUCK LUGANO − ZÜRICH/KLOTEN (+ SÜD · − NORD)</div>
@@ -637,6 +657,14 @@ export default function FlugWetter() {
                 <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>
                   🕒 {zeitLokal(mess.foehn.zeit)} Uhr · {alterText(alterMin(mess.foehn.zeit))} · Meeresdruck {mess.foehn.basis}
                 </div>
+                <div style={{ marginTop: 8 }}>
+                  <DruckVerlauf diff={diffStunden} gemessen={verlauf} jetzt={jetzt} linien={[-4, 4]} loMin={-8} hiMin={8} label="Verlauf der Druckdifferenz Lugano minus Zürich, gemessen und Modell" />
+                  <div style={{ fontSize: 10, color: TEXT2, display: "flex", gap: 12, flexWrap: "wrap", marginTop: 2 }}>
+                    <span><span style={{ color: BLAU, fontWeight: 700 }}>━</span> gemessen</span>
+                    <span><span style={{ color: TEXT3, fontWeight: 700 }}>╍</span> Modell-Prognose</span>
+                    <span><span style={{ color: ORANGE, fontWeight: 700 }}>╍</span> Schwelle ±4 hPa</span>
+                  </div>
+                </div>
                 <div style={{ fontSize: 11, color: TEXT2, marginTop: 6 }}>{fs.hinweis}</div>
                 <div style={{ fontSize: 10, color: TEXT3, marginTop: 4 }}>{PILOTENREGEL}</div>
               </div>
@@ -645,6 +673,7 @@ export default function FlugWetter() {
           {mess.bise?.diff != null && (() => {
             const bs = biseStatus(mess.bise.diff);
             const tr = trendWert(mess.bise.diff, mess.bise.diffVor3h);
+            const verlauf = verlaufHeute(mess.bise.verlauf);
             return (
               <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 10, marginBottom: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 4 }}>🌬 BISE GEMESSEN · DRUCK GÜTTINGEN − GENF (+ = BISE)</div>
@@ -656,6 +685,14 @@ export default function FlugWetter() {
                 </div>
                 <div style={{ fontSize: 10, color: TEXT3, marginTop: 2 }}>
                   🕒 {zeitLokal(mess.bise.zeit)} Uhr · {alterText(alterMin(mess.bise.zeit))} · Meeresdruck {mess.bise.basis}
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <DruckVerlauf diff={biseModell} gemessen={verlauf} jetzt={jetzt} linien={[2, 4]} loMin={-4} hiMin={6} label="Verlauf der Druckdifferenz Güttingen minus Genf, gemessen und Modell Gottmadingen minus Genf" />
+                  <div style={{ fontSize: 10, color: TEXT2, display: "flex", gap: 12, flexWrap: "wrap", marginTop: 2 }}>
+                    <span><span style={{ color: BLAU, fontWeight: 700 }}>━</span> gemessen (Güttingen − Genf)</span>
+                    <span><span style={{ color: TEXT3, fontWeight: 700 }}>╍</span> Modell (Gottmadingen − Genf)</span>
+                    <span><span style={{ color: ORANGE, fontWeight: 700 }}>╍</span> Schwellen 2 / 4 hPa</span>
+                  </div>
                 </div>
                 <div style={{ fontSize: 11, color: TEXT2, marginTop: 6 }}>{bs.hinweis}</div>
                 <div style={{ fontSize: 10, color: TEXT3, marginTop: 4 }}>
@@ -702,37 +739,6 @@ export default function FlugWetter() {
         </p>
       )}
 
-      {/* Wind aktuell */}
-      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 8 }}>💨 WIND IM MODELL (10 m, KEINE MESSUNG)</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 16 }}>
-        {orteDaten.map(({ ort, d }) => {
-          const st = windStufe(d.current.wind_speed_10m, d.current.wind_gusts_10m, d.current.precipitation);
-          const aktiv = ort.id === sel.ort.id;
-          return (
-            <button
-              key={ort.id}
-              onClick={() => setGewaehlt(ort.id)}
-              style={{
-                textAlign: "left", background: "#fff", cursor: "pointer", display: "flex", gap: 10, alignItems: "center",
-                border: aktiv ? "2px solid #3355cc" : `1px solid ${RAND}`, borderRadius: 14, padding: aktiv ? 7 : 8, color: TEXT,
-              }}
-            >
-              <WindPfeil grad={d.current.wind_direction_10m} farbe={st.farbe} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12, color: TEXT2 }}>{ort.name}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1.1 }}>
-                  {r(d.current.wind_speed_10m)} <span style={{ fontSize: 11, fontWeight: 400, color: TEXT2 }}>km/h</span>
-                </div>
-                <div style={{ fontSize: 11, color: TEXT2 }}>
-                  Böen {r(d.current.wind_gusts_10m)} · {richtungText(d.current.wind_direction_10m)}
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: st.farbe }}>● {st.label}</div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
       {/* Tagesverlauf */}
       <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12, marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
@@ -766,32 +772,8 @@ export default function FlugWetter() {
         )}
       </div>
 
-      {/* Föhn + Höhenwind */}
+      {/* Höhenwind */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10, marginBottom: 14 }}>
-        <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 6 }}>🏔 FÖHN · PROGNOSE HEUTE (MODELL: LUGANO − ZÜRICH)</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 26, fontWeight: 800, color: foehn.farbe }}>{diffJetzt == null ? "–" : vorzeichen(diffJetzt)}</span>
-            <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: foehn.farbe }}>● {foehn.text}</span>
-          </div>
-          <DruckVerlauf diff={diffStunden} jetzt={jetzt} linien={[-4, 4]} loMin={-8} hiMin={8} label="Verlauf der Druckdifferenz Lugano minus Zürich" />
-          <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>{foehn.hinweis} Schwelle ±4 hPa (+ = Südföhn, − = Nordföhn).</div>
-        </div>
-
-        <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 6 }}>🌬 BISE · PROGNOSE HEUTE (MODELL: GOTTMADINGEN − GENF)</div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 26, fontWeight: 800, color: biseModellStatus.farbe }}>{biseModellJetzt == null ? "–" : vorzeichen(biseModellJetzt)}</span>
-            <span style={{ fontSize: 12, color: TEXT2 }}>hPa</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: biseModellStatus.farbe }}>● {biseModellStatus.text}</span>
-          </div>
-          <DruckVerlauf diff={biseModell} jetzt={jetzt} linien={[2, 4]} loMin={-4} hiMin={6} label="Verlauf der Druckdifferenz Gottmadingen minus Genf" />
-          <div style={{ fontSize: 11, color: TEXT2, marginTop: 4 }}>
-            {biseModellStatus.hinweis} Positiv = Bise. Gottmadingen (D, bei Schaffhausen) hat keine MeteoSchweiz-Station und ist daher nur als Modellwert enthalten; gemessen wird mit Güttingen.
-          </div>
-        </div>
-
         {hoehe && (
           <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6, marginBottom: 8 }}>🧭 HÖHENWIND ÜBER INTERLAKEN</div>
