@@ -485,6 +485,7 @@ export default function Home() {
           <a href="/admin/hikeandfly" style={{ fontSize: "11px", color: "rgba(31,58,90,0.35)", textDecoration: "none" }}>H&F Admin</a>
           <a href="/admin/blog" style={{ fontSize: "11px", color: "rgba(31,58,90,0.35)", textDecoration: "none" }}>Blog Admin</a>
           <a href="/admin/news" style={{ fontSize: "11px", color: "rgba(31,58,90,0.35)", textDecoration: "none" }}>News Admin</a>
+          <a href="/admin/dashboard" style={{ fontSize: "11px", color: "rgba(31,58,90,0.35)", textDecoration: "none" }}>Dashboard Admin</a>
           <a href="/admin/einstellungen" style={{ fontSize: "11px", color: "rgba(31,58,90,0.35)", textDecoration: "none" }}>Einstellungen</a>
           <a href="/upload" style={{ fontSize: "11px", color: "rgba(31,58,90,0.35)", textDecoration: "none" }}>Upload</a>
         </div>

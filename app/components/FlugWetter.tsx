@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
+import { supabase } from "../supabase";
+import { DASH_STANDARD, DASH_TABELLE, bereinigeAuswahl } from "../lib/dashboard";
 
 // ── Farben ────────────────────────────────────────────────────────────────
 const TEXT = "#1f3a5a";
@@ -403,6 +405,17 @@ async function ladeMess(): Promise<MesswerteAntwort | null> {
   }
 }
 
+// Dashboard-Auswahl aus dem Admin-Tool (Supabase). Bei Fehler/leer: Standard.
+async function ladeDashKonfig(): Promise<string[] | null> {
+  try {
+    const { data, error } = await supabase.from(DASH_TABELLE).select("eintraege").eq("id", 1).maybeSingle();
+    if (error || !data) return null;
+    return bereinigeAuswahl(data.eintraege);
+  } catch {
+    return null;
+  }
+}
+
 // Zeiten der Messdateien sind UTC – Anzeige in Schweizer Ortszeit
 function zeitLokal(iso: string | null): string {
   if (!iso) return "–";
@@ -419,6 +432,66 @@ function alterText(min: number | null): string {
   if (min < 1) return "gerade eben";
   if (min < 90) return `vor ${min} Min.`;
   return `vor ${Math.round(min / 60)} Std.`;
+}
+
+// ── Dashboard: kompakte Kacheln ───────────────────────────────────────────
+const dashKachel = (farbe: string): React.CSSProperties => ({
+  background: "#fff", border: `1px solid ${RAND}`, borderLeft: `4px solid ${farbe}`, borderRadius: 12, padding: "6px 8px", minWidth: 0,
+});
+
+function DashWind({ m }: { m: Messung }) {
+  const st = windStufe(m.wind, m.boeen, null);
+  const alter = alterMin(m.zeit);
+  const veraltet = alter != null && alter > 40;
+  return (
+    <div style={{ ...dashKachel(st.farbe), display: "flex", gap: 8, alignItems: "center" }}>
+      <WindPfeil grad={m.richtung} farbe={st.farbe} size={32} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 11, color: TEXT2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {m.name}{m.rolle ? ` · ${m.rolle}` : ""}
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.1 }}>
+          {r(m.wind)} <span style={{ fontSize: 10, fontWeight: 400, color: TEXT2 }}>km/h</span>
+        </div>
+        <div style={{ fontSize: 10, color: TEXT2 }}>Böen {r(m.boeen)} · {richtungText(m.richtung)}</div>
+        <div style={{ fontSize: 9, color: veraltet ? ORANGE : TEXT3, fontWeight: veraltet ? 700 : 400 }}>
+          {zeitLokal(m.zeit)} Uhr{veraltet ? " ⚠" : ""}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashDruck({ titel, d, status, trend }: { titel: string; d: DruckDiff; status: { text: string; farbe: string }; trend: string }) {
+  return (
+    <div style={dashKachel(status.farbe)}>
+      <div style={{ fontSize: 11, color: TEXT2 }}>{titel}</div>
+      <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.1, color: status.farbe }}>
+        {d.diff == null ? "–" : vorzeichen(d.diff)} <span style={{ fontSize: 10, fontWeight: 400, color: TEXT2 }}>hPa</span>
+      </div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: status.farbe }}>● {status.text}</div>
+      <div style={{ fontSize: 9, color: TEXT3 }}>{trend ? `${trend} · ` : ""}{zeitLokal(d.zeit)} Uhr</div>
+    </div>
+  );
+}
+
+function DashLokal({ l }: { l: MesswerteAntwort["lokal"] }) {
+  const zeilen: { label: string; d: DruckDiff }[] = [
+    { label: "Meiringen − Interlaken", d: l.meiringenInterlaken },
+    { label: "Grimsel − Meiringen", d: l.grimselMeiringen },
+    { label: "Grimsel − Interlaken", d: l.grimselInterlaken },
+  ];
+  return (
+    <div style={dashKachel(TEXT3)}>
+      <div style={{ fontSize: 11, color: TEXT2, marginBottom: 2 }}>⛰ Haslital (hPa)</div>
+      {zeilen.map((z) => (
+        <div key={z.label} style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10, color: TEXT2 }}>
+          <span>{z.label}</span>
+          <span style={{ fontWeight: 800, color: TEXT }}>{z.d.diff == null ? "–" : vorzeichen(z.d.diff)}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function MessKarte({ m }: { m: Messung }) {
@@ -464,6 +537,14 @@ export default function FlugWetter() {
   const [gewaehlt] = useState("interlaken");
   const [mess, setMess] = useState<MesswerteAntwort | null>(null);
   const [messGeladen, setMessGeladen] = useState(false);
+  const [dashKeys, setDashKeys] = useState<string[]>(DASH_STANDARD);
+  const [alleMess, setAlleMess] = useState(false);
+
+  useEffect(() => {
+    ladeDashKonfig().then((k) => {
+      if (k) setDashKeys(k);
+    });
+  }, []);
 
   const aktualisieren = useCallback(async () => {
     setLaden(true);
@@ -612,6 +693,41 @@ export default function FlugWetter() {
         ))}
       </div>
 
+      {/* Dashboard: die wichtigsten Messdaten (Auswahl im Admin-Tool) */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6 }}>📡 DASHBOARD · MESSDATEN JETZT</div>
+        <button
+          onClick={() => setAlleMess((v) => !v)}
+          aria-expanded={alleMess}
+          style={{ border: `1px solid ${RAND}`, background: "#fff", color: BLAU, borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+        >
+          {alleMess ? "Alle Messdaten ▴" : "Alle Messdaten ▾"}
+        </button>
+      </div>
+      {mess ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 16 }}>
+          {dashKeys.map((k) => {
+            if (k === "foehn") {
+              return mess.foehn.diff != null ? <DashDruck key={k} titel="🏔 Föhn (Lugano − Zürich)" d={mess.foehn} status={foehnStatus(mess.foehn.diff)} trend={trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h)} /> : null;
+            }
+            if (k === "bise") {
+              return mess.bise?.diff != null ? <DashDruck key={k} titel="🌬 Bise (Güttingen − Genf)" d={mess.bise} status={biseStatus(mess.bise.diff)} trend={trendWert(mess.bise.diff, mess.bise.diffVor3h)} /> : null;
+            }
+            if (k === "lokal") {
+              return mess.lokal ? <DashLokal key={k} l={mess.lokal} /> : null;
+            }
+            const m = [...(mess.windline ?? []), ...mess.stationen].find((x) => x.id === k);
+            return m ? <DashWind key={k} m={m} /> : null;
+          })}
+        </div>
+      ) : (
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: TEXT2 }}>
+          {messGeladen ? "Messwerte sind momentan nicht verfügbar." : "Messwerte werden geladen…"}
+        </p>
+      )}
+
+      {alleMess && (
+      <>
       {/* Windline: Start- und Landeplätze */}
       {mess && (mess.windline ?? []).length > 0 && (
         <>
@@ -739,6 +855,9 @@ export default function FlugWetter() {
         <p style={{ margin: "0 0 16px", fontSize: 12, color: TEXT2 }}>
           {messGeladen ? "Messwerte sind momentan nicht verfügbar." : "Messwerte werden geladen…"}
         </p>
+      )}
+
+      </>
       )}
 
       {/* Tagesverlauf */}
