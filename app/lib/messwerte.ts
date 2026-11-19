@@ -3,28 +3,30 @@
 // Dateien: https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/<kürzel>/ogd-smn_<kürzel>_t_now.csv
 // Alle Zeitstempel in diesen Dateien sind UTC (Format dd.mm.yyyy HH:MM).
 
-export type Station = { id: string; name: string; hoehe: number };
+// Koordinaten (WGS84) sind Näherungswerte für die Kartendarstellung. Beim Abruf werden sie – falls
+// verfügbar – durch die Angaben der MeteoSchweiz-Stationsliste ersetzt (siehe ladeStationsKoordinaten).
+export type Station = { id: string; name: string; hoehe: number; lat: number; lng: number };
 
 // Stationen, die als Karte angezeigt werden (Höhen laut MeteoSchweiz-Stationsliste)
 export const KARTEN_STATIONEN: Station[] = [
-  { id: "INT", name: "Interlaken", hoehe: 578 },
-  { id: "BRZ", name: "Brienz", hoehe: 567 },
-  { id: "MER", name: "Meiringen", hoehe: 589 },
-  { id: "FRU", name: "Frutigen", hoehe: 756 },
-  { id: "BOL", name: "Boltigen", hoehe: 820 },
-  { id: "ABO", name: "Adelboden", hoehe: 1321 },
-  { id: "GRH", name: "Grimsel Hospiz", hoehe: 1980 },
-  { id: "JUN", name: "Jungfraujoch", hoehe: 3571 },
-  { id: "ALT", name: "Altdorf", hoehe: 438 },
+  { id: "INT", name: "Interlaken", hoehe: 578, lat: 46.6767, lng: 7.8700 },
+  { id: "BRZ", name: "Brienz", hoehe: 567, lat: 46.7540, lng: 8.0370 },
+  { id: "MER", name: "Meiringen", hoehe: 589, lat: 46.7305, lng: 8.1695 },
+  { id: "FRU", name: "Frutigen", hoehe: 756, lat: 46.5886, lng: 7.6470 },
+  { id: "BOL", name: "Boltigen", hoehe: 820, lat: 46.6215, lng: 7.3935 },
+  { id: "ABO", name: "Adelboden", hoehe: 1321, lat: 46.4917, lng: 7.5611 },
+  { id: "GRH", name: "Grimsel Hospiz", hoehe: 1980, lat: 46.5719, lng: 8.3322 },
+  { id: "JUN", name: "Jungfraujoch", hoehe: 3571, lat: 46.5475, lng: 7.9851 },
+  { id: "ALT", name: "Altdorf", hoehe: 438, lat: 46.8868, lng: 8.6219 },
 ];
 
 // Referenzstationen für die gemessene Föhn-Druckdifferenz
-export const FOEHN_SUED: Station = { id: "LUG", name: "Lugano", hoehe: 273 };
-export const FOEHN_NORD: Station = { id: "KLO", name: "Zürich / Kloten", hoehe: 426 };
+export const FOEHN_SUED: Station = { id: "LUG", name: "Lugano", hoehe: 273, lat: 46.0042, lng: 8.9602 };
+export const FOEHN_NORD: Station = { id: "KLO", name: "Zürich / Kloten", hoehe: 426, lat: 47.4797, lng: 8.5361 };
 
 // Referenzstationen für die Bise (gängiger Index: Druck Güttingen/TG minus Genf)
-export const BISE_WEST = { id: "GVE", name: "Genf / Cointrin" };
-export const BISE_OST = { id: "GUT", name: "Güttingen" };
+export const BISE_WEST: Station = { id: "GVE", name: "Genf / Cointrin", hoehe: 411, lat: 46.2478, lng: 6.1273 };
+export const BISE_OST: Station = { id: "GUT", name: "Güttingen", hoehe: 440, lat: 47.6017, lng: 9.2790 };
 
 export type Messung = {
   id: string;
@@ -39,6 +41,10 @@ export type Messung = {
   richtung: number | null; // Grad, Zehnminutenmittel (dkl010z0)
   temp: number | null; // °C (tre200s0)
   regen: number | null; // mm in den letzten 10 Min. (rre150z0)
+  lat?: number | null; // Position für die Karte
+  lng?: number | null;
+  druck?: number | null; // hPa, Meeresdruck (QFF, sonst QNH) – nur MeteoSchweiz
+  druckBasis?: "QFF" | "QNH" | null;
 };
 
 export type DruckDiff = {
@@ -53,6 +59,7 @@ export type FoehnMessung = DruckDiff; // Lugano minus Zürich/Kloten (+ Südföh
 export type MesswerteAntwort = {
   stationen: Messung[];
   windline: Messung[];
+  referenz: Messung[]; // Lugano, Zürich/Kloten, Genf, Güttingen (für die Karte)
   foehn: DruckDiff; // Lugano − Zürich/Kloten (+ Südföhn, − Nordföhn)
   bise: DruckDiff; // Güttingen − Genf (+ Bise)
   lokal: {
@@ -102,6 +109,16 @@ export function letzteMessung(csv: string, st: Station): Messung {
   const gueltig = t.zeilen.filter((z) => stempelZuIso(z[iZeit]) !== null);
   const zeile = [...gueltig].reverse().find((z) => num(z[iWind]) !== null) ?? gueltig[gueltig.length - 1];
   const wert = (name: string) => (zeile ? num(zeile[t.spalte(name)]) : null);
+  let druck: number | null = null;
+  let druckBasis: "QFF" | "QNH" | null = null;
+  for (const [param, basis] of [["pp0qffs0", "QFF"], ["pp0qnhs0", "QNH"]] as const) {
+    const z = [...gueltig].reverse().find((x) => num(x[t.spalte(param)]) !== null);
+    if (z) {
+      druck = num(z[t.spalte(param)]);
+      druckBasis = basis;
+      break;
+    }
+  }
   return {
     id: st.id,
     name: st.name,
@@ -113,6 +130,10 @@ export function letzteMessung(csv: string, st: Station): Messung {
     richtung: wert("dkl010z0"),
     temp: wert("tre200s0"),
     regen: wert("rre150z0"),
+    lat: st.lat,
+    lng: st.lng,
+    druck,
+    druckBasis,
   };
 }
 
@@ -168,16 +189,17 @@ export function foehnBerechnen(sued: string | null, nord: string | null): FoehnM
 // Stationsliste: https://m.windline.ch/ (Stand der Prüfung; IDs können sich ändern)
 // Einheit: Die Windwerte (windspeed1 / windpeak1) kommen in m/s (von Christian an
 // der Windline-Seite bestätigt) und werden hier in km/h umgerechnet (x 3.6).
-export type WindlineStation = { id: string; name: string; rolle?: string };
+export type WindlineStation = { id: string; name: string; rolle?: string; lat: number; lng: number };
 
 export const WINDLINE_STATIONEN: WindlineStation[] = [
-  { id: "4109", name: "Niederhorn" },
-  { id: "6200", name: "Amisbühl", rolle: "Startplatz" },
-  { id: "6679", name: "Howald (Beatenberg)" },
-  { id: "6117", name: "Höhematte", rolle: "Landeplatz" },
-  { id: "6116", name: "Lehn", rolle: "Landeplatz" },
-  { id: "4104", name: "Grindelwald First" },
-  { id: "4096", name: "Niederhünigen" },
+  // Positionen = Näherungswerte (bitte bei Bedarf anpassen); liefert Windline Koordinaten im JSON, gelten diese
+  { id: "4109", name: "Niederhorn", lat: 46.7157, lng: 7.7699 },
+  { id: "6200", name: "Amisbühl", rolle: "Startplatz", lat: 46.6995, lng: 7.7870 },
+  { id: "6679", name: "Howald (Beatenberg)", lat: 46.6935, lng: 7.7680 },
+  { id: "6117", name: "Höhematte", rolle: "Landeplatz", lat: 46.6838, lng: 7.8512 },
+  { id: "6116", name: "Lehn", rolle: "Landeplatz", lat: 46.6770, lng: 7.8600 },
+  { id: "4104", name: "Grindelwald First", lat: 46.6595, lng: 8.0535 },
+  { id: "4096", name: "Niederhünigen", lat: 46.8333, lng: 7.6167 },
 ];
 
 export function windlineUrl(id: string): string {
@@ -199,9 +221,19 @@ export function parseWindline(text: string, st: WindlineStation): Messung {
     const v = n(k);
     return v === null ? null : Math.round(v * 3.6 * 10) / 10;
   };
+  // Koordinaten aus dem JSON übernehmen, falls vorhanden und plausibel (Schweiz); sonst Näherungswert
+  const koord = (keys: string[], von: number, bis: number, fallback: number) => {
+    for (const k of keys) {
+      const v = num(wert(k));
+      if (v !== null && v >= von && v <= bis) return v;
+    }
+    return fallback;
+  };
   return {
     id: `W${st.id}`,
     name: st.name,
+    lat: koord(["latitude", "lat"], 45.5, 48, st.lat),
+    lng: koord(["longitude", "lng", "lon"], 5.5, 11, st.lng),
     quelle: "Windline",
     rolle: st.rolle,
     status,
@@ -230,11 +262,43 @@ async function ladeWindlineStation(fetcher: Fetcher, st: WindlineStation): Promi
   return parseWindline(Buffer.from(await res.arrayBuffer()).toString("utf8"), st);
 }
 
+// Stationsliste der MeteoSchweiz (Koordinaten). Spaltennamen werden tolerant gesucht; unplausible
+// oder stark abweichende Werte werden verworfen, dann bleiben die Näherungswerte.
+const META_URL = "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv";
+
+export function parseStationsMeta(text: string): Map<string, { lat: number; lng: number }> {
+  const out = new Map<string, { lat: number; lng: number }>();
+  const t = leseCsv(text);
+  const kopf = text.split(/\r?\n/)[0]?.split(";") ?? [];
+  const iId = kopf.findIndex((c) => /station_abbr/i.test(c));
+  const iLat = kopf.findIndex((c) => /wgs84.*lat/i.test(c));
+  const iLng = kopf.findIndex((c) => /wgs84.*(lon|lng)/i.test(c));
+  if (iId < 0 || iLat < 0 || iLng < 0) return out;
+  for (const z of t.zeilen) {
+    const id = (z[iId] ?? "").trim().toUpperCase();
+    const lat = num(z[iLat]?.replace(",", "."));
+    const lng = num(z[iLng]?.replace(",", "."));
+    if (id && lat !== null && lng !== null && lat > 45.5 && lat < 48 && lng > 5.5 && lng < 11) out.set(id, { lat, lng });
+  }
+  return out;
+}
+
+async function ladeStationsKoordinaten(fetcher: Fetcher): Promise<Map<string, { lat: number; lng: number }>> {
+  try {
+    const res = await fetcher(META_URL, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return new Map();
+    return parseStationsMeta(Buffer.from(await res.arrayBuffer()).toString("latin1"));
+  } catch {
+    return new Map();
+  }
+}
+
 export async function ladeMesswerte(fetcher: Fetcher): Promise<MesswerteAntwort> {
   const alle: { id: string }[] = [...KARTEN_STATIONEN, FOEHN_SUED, FOEHN_NORD, BISE_WEST, BISE_OST];
-  const [res, resW] = await Promise.all([
+  const [res, resW, meta] = await Promise.all([
     Promise.allSettled(alle.map((s) => ladeCsv(fetcher, s.id))),
     Promise.allSettled(WINDLINE_STATIONEN.map((s) => ladeWindlineStation(fetcher, s))),
+    ladeStationsKoordinaten(fetcher),
   ]);
 
   const csv = new Map<string, string>();
@@ -250,7 +314,13 @@ export async function ladeMesswerte(fetcher: Fetcher): Promise<MesswerteAntwort>
     else fehlend.push(`W${WINDLINE_STATIONEN[i].id}`);
   });
 
-  const stationen = KARTEN_STATIONEN.filter((s) => csv.has(s.id)).map((s) => letzteMessung(csv.get(s.id) as string, s));
+  // Koordinaten aus der Stationsliste übernehmen (nur wenn nahe am Näherungswert, sonst Verwechslungsgefahr)
+  const mitMeta = (s: Station): Station => {
+    const m = meta.get(s.id);
+    return m && Math.abs(m.lat - s.lat) < 0.1 && Math.abs(m.lng - s.lng) < 0.15 ? { ...s, lat: m.lat, lng: m.lng } : s;
+  };
+  const stationen = KARTEN_STATIONEN.filter((s) => csv.has(s.id)).map((s) => letzteMessung(csv.get(s.id) as string, mitMeta(s)));
+  const referenz = [FOEHN_SUED, FOEHN_NORD, BISE_OST, BISE_WEST].filter((s) => csv.has(s.id)).map((s) => letzteMessung(csv.get(s.id) as string, mitMeta(s)));
   const c = (id: string) => csv.get(id) ?? null;
   const foehn = foehnBerechnen(c(FOEHN_SUED.id), c(FOEHN_NORD.id));
   // Bise: positiv, wenn der Druck in Güttingen höher ist als in Genf
@@ -262,5 +332,5 @@ export async function ladeMesswerte(fetcher: Fetcher): Promise<MesswerteAntwort>
     grimselMeiringen: druckDifferenz(c("GRH"), c("MER"), nurQnh),
     grimselInterlaken: druckDifferenz(c("GRH"), c("INT"), nurQnh),
   };
-  return { stationen, windline, foehn, bise, lokal, fehlend, abgerufen: new Date().toISOString() };
+  return { stationen, windline, referenz, foehn, bise, lokal, fehlend, abgerufen: new Date().toISOString() };
 }

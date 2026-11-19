@@ -1,8 +1,15 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
 import { supabase } from "../supabase";
 import { DASH_STANDARD, DASH_TABELLE, bereinigeAuswahl } from "../lib/dashboard";
+
+// Karte wird erst beim Einblenden geladen (Leaflet nur im Browser)
+const WindKarte = dynamic(() => import("./WindKarte"), {
+  ssr: false,
+  loading: () => <p style={{ margin: "0 0 16px", fontSize: 12, color: "#5b7491" }}>Karte wird geladen…</p>,
+});
 
 // ── Farben ────────────────────────────────────────────────────────────────
 const TEXT = "#1f3a5a";
@@ -539,6 +546,21 @@ export default function FlugWetter() {
   const [messGeladen, setMessGeladen] = useState(false);
   const [dashKeys, setDashKeys] = useState<string[]>(DASH_STANDARD);
   const [alleMess, setAlleMess] = useState(false);
+  const [karteOffen, setKarteOffen] = useState(false);
+
+  // Ein-/Ausblenden der Karte pro Gerät merken (falls der Browser-Speicher verfügbar ist)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("vf_karte") === "1") setKarteOffen(true);
+    } catch {}
+  }, []);
+  const karteUmschalten = () =>
+    setKarteOffen((v) => {
+      try {
+        localStorage.setItem("vf_karte", v ? "0" : "1");
+      } catch {}
+      return !v;
+    });
 
   useEffect(() => {
     ladeDashKonfig().then((k) => {
@@ -696,13 +718,22 @@ export default function FlugWetter() {
       {/* Dashboard: die wichtigsten Messdaten (Auswahl im Admin-Tool) */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, letterSpacing: 0.6 }}>📡 DASHBOARD · MESSDATEN JETZT</div>
-        <button
-          onClick={() => setAlleMess((v) => !v)}
-          aria-expanded={alleMess}
-          style={{ border: `1px solid ${RAND}`, background: "#fff", color: BLAU, borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-        >
-          {alleMess ? "Alle Messdaten ▴" : "Alle Messdaten ▾"}
-        </button>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button
+            onClick={karteUmschalten}
+            aria-expanded={karteOffen}
+            style={{ border: `1px solid ${karteOffen ? BLAU : RAND}`, background: karteOffen ? BLAU : "#fff", color: karteOffen ? "#fff" : BLAU, borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+          >
+            🗺 Karte {karteOffen ? "ausblenden" : "einblenden"}
+          </button>
+          <button
+            onClick={() => setAlleMess((v) => !v)}
+            aria-expanded={alleMess}
+            style={{ border: `1px solid ${RAND}`, background: "#fff", color: BLAU, borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+          >
+            {alleMess ? "Alle Messdaten ▴" : "Alle Messdaten ▾"}
+          </button>
+        </div>
       </div>
       {mess ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 16 }}>
@@ -725,6 +756,9 @@ export default function FlugWetter() {
           {messGeladen ? "Messwerte sind momentan nicht verfügbar." : "Messwerte werden geladen…"}
         </p>
       )}
+
+      {/* Karte: Wind und Druckunterschiede (ein-/ausblendbar) */}
+      {karteOffen && mess && <WindKarte mess={mess} />}
 
       {alleMess && (
       <>
