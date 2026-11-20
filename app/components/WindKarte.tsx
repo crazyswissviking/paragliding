@@ -163,7 +163,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     if (!box.current) return;
     const mobil = L.Browser.mobile;
     setBeruehrung(mobil);
-    const map = L.map(box.current, { scrollWheelZoom: false, dragging: !mobil, zoomSnap: 0.25, minZoom: 6, maxZoom: 16 });
+    const map = L.map(box.current, { scrollWheelZoom: true, wheelPxPerZoomLevel: 120, dragging: !mobil, zoomSnap: 0.25, minZoom: 6, maxZoom: 16 });
     L.tileLayer("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg", {
       maxZoom: 18,
       attribution: '© <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener noreferrer">swisstopo</a>',
@@ -284,7 +284,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
       <div style={{ fontSize: 10, color: TEXT3, lineHeight: 1.5, marginTop: 6 }}>
         Pfeil = Windrichtung (wohin der Wind weht), Zahl = Wind/Böen in km/h; grün ≤ 15, gelb 15–25, rot &gt; 25 km/h, grau = Messung älter als 1 Std.
         Gestrichelte Linien = Druckunterschied in hPa, der Pfeil zeigt vom hohen zum tiefen Druck (Föhn: Lugano − Zürich, Bise: Güttingen − Genf).
-        {" "}Je nach Ausschnitt sieht man die Oberland-Stationen samt Haslital-Druckunterschieden (Interlaken, Oberland) oder Föhn und Bise (Schweiz). Tippe auf eine Station oder Linie für Details.
+        {" "}Je nach Ausschnitt sieht man die Oberland-Stationen samt Haslital-Druckunterschieden (Interlaken, Oberland) oder Föhn und Bise (Schweiz). Zoom mit dem Mausrad, den Tasten +/− oder zwei Fingern. Klicke auf eine Station oder Linie für Details.
         {beruehrung ? " Auf dem Handy: mit zwei Fingern verschieben und zoomen." : ""}
       </div>
     </div>
