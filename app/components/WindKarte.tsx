@@ -3,7 +3,7 @@
 // Kartenbibliothek: MapLibre GL JS. Basiskarte: swisstopo (Pixelkarte grau). Daten: MeteoSchweiz + Windline (siehe /api/messwerte).
 import { useEffect, useRef, useState } from "react";
 import { GeoJSONSource, Map as MapLibreMap, Marker, NavigationControl, Popup } from "maplibre-gl";
-import type { MapLayerMouseEvent } from "maplibre-gl";
+import type { MapLayerMouseEvent, StyleSpecification } from "maplibre-gl";
 import type { Feature, LineString } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
@@ -173,6 +173,36 @@ const STIL = `
 .wk-karte .maplibregl-popup-content{font:12px/1.5 system-ui,sans-serif;color:${TEXT};padding:10px 12px;border-radius:10px}
 `;
 
+// ── Basiskarten ───────────────────────────────────────────────────────────
+// Vektorkarten: OpenMapTiles-Schema, gehostet von OpenFreeMap (kostenlos, ohne API-Schlüssel).
+// Quelle der Daten: © OpenStreetMap-Mitwirkende, © OpenMapTiles (Namensnennung steckt im Style).
+type Basis = "liberty" | "positron" | "swisstopo";
+const BASIS_NAMEN: Record<Basis, string> = { liberty: "Standard", positron: "Hell", swisstopo: "Topo (swisstopo)" };
+const SWISSTOPO_STIL: StyleSpecification = {
+  version: 8,
+  sources: {
+    basis: {
+      type: "raster",
+      tiles: ["https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg"],
+      tileSize: 256,
+      maxzoom: 18,
+      attribution: '© <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener noreferrer">swisstopo</a>',
+    },
+  },
+  layers: [{ id: "basis", type: "raster", source: "basis" }],
+};
+const stilFuer = (b: Basis): string | StyleSpecification => (b === "swisstopo" ? SWISSTOPO_STIL : `https://tiles.openfreemap.org/styles/${b}`);
+const SPEICHER_BASIS = "vf_karte_basis";
+const gespeicherteBasis = (): Basis => {
+  try {
+    const v = localStorage.getItem(SPEICHER_BASIS);
+    if (v === "liberty" || v === "positron" || v === "swisstopo") return v;
+  } catch {}
+  return "liberty";
+};
+
+type LinienDaten = Feature<LineString, { farbe: string; popup: string; gruppe: string }>[];
+
 export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
   const box = useRef<HTMLDivElement>(null);
   const karte = useRef<MapLibreMap | null>(null);
@@ -184,6 +214,12 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
   const [beruehrung, setBeruehrung] = useState(false);
   const [bereit, setBereit] = useState(false);
   const [zoomAktiv, setZoomAktiv] = useState(false);
+  const [basis, setBasis] = useState<Basis>("liberty");
+  const [basisHinweis, setBasisHinweis] = useState("");
+  const angewendet = useRef<Basis>("liberty"); // aktuell geladene Basiskarte
+  const linien = useRef<LinienDaten>([]);
+  const stilGeladen = useRef(false);
+  const druckSichtbar = useRef(true);
 
   // Karte anlegen
   useEffect(() => {
@@ -192,21 +228,12 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     // Mit Maus: Mausrad zoomt direkt.
     const touch = window.matchMedia("(pointer: coarse)").matches;
     setBeruehrung(touch);
+    const start = gespeicherteBasis();
+    angewendet.current = start;
+    setBasis(start);
     const map = new MapLibreMap({
       container: box.current,
-      style: {
-        version: 8,
-        sources: {
-          basis: {
-            type: "raster",
-            tiles: ["https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/{z}/{x}/{y}.jpeg"],
-            tileSize: 256,
-            maxzoom: 18,
-            attribution: '© <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener noreferrer">swisstopo</a>',
-          },
-        },
-        layers: [{ id: "basis", type: "raster", source: "basis" }],
-      },
+      style: stilFuer(start),
       bounds: grenzen(ANSICHTEN.oberland.grenzen),
       fitBoundsOptions: { padding: FIT_PADDING, animate: false },
       minZoom: 5,
@@ -246,8 +273,32 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     }
     map.addControl(new NavigationControl({ showCompass: false }), "top-left");
 
-    map.on("load", () => {
-      map.addSource("druck", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    // Klick-Handler der Linien: einmalig registrieren (gelten pro Ebenen-Name auch nach Style-Wechsel)
+    const klickLinien = (id: string) => {
+      map.on("click", `${id}-hit`, (e: MapLayerMouseEvent) => {
+        const f = e.features?.[0];
+        if (f) new Popup({ offset: 8, maxWidth: "260px" }).setLngLat(e.lngLat).setHTML(String(f.properties?.popup ?? "")).addTo(map);
+      });
+      map.on("mouseenter", `${id}-hit`, () => (map.getCanvas().style.cursor = "pointer"));
+      map.on("mouseleave", `${id}-hit`, () => (map.getCanvas().style.cursor = ""));
+    };
+    klickLinien("druck-gross");
+    klickLinien("druck-lokal");
+
+    // Fällt die Vektorkarte aus (Server nicht erreichbar), automatisch auf swisstopo wechseln
+    map.on("error", () => {
+      if (!stilGeladen.current && angewendet.current !== "swisstopo") {
+        angewendet.current = "swisstopo";
+        setBasis("swisstopo");
+        setBasisHinweis("Vektorkarte nicht erreichbar – swisstopo-Karte wird angezeigt.");
+        map.setStyle(SWISSTOPO_STIL, { diff: false });
+      }
+    });
+
+    // Bei jedem (neuen) Style: Druck-Linien wieder anlegen
+    map.on("style.load", () => {
+      stilGeladen.current = true;
+      if (!map.getSource("druck")) map.addSource("druck", { type: "geojson", data: { type: "FeatureCollection", features: linien.current } });
       const linie = (id: string, filter: "gross" | "lokal") => {
         const zoomGrenze = filter === "gross" ? { maxzoom: MIN_ZOOM_STATIONEN } : { minzoom: MIN_ZOOM_STATIONEN };
         map.addLayer({
@@ -260,15 +311,12 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
           id: `${id}-hit`, type: "line", source: "druck", filter: ["==", ["get", "gruppe"], filter], ...zoomGrenze,
           paint: { "line-color": "#000", "line-width": 18, "line-opacity": 0 },
         });
-        map.on("click", `${id}-hit`, (e: MapLayerMouseEvent) => {
-          const f = e.features?.[0];
-          if (f) new Popup({ offset: 8, maxWidth: "260px" }).setLngLat(e.lngLat).setHTML(String(f.properties?.popup ?? "")).addTo(map);
-        });
-        map.on("mouseenter", `${id}-hit`, () => (map.getCanvas().style.cursor = "pointer"));
-        map.on("mouseleave", `${id}-hit`, () => (map.getCanvas().style.cursor = ""));
       };
       linie("druck-gross", "gross");
       linie("druck-lokal", "lokal");
+      for (const id of ["druck-gross", "druck-gross-hit", "druck-lokal", "druck-lokal-hit"]) {
+        map.setLayoutProperty(id, "visibility", druckSichtbar.current ? "visible" : "none");
+      }
       setBereit(true);
     });
     karte.current = map;
@@ -282,6 +330,19 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
       setBereit(false);
     };
   }, []);
+
+  // Basiskarte wechseln
+  useEffect(() => {
+    const map = karte.current;
+    if (!bereit || !map || angewendet.current === basis) return;
+    angewendet.current = basis;
+    stilGeladen.current = false;
+    setBasisHinweis("");
+    try {
+      localStorage.setItem(SPEICHER_BASIS, basis);
+    } catch {}
+    map.setStyle(stilFuer(basis), { diff: false });
+  }, [basis, bereit]);
 
   // Ansicht wechseln
   useEffect(() => {
@@ -310,7 +371,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     [...(mess.stationen ?? []), ...(mess.windline ?? [])].forEach((m) => stationMarker(m, false));
     (mess.referenz ?? []).forEach((m) => stationMarker(m, true));
 
-    const features: Feature<LineString, { farbe: string; popup: string; gruppe: string }>[] = [];
+    const features: LinienDaten = [];
     paare(mess).forEach((p) => {
       const diff = p.d.diff as number;
       const farbe = p.farbe(diff);
@@ -336,6 +397,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
       lbl.getElement().style.zIndex = "800";
       druckMarker.current.push({ m: lbl, gross });
     });
+    linien.current = features;
     (map.getSource("druck") as GeoJSONSource | undefined)?.setData({ type: "FeatureCollection", features });
   }, [mess, bereit]);
 
@@ -354,6 +416,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
       });
     };
     sync();
+    druckSichtbar.current = zeigeDruck;
     for (const id of ["druck-gross", "druck-gross-hit", "druck-lokal", "druck-lokal-hit"]) {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", zeigeDruck ? "visible" : "none");
     }
@@ -381,6 +444,15 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
         <button onClick={() => setZeigeWind((v) => !v)} style={knopf(zeigeWind)} aria-pressed={zeigeWind}>💨 Wind</button>
         <button onClick={() => setZeigeDruck((v) => !v)} style={knopf(zeigeDruck)} aria-pressed={zeigeDruck}>🧭 Druckunterschiede</button>
       </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8, alignItems: "center" }}>
+        <span style={{ fontSize: 11, color: TEXT2, fontWeight: 700 }}>Basiskarte:</span>
+        {(Object.keys(BASIS_NAMEN) as Basis[]).map((b) => (
+          <button key={b} onClick={() => setBasis(b)} style={knopf(basis === b)} aria-pressed={basis === b}>
+            {BASIS_NAMEN[b]}
+          </button>
+        ))}
+      </div>
+      {basisHinweis && <div style={{ fontSize: 11, color: ORANGE, marginBottom: 6 }}>{basisHinweis}</div>}
       <div style={{ position: "relative", zIndex: 0, isolation: "isolate", borderRadius: 14, overflow: "hidden", border: `1px solid ${zoomAktiv ? BLAU : RAND}` }} className="wk-karte">
         <div ref={box} style={{ height: 380, width: "100%", background: "#e8eef5" }} role="application" aria-label="Karte mit Wind und Druckunterschieden" />
         {!beruehrung && (
@@ -393,7 +465,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
         Pfeil = Windrichtung (wohin der Wind weht), Zahl = Wind/Böen in km/h; grün ≤ 15, gelb 15–25, rot &gt; 25 km/h, grau = Messung älter als 1 Std.
         Gestrichelte Linien = Druckunterschied in hPa, der Pfeil zeigt vom hohen zum tiefen Druck (Föhn: Lugano − Zürich, Bise: Güttingen − Genf).
         {" "}Je nach Ausschnitt sieht man die Oberland-Stationen samt Haslital-Druckunterschieden (Interlaken, Oberland) oder Föhn und Bise (Schweiz).
-        {" "}Zoom mit +/−, nach einem Klick in die Karte auch mit dem Mausrad (davor scrollt das Mausrad die Seite), auf dem Handy mit zwei Fingern. Klicke auf eine Station oder Linie für Details.
+        {" "}Zoom mit +/−, nach einem Klick in die Karte auch mit dem Mausrad (davor scrollt das Mausrad die Seite), auf dem Handy mit zwei Fingern. Klicke auf eine Station oder Linie für Details. Basiskarte: OpenFreeMap mit OpenMapTiles-Vektordaten © OpenStreetMap-Mitwirkende bzw. swisstopo.
         {beruehrung ? " Auf dem Handy: mit zwei Fingern verschieben und zoomen." : ""}
       </div>
     </div>
