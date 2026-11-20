@@ -5,7 +5,7 @@ import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
 import { supabase } from "../supabase";
 import { DASH_STANDARD, DASH_TABELLE, bereinigeAuswahl } from "../lib/dashboard";
 
-// Karte wird erst beim Einblenden geladen (Leaflet nur im Browser)
+// Karte wird erst beim Einblenden geladen (MapLibre nur im Browser)
 const WindKarte = dynamic(() => import("./WindKarte"), {
   ssr: false,
   loading: () => <p style={{ margin: "0 0 16px", fontSize: 12, color: "#5b7491" }}>Karte wird geladen…</p>,
@@ -550,9 +550,13 @@ export default function FlugWetter() {
 
   // Ein-/Ausblenden der Karte pro Gerät merken (falls der Browser-Speicher verfügbar ist)
   useEffect(() => {
-    try {
-      if (localStorage.getItem("vf_karte") === "1") setKarteOffen(true);
-    } catch {}
+    // bewusst asynchron (nach dem ersten Rendern), damit Server- und Browser-HTML übereinstimmen
+    const t = setTimeout(() => {
+      try {
+        if (localStorage.getItem("vf_karte") === "1") setKarteOffen(true);
+      } catch {}
+    }, 0);
+    return () => clearTimeout(t);
   }, []);
   const karteUmschalten = () =>
     setKarteOffen((v) => {
@@ -568,8 +572,8 @@ export default function FlugWetter() {
     });
   }, []);
 
-  const aktualisieren = useCallback(async () => {
-    setLaden(true);
+  // Lädt alle Daten (ohne synchrones setState – wird vom Effekt unten aufgerufen)
+  const ladeAlles = useCallback(async () => {
     try {
       const d = await ladeHaupt();
       setDaten(d);
@@ -585,11 +589,20 @@ export default function FlugWetter() {
     setLaden(false);
   }, []);
 
+  // Knopf ↻: zuerst „…“ anzeigen, dann laden
+  const aktualisieren = () => {
+    setLaden(true);
+    void ladeAlles();
+  };
+
   useEffect(() => {
-    aktualisieren();
-    const t = setInterval(aktualisieren, 10 * 60 * 1000);
-    return () => clearInterval(t);
-  }, [aktualisieren]);
+    const start = setTimeout(ladeAlles, 0);
+    const t = setInterval(ladeAlles, 10 * 60 * 1000);
+    return () => {
+      clearTimeout(start);
+      clearInterval(t);
+    };
+  }, [ladeAlles]);
 
   const karte: React.CSSProperties = {
     background: "rgba(255,255,255,0.78)",
