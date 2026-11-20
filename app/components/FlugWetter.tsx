@@ -239,6 +239,114 @@ function WindPfeil({ grad, farbe, size = 46 }: { grad: Zahl; farbe: string; size
   );
 }
 
+// ── Runde „Uhren“ (Rundinstrumente) ───────────────────────────────────────
+// Winkel in Grad, 0° = oben, im Uhrzeigersinn
+function polar(rad: number, winkel: number): [number, number] {
+  const a = (winkel * Math.PI) / 180;
+  return [rad * Math.sin(a), -rad * Math.cos(a)];
+}
+
+function bogen(rad: number, von: number, bis: number): string {
+  const [x0, y0] = polar(rad, von);
+  const [x1, y1] = polar(rad, bis);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rad} ${rad} 0 ${bis - von > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+
+// Wind-Uhr: Kompassring mit Windrichtung (Kugel am Rand = Richtung, aus der der Wind weht),
+// Geschwindigkeit als Bogen um den Rand (volle Runde = 40 km/h), Böenspitze als Strich, Zahl in der Mitte.
+const WIND_VOLL = 40;
+function WindUhr({ wind, boeen, richtung, farbe, size = 96 }: { wind: Zahl; boeen: Zahl; richtung: Zahl; farbe: string; size?: number }) {
+  const w = wind == null ? 0 : Math.min(Math.max(wind, 0), WIND_VOLL);
+  const wWinkel = Math.min((w / WIND_VOLL) * 360, 359.9);
+  const bWinkel = boeen == null ? null : Math.min((Math.min(Math.max(boeen, 0), WIND_VOLL) / WIND_VOLL) * 360, 359.9);
+  const ticks = Array.from({ length: 12 }, (_, i) => i * 30);
+  const klein = size < 80;
+  return (
+    <svg width={size} height={size} viewBox="-50 -50 100 100" role="img" aria-label={`Wind ${r(wind)} km/h, Böen ${r(boeen)}, Richtung ${richtungText(richtung)}`} style={{ flexShrink: 0 }}>
+      <circle r="45" fill="none" stroke="#e3edf8" strokeWidth="5" />
+      {wind != null && wWinkel > 0.5 && <path d={bogen(45, 0, wWinkel)} fill="none" stroke={farbe} strokeWidth="5" strokeLinecap="round" />}
+      {bWinkel != null && (() => {
+        const [x0, y0] = polar(41, bWinkel);
+        const [x1, y1] = polar(49, bWinkel);
+        return <line x1={x0} y1={y0} x2={x1} y2={y1} stroke={TEXT} strokeWidth="2" strokeLinecap="round" />;
+      })()}
+      <circle r="38" fill="#f4f9ff" stroke={RAND} />
+      {ticks.map((a) => {
+        const gross = a % 90 === 0;
+        const [x0, y0] = polar(gross ? 31 : 33, a);
+        const [x1, y1] = polar(36, a);
+        return <line key={a} x1={x0} y1={y0} x2={x1} y2={y1} stroke={gross ? TEXT2 : TEXT3} strokeWidth={gross ? 1.6 : 1} />;
+      })}
+      {!klein &&
+        [["N", 0], ["O", 90], ["S", 180], ["W", 270]].map(([t, a]) => {
+          const [x, y] = polar(25, a as number);
+          return (
+            <text key={t as string} x={x} y={y + 2.5} textAnchor="middle" fontSize="7" fill={TEXT3}>
+              {t}
+            </text>
+          );
+        })}
+      {richtung != null && (
+        <g transform={`rotate(${richtung})`}>
+          <line x1="0" y1="-14" x2="0" y2="-29" stroke={farbe} strokeWidth="2.5" strokeLinecap="round" />
+          <circle cy="-31" r="4.5" fill={farbe} stroke="#fff" strokeWidth="1.2" />
+        </g>
+      )}
+      <circle r={klein ? 15 : 17} fill="#fff" stroke={RAND} />
+      <text y={klein ? 2 : 1} textAnchor="middle" fontSize={klein ? 15 : 16} fontWeight="800" fill={TEXT}>
+        {r(wind)}
+      </text>
+      <text y={klein ? 10 : 9} textAnchor="middle" fontSize="5.5" fill={TEXT2}>
+        km/h
+      </text>
+    </svg>
+  );
+}
+
+// Druck-Uhr: 270°-Rundinstrument mit Zeiger, 0 hPa oben. Farbzonen aus der jeweiligen Statusfunktion.
+function DruckUhr({ wert, bereich, farbeFuer, size = 96, einheit = "hPa", beschriftung = true }: { wert: Zahl; bereich: number; farbeFuer?: (d: number) => string; size?: number; einheit?: string; beschriftung?: boolean }) {
+  const SWEEP = 135; // ±135° um „12 Uhr“
+  const wInst = wert == null ? 0 : Math.max(-bereich, Math.min(bereich, wert));
+  const zeiger = (wInst / bereich) * SWEEP;
+  const segmente = 27;
+  const schritt = (2 * SWEEP) / segmente;
+  const farbe = wert != null && farbeFuer ? farbeFuer(wert) : TEXT;
+  const klein = size < 80;
+  const [zx, zy] = polar(34, zeiger);
+  return (
+    <svg width={size} height={size} viewBox="-50 -50 100 100" role="img" aria-label={`${wert == null ? "keine Daten" : vorzeichen(wert)} ${einheit}`} style={{ flexShrink: 0 }}>
+      {Array.from({ length: segmente }, (_, i) => {
+        const a0 = -SWEEP + i * schritt;
+        const mitte = ((a0 + schritt / 2) / SWEEP) * bereich;
+        return <path key={i} d={bogen(42, a0 + 0.6, a0 + schritt - 0.6)} fill="none" stroke={farbeFuer ? farbeFuer(mitte) : "#cfe0f2"} strokeWidth="7" opacity={0.85} />;
+      })}
+      {[-1, -0.5, 0, 0.5, 1].map((f) => {
+        const [x0, y0] = polar(33, f * SWEEP);
+        const [x1, y1] = polar(37, f * SWEEP);
+        return <line key={f} x1={x0} y1={y0} x2={x1} y2={y1} stroke={TEXT2} strokeWidth="1.2" />;
+      })}
+      {beschriftung && !klein && (
+        <text x={0} y={-24} textAnchor="middle" fontSize="6" fill={TEXT3}>0</text>
+      )}
+      {wert != null && (
+        <>
+          <line x1="0" y1="0" x2={zx} y2={zy} stroke={TEXT} strokeWidth="2.6" strokeLinecap="round" />
+          <circle r="4.5" fill={TEXT} />
+          <circle r="1.6" fill="#fff" />
+        </>
+      )}
+      <text y={klein ? 30 : 27} textAnchor="middle" fontSize={klein ? 13 : 14} fontWeight="800" fill={farbe}>
+        {wert == null ? "–" : vorzeichen(wert)}
+      </text>
+      {!klein && (
+        <text y={36} textAnchor="middle" fontSize="6" fill={TEXT2}>
+          {einheit}
+        </text>
+      )}
+    </svg>
+  );
+}
+
 function pfad(vals: Zahl[], x: (i: number) => number, y: (v: number) => number): string {
   let d = "";
   let offen = false;
@@ -442,8 +550,9 @@ function alterText(min: number | null): string {
 }
 
 // ── Dashboard: kompakte Kacheln ───────────────────────────────────────────
-const dashKachel = (farbe: string): React.CSSProperties => ({
-  background: "#fff", border: `1px solid ${RAND}`, borderLeft: `4px solid ${farbe}`, borderRadius: 12, padding: "6px 8px", minWidth: 0,
+const dashUhrKachel = (farbe: string): React.CSSProperties => ({
+  background: "#fff", border: `1px solid ${RAND}`, borderTop: `4px solid ${farbe}`, borderRadius: 14, padding: "8px 6px 6px", minWidth: 0,
+  display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 2,
 });
 
 function DashWind({ m }: { m: Messung }) {
@@ -451,52 +560,50 @@ function DashWind({ m }: { m: Messung }) {
   const alter = alterMin(m.zeit);
   const veraltet = alter != null && alter > 40;
   return (
-    <div style={{ ...dashKachel(st.farbe), display: "flex", gap: 8, alignItems: "center" }}>
-      <WindPfeil grad={m.richtung} farbe={st.farbe} size={32} />
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11, color: TEXT2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {m.name}{m.rolle ? ` · ${m.rolle}` : ""}
-        </div>
-        <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.1 }}>
-          {r(m.wind)} <span style={{ fontSize: 10, fontWeight: 400, color: TEXT2 }}>km/h</span>
-        </div>
-        <div style={{ fontSize: 10, color: TEXT2 }}>Böen {r(m.boeen)} · {richtungText(m.richtung)}</div>
-        <div style={{ fontSize: 9, color: veraltet ? ORANGE : TEXT3, fontWeight: veraltet ? 700 : 400 }}>
-          {zeitLokal(m.zeit)} Uhr{veraltet ? " ⚠" : ""}
-        </div>
+    <div style={dashUhrKachel(st.farbe)}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, maxWidth: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {m.name}{m.rolle ? ` · ${m.rolle}` : ""}
+      </div>
+      <WindUhr wind={m.wind} boeen={m.boeen} richtung={m.richtung} farbe={st.farbe} size={104} />
+      <div style={{ fontSize: 11, color: TEXT2 }}>
+        Böen <b style={{ color: TEXT }}>{r(m.boeen)}</b> · aus {richtungText(m.richtung)}
+      </div>
+      <div style={{ fontSize: 9, color: veraltet ? ORANGE : TEXT3, fontWeight: veraltet ? 700 : 400 }}>
+        {zeitLokal(m.zeit)} Uhr{veraltet ? " ⚠" : ""}
       </div>
     </div>
   );
 }
 
-function DashDruck({ titel, d, status, trend }: { titel: string; d: DruckDiff; status: { text: string; farbe: string }; trend: string }) {
+function DashDruck({ titel, d, status, trend, farbeFuer }: { titel: string; d: DruckDiff; status: { text: string; farbe: string }; trend: string; farbeFuer: (v: number) => string }) {
   return (
-    <div style={dashKachel(status.farbe)}>
-      <div style={{ fontSize: 11, color: TEXT2 }}>{titel}</div>
-      <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.1, color: status.farbe }}>
-        {d.diff == null ? "–" : vorzeichen(d.diff)} <span style={{ fontSize: 10, fontWeight: 400, color: TEXT2 }}>hPa</span>
-      </div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: status.farbe }}>● {status.text}</div>
+    <div style={dashUhrKachel(status.farbe)}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, maxWidth: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{titel}</div>
+      <DruckUhr wert={d.diff} bereich={10} farbeFuer={farbeFuer} size={104} />
+      <div style={{ fontSize: 11, fontWeight: 700, color: status.farbe }}>● {status.text}</div>
       <div style={{ fontSize: 9, color: TEXT3 }}>{trend ? `${trend} · ` : ""}{zeitLokal(d.zeit)} Uhr</div>
     </div>
   );
 }
 
 function DashLokal({ l }: { l: MesswerteAntwort["lokal"] }) {
-  const zeilen: { label: string; d: DruckDiff }[] = [
+  const uhren: { label: string; d: DruckDiff }[] = [
     { label: "Meiringen − Interlaken", d: l.meiringenInterlaken },
     { label: "Grimsel − Meiringen", d: l.grimselMeiringen },
     { label: "Grimsel − Interlaken", d: l.grimselInterlaken },
   ];
   return (
-    <div style={dashKachel(TEXT3)}>
-      <div style={{ fontSize: 11, color: TEXT2, marginBottom: 2 }}>⛰ Haslital (hPa)</div>
-      {zeilen.map((z) => (
-        <div key={z.label} style={{ display: "flex", justifyContent: "space-between", gap: 6, fontSize: 10, color: TEXT2 }}>
-          <span>{z.label}</span>
-          <span style={{ fontWeight: 800, color: TEXT }}>{z.d.diff == null ? "–" : vorzeichen(z.d.diff)}</span>
-        </div>
-      ))}
+    <div style={{ ...dashUhrKachel(TEXT3), gridColumn: "span 2" }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2 }}>⛰ Haslital · Druckunterschiede</div>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 6 }}>
+        {uhren.map((u) => (
+          <div key={u.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 96 }}>
+            <DruckUhr wert={u.d.diff} bereich={6} size={72} beschriftung={false} />
+            <div style={{ fontSize: 9, color: TEXT2, lineHeight: 1.2 }}>{u.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 9, color: TEXT3 }}>Skala ±6 hPa · hPa</div>
     </div>
   );
 }
@@ -507,7 +614,7 @@ function MessKarte({ m }: { m: Messung }) {
   const veraltet = alter != null && alter > 40;
   return (
     <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 8, display: "flex", gap: 10, alignItems: "center" }}>
-      <WindPfeil grad={m.richtung} farbe={st.farbe} />
+      <WindUhr wind={m.wind} boeen={m.boeen} richtung={m.richtung} farbe={st.farbe} size={72} />
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 12, color: TEXT2 }}>
           {m.name} <span style={{ color: TEXT3 }}>{m.hoehe != null ? `· ${m.hoehe} m` : ""}</span>
@@ -749,13 +856,13 @@ export default function FlugWetter() {
         </div>
       </div>
       {mess ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 16 }}>
           {dashKeys.map((k) => {
             if (k === "foehn") {
-              return mess.foehn.diff != null ? <DashDruck key={k} titel="🏔 Föhn (Lugano − Zürich)" d={mess.foehn} status={foehnStatus(mess.foehn.diff)} trend={trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h)} /> : null;
+              return mess.foehn.diff != null ? <DashDruck key={k} titel="🏔 Föhn (Lugano − Zürich)" d={mess.foehn} status={foehnStatus(mess.foehn.diff)} trend={trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h)} farbeFuer={(v) => foehnStatus(v).farbe} /> : null;
             }
             if (k === "bise") {
-              return mess.bise?.diff != null ? <DashDruck key={k} titel="🌬 Bise (Güttingen − Genf)" d={mess.bise} status={biseStatus(mess.bise.diff)} trend={trendWert(mess.bise.diff, mess.bise.diffVor3h)} /> : null;
+              return mess.bise?.diff != null ? <DashDruck key={k} titel="🌬 Bise (Güttingen − Genf)" d={mess.bise} status={biseStatus(mess.bise.diff)} trend={trendWert(mess.bise.diff, mess.bise.diffVor3h)} farbeFuer={(v) => biseStatus(v).farbe} /> : null;
             }
             if (k === "lokal") {
               return mess.lokal ? <DashLokal key={k} l={mess.lokal} /> : null;
