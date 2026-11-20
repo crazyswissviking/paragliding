@@ -183,6 +183,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
   const [zeigeDruck, setZeigeDruck] = useState(true);
   const [beruehrung, setBeruehrung] = useState(false);
   const [bereit, setBereit] = useState(false);
+  const [zoomAktiv, setZoomAktiv] = useState(false);
 
   // Karte anlegen
   useEffect(() => {
@@ -222,6 +223,27 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     });
     map.touchZoomRotate.disableRotation();
     map.scrollZoom.setWheelZoomRate(1 / 200); // Mausrad etwas flotter als Standard
+    let handlerEntfernen = () => {};
+    if (!touch) {
+      // Mausrad scrollt zuerst die Seite. Erst nach einem Klick in die Karte zoomt das Mausrad die Karte,
+      // beim Verlassen der Karte scrollt wieder die Seite.
+      map.scrollZoom.disable();
+      const el = map.getContainer();
+      const an = () => {
+        map.scrollZoom.enable();
+        setZoomAktiv(true);
+      };
+      const aus = () => {
+        map.scrollZoom.disable();
+        setZoomAktiv(false);
+      };
+      el.addEventListener("mousedown", an);
+      el.addEventListener("mouseleave", aus);
+      handlerEntfernen = () => {
+        el.removeEventListener("mousedown", an);
+        el.removeEventListener("mouseleave", aus);
+      };
+    }
     map.addControl(new NavigationControl({ showCompass: false }), "top-left");
 
     map.on("load", () => {
@@ -251,6 +273,8 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     });
     karte.current = map;
     return () => {
+      handlerEntfernen();
+      setZoomAktiv(false);
       map.remove();
       karte.current = null;
       stationen.current = [];
@@ -357,14 +381,19 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
         <button onClick={() => setZeigeWind((v) => !v)} style={knopf(zeigeWind)} aria-pressed={zeigeWind}>💨 Wind</button>
         <button onClick={() => setZeigeDruck((v) => !v)} style={knopf(zeigeDruck)} aria-pressed={zeigeDruck}>🧭 Druckunterschiede</button>
       </div>
-      <div style={{ position: "relative", zIndex: 0, isolation: "isolate", borderRadius: 14, overflow: "hidden", border: `1px solid ${RAND}` }} className="wk-karte">
+      <div style={{ position: "relative", zIndex: 0, isolation: "isolate", borderRadius: 14, overflow: "hidden", border: `1px solid ${zoomAktiv ? BLAU : RAND}` }} className="wk-karte">
         <div ref={box} style={{ height: 380, width: "100%", background: "#e8eef5" }} role="application" aria-label="Karte mit Wind und Druckunterschieden" />
+        {!beruehrung && (
+          <div style={{ position: "absolute", left: 8, bottom: 8, zIndex: 2, pointerEvents: "none", background: "rgba(255,255,255,0.9)", borderRadius: 999, padding: "2px 10px", fontSize: 10, color: TEXT2 }}>
+            {zoomAktiv ? "🖱 Mausrad zoomt die Karte" : "🖱 Klicken, dann zoomt das Mausrad"}
+          </div>
+        )}
       </div>
       <div style={{ fontSize: 10, color: TEXT3, lineHeight: 1.5, marginTop: 6 }}>
         Pfeil = Windrichtung (wohin der Wind weht), Zahl = Wind/Böen in km/h; grün ≤ 15, gelb 15–25, rot &gt; 25 km/h, grau = Messung älter als 1 Std.
         Gestrichelte Linien = Druckunterschied in hPa, der Pfeil zeigt vom hohen zum tiefen Druck (Föhn: Lugano − Zürich, Bise: Güttingen − Genf).
         {" "}Je nach Ausschnitt sieht man die Oberland-Stationen samt Haslital-Druckunterschieden (Interlaken, Oberland) oder Föhn und Bise (Schweiz).
-        {" "}Zoom mit dem Mausrad, den Tasten +/− oder zwei Fingern. Klicke auf eine Station oder Linie für Details.
+        {" "}Zoom mit +/−, nach einem Klick in die Karte auch mit dem Mausrad (davor scrollt das Mausrad die Seite), auf dem Handy mit zwei Fingern. Klicke auf eine Station oder Linie für Details.
         {beruehrung ? " Auf dem Handy: mit zwei Fingern verschieben und zoomen." : ""}
       </div>
     </div>
