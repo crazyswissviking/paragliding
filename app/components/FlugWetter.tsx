@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Meteogramm from "./Meteogramm";
 import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
 import { supabase } from "../supabase";
 import { DASH_STANDARD, DASH_TABELLE, bereinigeAuswahl } from "../lib/dashboard";
@@ -654,6 +655,7 @@ export default function FlugWetter() {
   const [dashKeys, setDashKeys] = useState<string[]>(DASH_STANDARD);
   const [alleMess, setAlleMess] = useState(false);
   const [karteOffen, setKarteOffen] = useState(false);
+  const [ladeVersion, setLadeVersion] = useState(0); // zählt Aktualisierungen (für das Meteogramm)
 
   // Ein-/Ausblenden der Karte pro Gerät merken (falls der Browser-Speicher verfügbar ist)
   useEffect(() => {
@@ -681,6 +683,7 @@ export default function FlugWetter() {
 
   // Lädt alle Daten (ohne synchrones setState – wird vom Effekt unten aufgerufen)
   const ladeAlles = useCallback(async () => {
+    setLadeVersion((v) => v + 1);
     try {
       const d = await ladeHaupt();
       setDaten(d);
@@ -1013,6 +1016,9 @@ export default function FlugWetter() {
 
       </>
       )}
+
+      {/* Meteogramm Thun mit automatischer Erklärung */}
+      <Meteogramm version={ladeVersion} />
 
       {/* Tagesverlauf */}
       <div style={{ background: "#fff", border: `1px solid ${RAND}`, borderRadius: 14, padding: 12, marginBottom: 16 }}>
