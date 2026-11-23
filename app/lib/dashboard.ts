@@ -8,8 +8,8 @@ export const DASH_TABELLE = "dashboard_einstellungen";
 export type DashElement = { key: string; label: string; gruppe: string };
 
 export const DASH_ELEMENTE: DashElement[] = [
-  { key: "foehn", label: "Föhn (Druck Lugano − Zürich)", gruppe: "Föhn, Bise & Druck" },
-  { key: "bise", label: "Bise (Druck Güttingen − Genf)", gruppe: "Föhn, Bise & Druck" },
+  { key: "foehn", label: "Föhn-Analyse (Zeile oben: Druck Lugano − Zürich, mit Prognose)", gruppe: "Föhn, Bise & Druck" },
+  { key: "bise", label: "Bise-Analyse (Zeile oben: Druck Güttingen − Genf, mit Prognose)", gruppe: "Föhn, Bise & Druck" },
   { key: "lokal", label: "Haslital: Druckunterschiede", gruppe: "Föhn, Bise & Druck" },
   ...WINDLINE_STATIONEN.map((s) => ({
     key: `W${s.id}`,

@@ -2,7 +2,10 @@
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Meteogramm from "./Meteogramm";
+import FoehnBise from "./FoehnBise";
 import type { DruckDiff, MesswerteAntwort, Messung } from "../lib/messwerte";
+import { foehnStatus, biseStatus, vorzeichen } from "../lib/foehn";
+import { DruckUhr, bogen, polar } from "./Uhren";
 import { supabase } from "../supabase";
 import { DASH_STANDARD, DASH_TABELLE, bereinigeAuswahl } from "../lib/dashboard";
 
@@ -138,52 +141,10 @@ function windStufe(wind: Zahl, boeen: Zahl, regen: Zahl): Stufe {
   return { label: "ruhig", farbe: GRUEN };
 }
 
-// Föhn-Index: Druck Lugano − Zürich. Positiv = Südföhn, negativ = Nordföhn.
-// Schwellen (Erfahrungswerte): ab ca. 4 hPa greift Föhn in die Täler durch, ab ca. 8 hPa bis ins Flachland.
-function foehnStatus(d: Zahl): { text: string; farbe: string; hinweis: string } {
-  if (d == null) return { text: "keine Daten", farbe: TEXT3, hinweis: "" };
-  const a = Math.abs(d);
-  const sued = d >= 0;
-  const art = sued ? "Südföhn" : "Nordföhn";
-  if (a < 2) return { text: "kein Föhn", farbe: GRUEN, hinweis: "Kein nennenswerter Druckunterschied über den Alpen." };
-  if (a < 4) {
-    return {
-      text: `${art} möglich`,
-      farbe: GELB,
-      hinweis: sued
-        ? "Leichter Südüberdruck – in exponierten Tälern kann es föhnig werden."
-        : "Leichter Nordüberdruck – Nordwind über dem Alpenhauptkamm, Föhn höchstens auf der Alpensüdseite.",
-    };
-  }
-  if (a < 8) {
-    return {
-      text: art,
-      farbe: ORANGE,
-      hinweis: sued
-        ? "Südwind kann bis in die Täler der Alpennordseite durchgreifen (z. B. Haslital, Lauterbrunnental). Lee-Rotoren beachten."
-        : "Nordföhn: Der Föhn weht auf der Alpensüdseite (Tessin). Im Berner Oberland liegt man auf der Luvseite – es kann Nord-/Nordwestwind und Stau geben, aber keinen Föhn.",
-    };
-  }
-  return {
-    text: `starker ${art}`,
-    farbe: ROT,
-    hinweis: sued
-      ? "Starker Südüberdruck – Föhn kann bis ins Flachland durchgreifen."
-      : "Starker Nordüberdruck – kräftiger Nordwind über den Alpen, auf der Alpensüdseite föhnig und stürmisch.",
-  };
-}
 
 const PILOTENREGEL =
   "Pilotenregel: Leeseite ab ca. 3–4 hPa besser meiden (Südföhn: Alpennordseite, Nordföhn: Alpensüdseite). Ab ca. 4 hPa greift der Föhn in die Täler, ab ca. 8 hPa bis ins Flachland.";
 
-// Bise-Index: Druck Güttingen/TG minus Genf. Positiv = Bise (Erfahrungswerte, z. B. SRF Meteo).
-function biseStatus(d: Zahl): { text: string; farbe: string; hinweis: string } {
-  if (d == null) return { text: "keine Daten", farbe: TEXT3, hinweis: "" };
-  if (d < 0) return { text: "Südwestlage", farbe: TEXT2, hinweis: "Umgekehrter Gradient: im Mittelland eher Südwestwind, keine Bise." };
-  if (d < 2) return { text: "keine Bise", farbe: GRUEN, hinweis: "Kaum Druckgefälle Richtung Westen." };
-  if (d < 4) return { text: "Bise wahrscheinlich", farbe: GELB, hinweis: "Nordostwind im Mittelland wahrscheinlich, am stärksten Richtung Genfersee." };
-  return { text: "Bisenlage", farbe: ORANGE, hinweis: "Je grösser der Unterschied, desto stärker die Bise (kräftige Böen am Genfersee möglich)." };
-}
 
 // Trend beim Föhn: Betrag verglichen mit vor 3 Stunden
 function trendFoehn(d: Zahl, vor: Zahl): string {
@@ -201,9 +162,6 @@ function trendWert(d: Zahl, vor: Zahl): string {
   return `${dl > 0 ? "↗ +" : "↘ −"}${Math.abs(dl).toFixed(1)} in 3 h`;
 }
 
-function vorzeichen(d: number): string {
-  return `${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toFixed(1)}`;
-}
 
 function stundeAusZeit(zeit: string): number {
   // "2026-11-12T14:15" → 14.25
@@ -240,18 +198,6 @@ function WindPfeil({ grad, farbe, size = 46 }: { grad: Zahl; farbe: string; size
   );
 }
 
-// ── Runde „Uhren“ (Rundinstrumente) ───────────────────────────────────────
-// Winkel in Grad, 0° = oben, im Uhrzeigersinn
-function polar(rad: number, winkel: number): [number, number] {
-  const a = (winkel * Math.PI) / 180;
-  return [rad * Math.sin(a), -rad * Math.cos(a)];
-}
-
-function bogen(rad: number, von: number, bis: number): string {
-  const [x0, y0] = polar(rad, von);
-  const [x1, y1] = polar(rad, bis);
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rad} ${rad} 0 ${bis - von > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
-}
 
 // Wind-Uhr: Kompassring mit Windrichtung (Kugel am Rand = Richtung, aus der der Wind weht),
 // Geschwindigkeit als Bogen um den Rand (volle Runde = 40 km/h), Böenspitze als Strich, Zahl in der Mitte.
@@ -304,49 +250,6 @@ function WindUhr({ wind, boeen, richtung, farbe, size = 96 }: { wind: Zahl; boee
   );
 }
 
-// Druck-Uhr: 270°-Rundinstrument mit Zeiger, 0 hPa oben. Farbzonen aus der jeweiligen Statusfunktion.
-function DruckUhr({ wert, bereich, farbeFuer, size = 96, einheit = "hPa", beschriftung = true }: { wert: Zahl; bereich: number; farbeFuer?: (d: number) => string; size?: number; einheit?: string; beschriftung?: boolean }) {
-  const SWEEP = 135; // ±135° um „12 Uhr“
-  const wInst = wert == null ? 0 : Math.max(-bereich, Math.min(bereich, wert));
-  const zeiger = (wInst / bereich) * SWEEP;
-  const segmente = 27;
-  const schritt = (2 * SWEEP) / segmente;
-  const farbe = wert != null && farbeFuer ? farbeFuer(wert) : TEXT;
-  const klein = size < 80;
-  const [zx, zy] = polar(34, zeiger);
-  return (
-    <svg width={size} height={size} viewBox="-50 -50 100 100" role="img" aria-label={`${wert == null ? "keine Daten" : vorzeichen(wert)} ${einheit}`} style={{ flexShrink: 0 }}>
-      {Array.from({ length: segmente }, (_, i) => {
-        const a0 = -SWEEP + i * schritt;
-        const mitte = ((a0 + schritt / 2) / SWEEP) * bereich;
-        return <path key={i} d={bogen(42, a0 + 0.6, a0 + schritt - 0.6)} fill="none" stroke={farbeFuer ? farbeFuer(mitte) : "#cfe0f2"} strokeWidth="7" opacity={0.85} />;
-      })}
-      {[-1, -0.5, 0, 0.5, 1].map((f) => {
-        const [x0, y0] = polar(33, f * SWEEP);
-        const [x1, y1] = polar(37, f * SWEEP);
-        return <line key={f} x1={x0} y1={y0} x2={x1} y2={y1} stroke={TEXT2} strokeWidth="1.2" />;
-      })}
-      {beschriftung && !klein && (
-        <text x={0} y={-24} textAnchor="middle" fontSize="6" fill={TEXT3}>0</text>
-      )}
-      {wert != null && (
-        <>
-          <line x1="0" y1="0" x2={zx} y2={zy} stroke={TEXT} strokeWidth="2.6" strokeLinecap="round" />
-          <circle r="4.5" fill={TEXT} />
-          <circle r="1.6" fill="#fff" />
-        </>
-      )}
-      <text y={klein ? 30 : 27} textAnchor="middle" fontSize={klein ? 13 : 14} fontWeight="800" fill={farbe}>
-        {wert == null ? "–" : vorzeichen(wert)}
-      </text>
-      {!klein && (
-        <text y={36} textAnchor="middle" fontSize="6" fill={TEXT2}>
-          {einheit}
-        </text>
-      )}
-    </svg>
-  );
-}
 
 function pfad(vals: Zahl[], x: (i: number) => number, y: (v: number) => number): string {
   let d = "";
@@ -572,17 +475,6 @@ function DashWind({ m }: { m: Messung }) {
       <div style={{ fontSize: 9, color: veraltet ? ORANGE : TEXT3, fontWeight: veraltet ? 700 : 400 }}>
         {zeitLokal(m.zeit)} Uhr{veraltet ? " ⚠" : ""}
       </div>
-    </div>
-  );
-}
-
-function DashDruck({ titel, d, status, trend, farbeFuer }: { titel: string; d: DruckDiff; status: { text: string; farbe: string }; trend: string; farbeFuer: (v: number) => string }) {
-  return (
-    <div style={dashUhrKachel(status.farbe)}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: TEXT2, maxWidth: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{titel}</div>
-      <DruckUhr wert={d.diff} bereich={10} farbeFuer={farbeFuer} size={104} />
-      <div style={{ fontSize: 11, fontWeight: 700, color: status.farbe }}>● {status.text}</div>
-      <div style={{ fontSize: 9, color: TEXT3 }}>{trend ? `${trend} · ` : ""}{zeitLokal(d.zeit)} Uhr</div>
     </div>
   );
 }
@@ -858,15 +750,13 @@ export default function FlugWetter() {
           </button>
         </div>
       </div>
+      {/* Föhn & Bise: eigene Zeile mit Analyse und 24-h-Prognose */}
+      {mess && <FoehnBise mess={mess} version={ladeVersion} zeigeFoehn={dashKeys.includes("foehn")} zeigeBise={dashKeys.includes("bise")} />}
       {mess ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8, marginBottom: 16 }}>
           {dashKeys.map((k) => {
-            if (k === "foehn") {
-              return mess.foehn.diff != null ? <DashDruck key={k} titel="🏔 Föhn (Lugano − Zürich)" d={mess.foehn} status={foehnStatus(mess.foehn.diff)} trend={trendFoehn(mess.foehn.diff, mess.foehn.diffVor3h)} farbeFuer={(v) => foehnStatus(v).farbe} /> : null;
-            }
-            if (k === "bise") {
-              return mess.bise?.diff != null ? <DashDruck key={k} titel="🌬 Bise (Güttingen − Genf)" d={mess.bise} status={biseStatus(mess.bise.diff)} trend={trendWert(mess.bise.diff, mess.bise.diffVor3h)} farbeFuer={(v) => biseStatus(v).farbe} /> : null;
-            }
+            // Föhn und Bise stehen oben in der eigenen Analyse-Zeile
+            if (k === "foehn" || k === "bise") return null;
             if (k === "lokal") {
               return mess.lokal ? <DashLokal key={k} l={mess.lokal} /> : null;
             }
