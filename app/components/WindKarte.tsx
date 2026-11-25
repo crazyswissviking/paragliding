@@ -168,23 +168,6 @@ function stationElement(m: Messung, veraltet: boolean, ref: boolean): HTMLElemen
   return el;
 }
 
-function netzElement(s: Station, veraltet: boolean): HTMLElement {
-  const farbe = veraltet ? TEXT3 : windFarbe(s.wind, s.boeen);
-  const ruhig = s.wind == null || s.wind < 1 || s.richtung == null;
-  const pfeil = ruhig
-    ? `<circle cx="22" cy="22" r="4.5" fill="#fff"/>`
-    : `<g transform="rotate(${(s.richtung as number) + 180} 22 22)"><path d="M22 6 L31 32 L22 26 L13 32 Z" fill="#fff"/></g>`;
-  const el = document.createElement("div");
-  el.className = "wk-n";
-  el.setAttribute("role", "button");
-  el.setAttribute("aria-label", `${s.name} (${NETZ_NAMEN[s.netz]}): Wind ${rund(s.wind)} km/h`);
-  el.style.zIndex = String(5 + Math.round(s.wind ?? 0));
-  el.innerHTML =
-    `<svg width="26" height="26" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="${farbe}" stroke="#fff" stroke-width="3"/>${pfeil}</svg>` +
-    `<div class="wk-nw">${s.wind == null ? "" : rund(s.wind)}</div>`;
-  return el;
-}
-
 function pfeilElement(winkel: number, farbe: string): HTMLElement {
   const el = document.createElement("div");
   el.className = "wk-pfeil";
@@ -204,9 +187,6 @@ const STIL = `
 .wk-w{position:absolute;top:42px;left:50%;transform:translateX(-50%);background:#fff;border-radius:6px;padding:0 4px;font:700 11px/16px system-ui,sans-serif;color:${TEXT};white-space:nowrap}
 .wk-p{position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.85);border-radius:6px;padding:0 3px;font:600 9px/12px system-ui,sans-serif;color:${TEXT2};white-space:nowrap}
 .wk-name{position:absolute;left:46px;top:8px;background:rgba(255,255,255,.9);padding:0 4px;font:700 11px/16px system-ui,sans-serif;color:${TEXT2};white-space:nowrap;border-radius:4px}
-.wk-n{width:26px;height:26px;cursor:pointer;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
-.wk-nw{display:none;position:absolute;top:27px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.92);border-radius:5px;padding:0 3px;font:700 10px/13px system-ui,sans-serif;color:${TEXT};white-space:nowrap}
-.wk-karte.wk-gross .wk-nw{display:block}
 .wk-pfeil{width:22px;height:22px;pointer-events:none}
 .wk-lblbox{width:0;height:0;cursor:pointer}
 .wk-lbl{position:absolute;left:0;top:0;transform:translate(-50%,-50%);background:#fff;border:2px solid;border-radius:999px;padding:1px 7px;font:800 11px/16px system-ui,sans-serif;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25)}
@@ -220,6 +200,7 @@ type Basis = "liberty" | "positron" | "swisstopo";
 const BASIS_NAMEN: Record<Basis, string> = { liberty: "Standard", positron: "Hell", swisstopo: "Topo (swisstopo)" };
 const SWISSTOPO_STIL: StyleSpecification = {
   version: 8,
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf", // für die Windzahlen der Messnetz-Ebene
   sources: {
     basis: {
       type: "raster",
@@ -243,12 +224,53 @@ const gespeicherteBasis = (): Basis => {
 
 type LinienDaten = Feature<LineString, { farbe: string; popup: string; gruppe: string }>[];
 
+// ── Messnetz als Kartenebene (schnell, auch mit hunderten Stationen) ─────────
+const LEERE_DATEN: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
+
+function pfeilBild(): ImageData | null {
+  const c = document.createElement("canvas");
+  c.width = 44;
+  c.height = 44;
+  const ctx = c.getContext("2d");
+  if (!ctx) return null;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.moveTo(22, 6);
+  ctx.lineTo(31, 32);
+  ctx.lineTo(22, 26);
+  ctx.lineTo(13, 32);
+  ctx.closePath();
+  ctx.fill();
+  return ctx.getImageData(0, 0, 44, 44);
+}
+
+function netzFeatures(stationen: Station[], ausser: Set<string>): GeoJSON.FeatureCollection {
+  const features: GeoJSON.Feature[] = [];
+  for (const s of stationen) {
+    if (s.netz === "meteoschweiz" && ausser.has(s.extId)) continue; // Referenzstationen sind schon mit Namen auf der Karte
+    const alter = alterMin(s.zeit);
+    features.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [s.lng, s.lat] },
+      properties: {
+        farbe: alter != null && alter > 90 ? TEXT3 : windFarbe(s.wind, s.boeen),
+        ruhig: s.wind == null || s.wind < 1 || s.richtung == null,
+        drehung: s.richtung == null ? 0 : (s.richtung + 180) % 360,
+        zahl: s.wind == null ? "" : String(Math.round(s.wind)),
+        wind: s.wind ?? 0,
+        popup: popupNetz(s),
+      },
+    });
+  }
+  return { type: "FeatureCollection", features };
+}
+
 export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
   const box = useRef<HTMLDivElement>(null);
   const karte = useRef<MapLibreMap | null>(null);
   const stationen = useRef<{ m: Marker; ref: boolean }[]>([]);
   const druckMarker = useRef<{ m: Marker; gross: boolean }[]>([]);
-  const netzMarker = useRef<Marker[]>([]);
+  const netzDaten = useRef<GeoJSON.FeatureCollection>(LEERE_DATEN);
   const [zeigeNetz, setZeigeNetz] = useState(false);
   const [netz, setNetz] = useState<MessnetzAntwort | null>(null);
   const [netzFehler, setNetzFehler] = useState("");
@@ -328,6 +350,12 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     };
     klickLinien("druck-gross");
     klickLinien("druck-lokal");
+    map.on("click", "netz-kreis", (e: MapLayerMouseEvent) => {
+      const f = e.features?.[0];
+      if (f) new Popup({ offset: 10, maxWidth: "280px" }).setLngLat(e.lngLat).setHTML(String(f.properties?.popup ?? "")).addTo(map);
+    });
+    map.on("mouseenter", "netz-kreis", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "netz-kreis", () => (map.getCanvas().style.cursor = ""));
 
     // Fällt die Vektorkarte aus (Server nicht erreichbar), automatisch auf swisstopo wechseln
     map.on("error", () => {
@@ -361,6 +389,31 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
       for (const id of ["druck-gross", "druck-gross-hit", "druck-lokal", "druck-lokal-hit"]) {
         map.setLayoutProperty(id, "visibility", druckSichtbar.current ? "visible" : "none");
       }
+      // Messnetz-Ebenen (nach jedem Stilwechsel neu anlegen)
+      if (!map.getSource("netz")) map.addSource("netz", { type: "geojson", data: netzDaten.current });
+      if (!map.hasImage("netz-pfeil")) {
+        const bild = pfeilBild();
+        if (bild) map.addImage("netz-pfeil", bild);
+      }
+      map.addLayer({
+        id: "netz-kreis", type: "circle", source: "netz",
+        paint: {
+          "circle-color": ["get", "farbe"], "circle-stroke-color": "#fff", "circle-stroke-width": 1.5,
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 3.5, 8, 6.5, 11, 11],
+        },
+      });
+      map.addLayer({
+        id: "netz-pfeil", type: "symbol", source: "netz", filter: ["!", ["get", "ruhig"]],
+        layout: {
+          "icon-image": "netz-pfeil", "icon-rotate": ["get", "drehung"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true,
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 5, 0.14, 8, 0.28, 11, 0.5],
+        },
+      });
+      map.addLayer({
+        id: "netz-zahl", type: "symbol", source: "netz", minzoom: 9, filter: ["!=", ["get", "zahl"], ""],
+        layout: { "text-field": ["get", "zahl"], "text-font": ["Noto Sans Bold"], "text-size": 11, "text-offset": [0, 1.7], "text-anchor": "top", "symbol-sort-key": ["-", 0, ["get", "wind"]] },
+        paint: { "text-color": TEXT, "text-halo-color": "#fff", "text-halo-width": 1.6 },
+      });
       setBereit(true);
     });
     karte.current = map;
@@ -371,7 +424,6 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
       karte.current = null;
       stationen.current = [];
       druckMarker.current = [];
-      netzMarker.current = [];
       setBereit(false);
     };
   }, []);
@@ -465,24 +517,13 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     };
   }, [zeigeNetz, mess]);
 
-  // Messnetz-Marker zeichnen
+  // Messnetz-Daten in die Kartenebene schreiben
   useEffect(() => {
     const map = karte.current;
     if (!bereit || !map) return;
-    netzMarker.current.forEach((m) => m.remove());
-    netzMarker.current = [];
-    if (!zeigeNetz || !netz) return;
-    // Referenzstationen (Föhn/Bise, Haslital) sind schon mit Namen auf der Karte
     const ref = new Set((mess.referenz ?? []).map((r) => r.id));
-    for (const s of netz.stationen) {
-      if (s.netz === "meteoschweiz" && ref.has(s.extId)) continue;
-      const alter = alterMin(s.zeit);
-      const marker = new Marker({ element: netzElement(s, alter != null && alter > 90), anchor: "center" })
-        .setLngLat([s.lng, s.lat])
-        .setPopup(new Popup({ offset: 14, maxWidth: "280px" }).setHTML(popupNetz(s)))
-        .addTo(map);
-      netzMarker.current.push(marker);
-    }
+    netzDaten.current = zeigeNetz && netz ? netzFeatures(netz.stationen, ref) : LEERE_DATEN;
+    (map.getSource("netz") as GeoJSONSource | undefined)?.setData(netzDaten.current);
   }, [netz, zeigeNetz, bereit, mess]);
 
   // Ebenen ein-/ausschalten (Wind, Druck, Zoomstufe)
@@ -495,7 +536,6 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
         // Ist das Messnetz an, ersetzt es die einzelnen MeteoSchweiz-/Windline-Marker (Referenzstationen bleiben)
         m.getElement().style.display = zeigeWind && (ref || (nah && !zeigeNetz)) ? "" : "none";
       });
-      map.getContainer().parentElement?.classList.toggle("wk-gross", map.getZoom() >= 9);
       // Föhn/Bise (großräumig) nur bei weitem Ausschnitt, Haslital-Differenzen nur bei nahem Ausschnitt
       druckMarker.current.forEach(({ m, gross }) => {
         m.getElement().style.display = zeigeDruck && (gross ? !nah : nah) ? "" : "none";
