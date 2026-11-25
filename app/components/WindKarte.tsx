@@ -285,6 +285,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
   const angewendet = useRef<Basis>("liberty"); // aktuell geladene Basiskarte
   const linien = useRef<LinienDaten>([]);
   const stilGeladen = useRef(false);
+  const kachelFehler = useRef(0);
   const druckSichtbar = useRef(true);
 
   // Karte anlegen
@@ -358,11 +359,18 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     map.on("mouseleave", "netz-kreis", () => (map.getCanvas().style.cursor = ""));
 
     // Fällt die Vektorkarte aus (Server nicht erreichbar), automatisch auf swisstopo wechseln
-    map.on("error", () => {
-      if (!stilGeladen.current && angewendet.current !== "swisstopo") {
+    // Auch Kachelfehler zählen (Server gesperrt, Werbeblocker, Netzwerkfilter): nach 3 Fehlern wechselt die Karte auf swisstopo
+    // und zeigt die Fehlermeldung an, damit man die Ursache sieht.
+    map.on("error", (e: { error?: { message?: string }; sourceId?: string }) => {
+      if (angewendet.current === "swisstopo") return;
+      const tile = e.sourceId === "openmaptiles";
+      if (tile) kachelFehler.current += 1;
+      if (!stilGeladen.current || kachelFehler.current >= 3) {
         angewendet.current = "swisstopo";
+        stilGeladen.current = false;
         setBasis("swisstopo");
-        setBasisHinweis("Vektorkarte nicht erreichbar – swisstopo-Karte wird angezeigt.");
+        const grund = (e.error?.message ?? "").slice(0, 120);
+        setBasisHinweis(`Vektorkarte (Standard/Hell) lädt nicht${grund ? ` – ${grund}` : ""}. swisstopo-Karte wird angezeigt.`);
         map.setStyle(SWISSTOPO_STIL, { diff: false });
       }
     });
@@ -434,6 +442,7 @@ export default function WindKarte({ mess }: { mess: MesswerteAntwort }) {
     if (!bereit || !map || angewendet.current === basis) return;
     angewendet.current = basis;
     stilGeladen.current = false;
+    kachelFehler.current = 0;
     setBasisHinweis("");
     try {
       localStorage.setItem(SPEICHER_BASIS, basis);
